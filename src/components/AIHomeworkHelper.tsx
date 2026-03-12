@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Bot, Send } from "lucide-react";
+import { Bot, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Message {
   role: "user" | "assistant";
