@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 const features = [
-  { icon: BookOpen, title: "Cambridge Aligned", desc: "Curriculum-strict tutoring" },
+  { icon: BookOpen, title: "Multi-Curriculum", desc: "Cambridge, CAPS & IEB support" },
   { icon: Shield, title: "Parent Supervised", desc: "Full session visibility" },
   { icon: Star, title: "Gamified Learning", desc: "Points & rewards system" },
   { icon: Zap, title: "AI Powered", desc: "Socratic teaching method" },
