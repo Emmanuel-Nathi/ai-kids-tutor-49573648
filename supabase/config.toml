@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.child-login]
 verify_jwt = false
+
+[functions.invite-coparent]
+verify_jwt = false
