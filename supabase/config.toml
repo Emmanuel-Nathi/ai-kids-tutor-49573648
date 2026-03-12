@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.homework-parse]
 verify_jwt = false
+
+[functions.child-login]
+verify_jwt = false

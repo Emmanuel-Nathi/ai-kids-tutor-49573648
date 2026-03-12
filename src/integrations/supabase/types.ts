@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       children: {
         Row: {
+          access_pin: string | null
           avatar_url: string | null
           created_at: string
           curriculum_level: string
@@ -28,6 +29,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_pin?: string | null
           avatar_url?: string | null
           created_at?: string
           curriculum_level?: string
@@ -40,6 +42,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_pin?: string | null
           avatar_url?: string | null
           created_at?: string
           curriculum_level?: string

@@ -14,17 +14,22 @@ AI Kids Tutor - design system, architecture decisions, and key patterns
 ## Architecture
 - Auth: Supabase auth with auto-profile creation trigger
 - Roles: user_roles table (parent/child enum), has_role() security definer function
-- AI: Lovable AI Gateway → google/gemini-3-flash-preview (tutor), google/gemini-2.5-pro (vision/homework)
-- Curricula: Cambridge, CAPS, IEB — stored as selected_curriculum on children table
-- Language support: english, afrikaans, isizulu — stored as preferred_language on children table
-- Edge functions: ai-tutor (streaming SSE), calculate-points, homework-parse (vision OCR)
-- Owl mascot: src/components/OwlMascot.tsx, logo at src/assets/logo.png (user-uploaded)
+- AI: Lovable AI Gateway → google/gemini-3-flash-preview, Socratic method, Cambridge curriculum
+- Edge functions: ai-tutor, homework-parse, calculate-points, child-login (all verify_jwt=false)
+- Owl mascot: src/components/OwlMascot.tsx, transparent logo at src/assets/logo.png
+- AppLayout: SidebarProvider wrapper for child-facing pages (AppSidebar.tsx + AppLayout.tsx)
+- Child pages use AppLayout (no back buttons), Parent pages keep standalone layout
 
 ## Database Tables
-profiles, user_roles, children (+ selected_curriculum, preferred_language), sessions (+ interaction_summary, curriculum_alignment_score), messages, homework, points, rewards, reward_claims
+profiles, user_roles, children (has access_pin), sessions, messages, homework, points, rewards, reward_claims
 
 ## Routes
-/ → Landing, /auth → Auth, /parent → ParentDashboard
-/parent/child/:childId → ParentChildDetail
-/child/:childId → ChildHome, /child/:childId/chat → ChildChat
-/child/:childId/homework, /child/:childId/rewards, /child/:childId/activities
+/ → Landing, /auth → Auth, /child-login → ChildLogin (PIN-based)
+/parent → ParentDashboard, /parent/child/:childId → ParentChildDetail
+/child/:childId → ChildHome (wrapped in AppLayout)
+/child/:childId/chat, /homework, /rewards, /activities (all wrapped in AppLayout)
+
+## Points System
+- Homework upload: +10 XP, Homework complete: +20 XP
+- Chat: +5 XP every 3rd message
+- calculate-points edge function supports both session-based and direct child_id+amount modes

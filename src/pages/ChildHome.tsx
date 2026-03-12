@@ -7,7 +7,7 @@ import { Sparkle } from "@/components/Sparkle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Gift, Sparkles, ArrowLeft, Star } from "lucide-react";
+import { Camera, Gift, Sparkles, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -78,16 +78,11 @@ export default function ChildHome() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/parent")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
-            <Badge variant="secondary" className="text-[10px] uppercase">
-              {curriculumLabels[curriculum] || curriculum}
-            </Badge>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
+          <Badge variant="secondary" className="text-[10px] uppercase">
+            {curriculumLabels[curriculum] || curriculum}
+          </Badge>
         </div>
         <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1 relative">
           <Star className="w-4 h-4 text-star-gold fill-star-gold" />

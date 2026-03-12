@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ export default function ChildChat() {
   const [childCurrLevel, setChildCurrLevel] = useState("");
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
+  const [userMsgCount, setUserMsgCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextSent = useRef(false);
@@ -54,13 +55,11 @@ export default function ChildChat() {
     }
   }, [childId]);
 
-  // Auto-send context question from homework scanner
   useEffect(() => {
     if (contextQuestion && !contextSent.current && childGrade) {
       contextSent.current = true;
       setInput(`Help me with this: ${contextQuestion}`);
       setTimeout(() => {
-        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
         sendMessageWithText(`Help me with this: ${contextQuestion}`);
       }, 500);
     }
@@ -71,6 +70,20 @@ export default function ChildChat() {
     await supabase.from("messages").insert({ session_id: sessionId, role, content });
   };
 
+  const awardXP = async (amount: number, reason: string) => {
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-points`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ child_id: childId, amount, reason }),
+      });
+      toast.success(`+${amount} XP! ⭐`, { duration: 2000 });
+    } catch {}
+  };
+
   const sendMessageWithText = async (text: string) => {
     if (!text.trim() || isStreaming) return;
 
@@ -79,7 +92,15 @@ export default function ChildChat() {
     setInput("");
     setIsStreaming(true);
 
+    const newCount = userMsgCount + 1;
+    setUserMsgCount(newCount);
+
     await saveMessage("user", text.trim());
+
+    // Award 5 XP every 3rd message
+    if (newCount % 3 === 0) {
+      awardXP(5, `💬 Asked ${newCount} questions in ${subject}`);
+    }
 
     let assistantSoFar = "";
 
@@ -173,9 +194,6 @@ export default function ChildChat() {
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/child/${childId}`)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
         <span className="font-display font-bold text-lg">
           {subjectEmoji[subject] || "📚"} {subject.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} Tutor
         </span>
