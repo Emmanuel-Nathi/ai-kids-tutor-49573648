@@ -109,6 +109,7 @@ export default function ParentDashboard() {
       });
     }
     setChildren(enriched);
+    childIdsRef.current = enriched.map((c) => c.id);
 
     if (user) {
       const { data: rw } = await supabase.from("rewards").select("*").eq("parent_id", user.id).order("created_at");
