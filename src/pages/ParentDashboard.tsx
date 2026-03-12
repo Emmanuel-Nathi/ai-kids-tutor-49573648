@@ -274,70 +274,9 @@ export default function ParentDashboard() {
           <TabsContent value="children" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-bold">Your Children</h2>
-              <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Child</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="font-display">Add a Child</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Child's Name</Label>
-                      <Input placeholder="e.g. Sarah" value={newChild.name} onChange={(e) => setNewChild({ ...newChild, name: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Grade / Year</Label>
-                      <Select value={newChild.grade} onValueChange={(v) => setNewChild({ ...newChild, grade: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 12 }, (_, i) => (
-                            <SelectItem key={i + 1} value={String(i + 1)}>Year {i + 1}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Curriculum Level</Label>
-                      <Select value={newChild.curriculum_level} onValueChange={(v) => setNewChild({ ...newChild, curriculum_level: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="primary">Primary</SelectItem>
-                          <SelectItem value="lower_secondary">Lower Secondary</SelectItem>
-                          <SelectItem value="upper_secondary">Upper Secondary</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Curriculum</Label>
-                      <Select value={newChild.selected_curriculum} onValueChange={(v) => setNewChild({ ...newChild, selected_curriculum: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cambridge">Cambridge International</SelectItem>
-                          <SelectItem value="caps">CAPS (Public Schools)</SelectItem>
-                          <SelectItem value="ieb">IEB (Private Schools)</SelectItem>
-                          <SelectItem value="general">General</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {(newChild.selected_curriculum === "caps" || newChild.selected_curriculum === "ieb") && (
-                      <div className="space-y-2">
-                        <Label>Preferred Language</Label>
-                        <Select value={newChild.preferred_language} onValueChange={(v) => setNewChild({ ...newChild, preferred_language: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="english">English</SelectItem>
-                            <SelectItem value="afrikaans">Afrikaans</SelectItem>
-                            <SelectItem value="isizulu">isiZulu</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    <Button className="w-full" onClick={addChild}>Add Child</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" onClick={() => navigate("/parent/add-child")}>
+                <Plus className="w-4 h-4 mr-1" /> Add Child
+              </Button>
             </div>
 
             {/* Invite Co-Parent */}

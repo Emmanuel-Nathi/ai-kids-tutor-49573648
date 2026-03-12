@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
+import { ChildSetupWizard } from "@/components/ChildSetupWizard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Paywall from "./pages/Paywall";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/paywall" element={<Paywall />} />
             <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
             <Route path="/parent/child/:childId" element={<SubscriptionGuard><ParentChildDetail /></SubscriptionGuard>} />
+            <Route path="/parent/add-child" element={<SubscriptionGuard><ChildSetupWizard /></SubscriptionGuard>} />
             <Route path="/child/:childId" element={<AppLayout><ChildHome /></AppLayout>} />
             <Route path="/child/:childId/chat" element={<AppLayout><ChildChat /></AppLayout>} />
             <Route path="/child/:childId/homework" element={<AppLayout><ChildHomework /></AppLayout>} />
