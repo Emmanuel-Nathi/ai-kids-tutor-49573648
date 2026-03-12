@@ -517,6 +517,11 @@ export default function ParentDashboard() {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="account" className="space-y-4 mt-4">
+            <h2 className="font-display text-2xl font-bold">Account</h2>
+            <SubscriptionManager />
+          </TabsContent>
         </Tabs>
       </main>
 
