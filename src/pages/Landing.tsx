@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
 import { BookOpen, Shield, Star, Zap } from "lucide-react";
+import logo from "@/assets/logo.png";
+import TransparentLogo from "@/components/TransparentLogo";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
