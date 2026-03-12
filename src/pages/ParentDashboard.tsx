@@ -187,6 +187,33 @@ export default function ParentDashboard() {
     }
   };
 
+  const inviteCoParent = async () => {
+    if (!user || !coParentEmail.trim()) return;
+    setInviting(true);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-coparent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ email: coParentEmail.trim(), parent_id: user.id }),
+        }
+      );
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed to invite");
+      toast.success(data.message || "Invitation sent!");
+      setCoParentEmail("");
+      setCoParentOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Could not send invitation");
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const getChildName = (id: string) => children.find((c) => c.id === id)?.name || "Child";
   const getRewardName = (id: string) => rewards.find((r) => r.id === id)?.name || "Reward";
   const pendingClaims = claims.filter((c) => c.status === "pending");
