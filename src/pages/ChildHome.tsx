@@ -7,7 +7,7 @@ import { Sparkle } from "@/components/Sparkle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Gift, Sparkles, Star } from "lucide-react";
+import { Camera, Flame, Gift, Sparkles, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
