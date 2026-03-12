@@ -112,11 +112,13 @@ export default function ParentDashboard() {
       name: newChild.name.trim(),
       grade: newChild.grade,
       curriculum_level: newChild.curriculum_level,
-    });
+      selected_curriculum: newChild.selected_curriculum,
+      preferred_language: newChild.preferred_language,
+    } as any);
     if (error) toast.error(error.message);
     else {
       toast.success(`${newChild.name} added!`);
-      setNewChild({ name: "", grade: "1", curriculum_level: "primary" });
+      setNewChild({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
       setAddOpen(false);
       fetchAll();
     }
