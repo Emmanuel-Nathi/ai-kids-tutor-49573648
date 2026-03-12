@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ParentDashboard from "./pages/ParentDashboard";
+import ParentChildDetail from "./pages/ParentChildDetail";
 import ChildHome from "./pages/ChildHome";
 import ChildChat from "./pages/ChildChat";
 import ChildHomework from "./pages/ChildHomework";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/parent" element={<ParentDashboard />} />
+            <Route path="/parent/child/:childId" element={<ParentChildDetail />} />
             <Route path="/child/:childId" element={<ChildHome />} />
             <Route path="/child/:childId/chat" element={<ChildChat />} />
             <Route path="/child/:childId/homework" element={<ChildHomework />} />

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OwlMascot } from "@/components/OwlMascot";
+import { Sparkle } from "@/components/Sparkle";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -26,12 +27,27 @@ export default function ChildChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [showCelebrate, setShowCelebrate] = useState(false);
+  const [childGrade, setChildGrade] = useState("");
+  const [childCurrLevel, setChildCurrLevel] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Fetch child's grade for curriculum context
+  useEffect(() => {
+    if (childId) {
+      supabase.from("children").select("grade, curriculum_level").eq("id", childId).single().then(({ data }) => {
+        if (data) {
+          setChildGrade(data.grade);
+          setChildCurrLevel(data.curriculum_level);
+        }
+      });
+    }
+  }, [childId]);
 
   const saveMessage = async (role: string, content: string) => {
     if (!sessionId) return;
@@ -63,6 +79,8 @@ export default function ChildChat() {
           messages: [...messages, userMsg],
           subject,
           childId,
+          grade: childGrade,
+          curriculum_level: childCurrLevel,
         }),
       });
 
@@ -119,7 +137,15 @@ export default function ChildChat() {
         }
       }
 
-      if (assistantSoFar) await saveMessage("assistant", assistantSoFar);
+      if (assistantSoFar) {
+        await saveMessage("assistant", assistantSoFar);
+        // Check for celebration triggers
+        const celebrationWords = ["brilliant", "correct", "well done", "great job", "amazing", "fantastic", "🌟", "🎉", "excellent"];
+        if (celebrationWords.some((w) => assistantSoFar.toLowerCase().includes(w))) {
+          setShowCelebrate(true);
+          setTimeout(() => setShowCelebrate(false), 1500);
+        }
+      }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {
@@ -144,15 +170,16 @@ export default function ChildChat() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <OwlMascot size="lg" message={`Ask me anything about ${subject}! I'll help you think through it 🤔`} />
+            <OwlMascot size="lg" variant="idle" message={`Ask me anything about ${subject}! I'll help you think through it 🤔`} />
           </div>
         )}
 
         {messages.map((msg, i) => (
           <div key={i} className={cn("flex gap-2 max-w-[85%]", msg.role === "user" ? "ml-auto flex-row-reverse" : "")}>
             {msg.role === "assistant" && (
-              <div className="shrink-0 mt-1">
+              <div className="shrink-0 mt-1 relative">
                 <OwlMascot size="sm" animate={false} />
+                <Sparkle active={showCelebrate && i === messages.length - 1} count={3} />
               </div>
             )}
             <div
@@ -176,7 +203,7 @@ export default function ChildChat() {
 
         {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2">
-            <OwlMascot size="sm" animate={false} />
+            <OwlMascot size="sm" variant="thinking" />
             <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
               <span className="animate-pulse text-muted-foreground">Thinking...</span>
             </div>

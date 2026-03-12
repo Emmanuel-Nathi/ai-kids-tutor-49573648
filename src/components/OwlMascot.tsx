@@ -1,9 +1,11 @@
 import owlLogo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
   animate?: boolean;
+  variant?: "idle" | "celebrate" | "thinking" | "blink";
   className?: string;
   message?: string;
 }
@@ -15,13 +17,36 @@ const sizeMap = {
   xl: "w-48 h-48",
 };
 
-export function OwlMascot({ size = "md", animate = true, className, message }: OwlMascotProps) {
+const variants = {
+  idle: {
+    y: [0, -8, 0],
+    rotate: [0, 2, 0],
+    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" as const },
+  },
+  celebrate: {
+    y: [0, -16, 0, -10, 0],
+    scale: [1, 1.15, 1, 1.1, 1],
+    rotate: [0, -5, 5, -3, 0],
+    transition: { duration: 0.8, ease: "easeOut" as const },
+  },
+  thinking: {
+    rotate: [-3, 3, -3],
+    transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const },
+  },
+  blink: {
+    opacity: [1, 0.3, 1],
+    transition: { duration: 0.4, repeat: 2 },
+  },
+};
+
+export function OwlMascot({ size = "md", animate = true, variant = "idle", className, message }: OwlMascotProps) {
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
-      <img
+      <motion.img
         src={owlLogo}
         alt="Owl Tutor mascot"
-        className={cn(sizeMap[size], "object-contain drop-shadow-lg", animate && "animate-float")}
+        className={cn(sizeMap[size], "object-contain drop-shadow-lg")}
+        animate={animate ? variants[variant] : undefined}
       />
       {message && (
         <div className="relative max-w-[240px] rounded-2xl bg-card px-4 py-2 text-center text-sm font-display shadow-md border border-border">

@@ -2,3 +2,6 @@ project_id = "uejizyyawomenkzqixfm"
 
 [functions.ai-tutor]
 verify_jwt = false
+
+[functions.calculate-points]
+verify_jwt = false
