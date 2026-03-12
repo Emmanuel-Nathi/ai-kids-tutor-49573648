@@ -22,6 +22,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [childGrade, setChildGrade] = useState("");
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
