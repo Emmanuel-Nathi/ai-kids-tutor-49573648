@@ -43,7 +43,7 @@ export default function Landing() {
             Your Child's <span className="text-primary">Smart Study Buddy</span>
           </h1>
           <p className="mt-3 text-muted-foreground text-lg max-w-md mx-auto">
-            AI-powered homework help aligned to the Cambridge curriculum. Parents stay in control.
+            AI-powered homework help aligned to Cambridge, CAPS & IEB curricula. Parents stay in control.
           </p>
           <Button onClick={() => navigate("/auth")} size="lg" className="mt-6 font-display text-lg px-8">
             Start Learning Free

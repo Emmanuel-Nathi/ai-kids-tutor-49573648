@@ -6,16 +6,28 @@ import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Camera, Gift, Sparkles, ArrowLeft, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const subjects = [
+const baseSubjects = [
   { id: "math", label: "Maths", emoji: "🔢", color: "bg-secondary/10 text-secondary" },
   { id: "english", label: "English", emoji: "📖", color: "bg-primary/10 text-primary" },
   { id: "science", label: "Science", emoji: "🔬", color: "bg-accent/10 text-accent" },
   { id: "general", label: "General", emoji: "🌍", color: "bg-star-gold/20 text-foreground" },
 ];
+
+const capsExtraSubjects = [
+  { id: "life_orientation", label: "Life Orientation", emoji: "🧭", color: "bg-primary/10 text-primary" },
+  { id: "natural_sciences", label: "Natural Sciences", emoji: "🌿", color: "bg-accent/10 text-accent" },
+];
+
+const curriculumLabels: Record<string, string> = {
+  cambridge: "Cambridge",
+  caps: "CAPS",
+  ieb: "IEB",
+};
 
 export default function ChildHome() {
   const { childId } = useParams<{ childId: string }>();
@@ -23,6 +35,7 @@ export default function ChildHome() {
   const navigate = useNavigate();
   const [childName, setChildName] = useState("");
   const [totalPoints, setTotalPoints] = useState(0);
+  const [curriculum, setCurriculum] = useState("cambridge");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -30,15 +43,22 @@ export default function ChildHome() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children").select("name").eq("id", childId).single().then(({ data, error }) => {
+      supabase.from("children").select("name, selected_curriculum").eq("id", childId).single().then(({ data, error }) => {
         if (error) toast.error("Child not found");
-        else setChildName(data?.name || "");
+        else {
+          setChildName(data?.name || "");
+          setCurriculum((data as any)?.selected_curriculum || "cambridge");
+        }
       });
       supabase.from("points").select("amount").eq("child_id", childId).then(({ data }) => {
         setTotalPoints((data || []).reduce((s, p) => s + p.amount, 0));
       });
     }
   }, [childId]);
+
+  const subjects = curriculum === "caps" || curriculum === "ieb"
+    ? [...baseSubjects, ...capsExtraSubjects]
+    : baseSubjects;
 
   const startSession = async (subject: string) => {
     if (!childId) return;
@@ -62,7 +82,12 @@ export default function ChildHome() {
           <Button variant="ghost" size="icon" onClick={() => navigate("/parent")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
+          <div className="flex items-center gap-2">
+            <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
+            <Badge variant="secondary" className="text-[10px] uppercase">
+              {curriculumLabels[curriculum] || curriculum}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1 relative">
           <Star className="w-4 h-4 text-star-gold fill-star-gold" />
@@ -95,7 +120,7 @@ export default function ChildHome() {
                 >
                   <CardContent className="flex flex-col items-center gap-2 py-6">
                     <span className="text-3xl">{s.emoji}</span>
-                    <span className="font-display font-semibold">{s.label}</span>
+                    <span className="font-display font-semibold text-sm">{s.label}</span>
                   </CardContent>
                 </Card>
               </motion.div>

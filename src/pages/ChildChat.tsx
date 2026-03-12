@@ -21,6 +21,7 @@ export default function ChildChat() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session");
   const subject = searchParams.get("subject") || "general";
+  const contextQuestion = searchParams.get("context");
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -30,40 +31,55 @@ export default function ChildChat() {
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [childGrade, setChildGrade] = useState("");
   const [childCurrLevel, setChildCurrLevel] = useState("");
+  const [childCurriculum, setChildCurriculum] = useState("cambridge");
+  const [childLanguage, setChildLanguage] = useState("english");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const contextSent = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // Fetch child's grade for curriculum context
   useEffect(() => {
     if (childId) {
-      supabase.from("children").select("grade, curriculum_level").eq("id", childId).single().then(({ data }) => {
+      supabase.from("children").select("grade, curriculum_level, selected_curriculum, preferred_language").eq("id", childId).single().then(({ data }) => {
         if (data) {
           setChildGrade(data.grade);
           setChildCurrLevel(data.curriculum_level);
+          setChildCurriculum((data as any).selected_curriculum || "cambridge");
+          setChildLanguage((data as any).preferred_language || "english");
         }
       });
     }
   }, [childId]);
+
+  // Auto-send context question from homework scanner
+  useEffect(() => {
+    if (contextQuestion && !contextSent.current && childGrade) {
+      contextSent.current = true;
+      setInput(`Help me with this: ${contextQuestion}`);
+      setTimeout(() => {
+        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+        sendMessageWithText(`Help me with this: ${contextQuestion}`);
+      }, 500);
+    }
+  }, [contextQuestion, childGrade]);
 
   const saveMessage = async (role: string, content: string) => {
     if (!sessionId) return;
     await supabase.from("messages").insert({ session_id: sessionId, role, content });
   };
 
-  const sendMessage = async () => {
-    const text = input.trim();
-    if (!text || isStreaming) return;
+  const sendMessageWithText = async (text: string) => {
+    if (!text.trim() || isStreaming) return;
 
-    const userMsg: Message = { role: "user", content: text };
+    const userMsg: Message = { role: "user", content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsStreaming(true);
 
-    await saveMessage("user", text);
+    await saveMessage("user", text.trim());
 
     let assistantSoFar = "";
 
@@ -81,19 +97,13 @@ export default function ChildChat() {
           childId,
           grade: childGrade,
           curriculum_level: childCurrLevel,
+          curriculum: childCurriculum,
+          preferred_language: childLanguage,
         }),
       });
 
-      if (resp.status === 429) {
-        toast.error("Too many requests. Please wait a moment.");
-        setIsStreaming(false);
-        return;
-      }
-      if (resp.status === 402) {
-        toast.error("AI credits exhausted. Please add funds in your workspace.");
-        setIsStreaming(false);
-        return;
-      }
+      if (resp.status === 429) { toast.error("Too many requests. Please wait a moment."); setIsStreaming(false); return; }
+      if (resp.status === 402) { toast.error("AI credits exhausted."); setIsStreaming(false); return; }
       if (!resp.ok || !resp.body) throw new Error("Failed to connect to tutor");
 
       const reader = resp.body.getReader();
@@ -139,8 +149,7 @@ export default function ChildChat() {
 
       if (assistantSoFar) {
         await saveMessage("assistant", assistantSoFar);
-        // Check for celebration triggers
-        const celebrationWords = ["brilliant", "correct", "well done", "great job", "amazing", "fantastic", "🌟", "🎉", "excellent"];
+        const celebrationWords = ["brilliant", "correct", "well done", "great job", "amazing", "fantastic", "🌟", "🎉", "excellent", "xp", "points"];
         if (celebrationWords.some((w) => assistantSoFar.toLowerCase().includes(w))) {
           setShowCelebrate(true);
           setTimeout(() => setShowCelebrate(false), 1500);
@@ -154,7 +163,12 @@ export default function ChildChat() {
     }
   };
 
-  const subjectEmoji: Record<string, string> = { math: "🔢", english: "📖", science: "🔬", general: "🌍" };
+  const sendMessage = () => sendMessageWithText(input);
+
+  const subjectEmoji: Record<string, string> = {
+    math: "🔢", english: "📖", science: "🔬", general: "🌍",
+    life_orientation: "🧭", natural_sciences: "🌿",
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -163,14 +177,14 @@ export default function ChildChat() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <span className="font-display font-bold text-lg">
-          {subjectEmoji[subject] || "📚"} {subject.charAt(0).toUpperCase() + subject.slice(1)} Tutor
+          {subjectEmoji[subject] || "📚"} {subject.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} Tutor
         </span>
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <OwlMascot size="lg" variant="idle" message={`Ask me anything about ${subject}! I'll help you think through it 🤔`} />
+            <OwlMascot size="lg" variant="idle" message={`Ask me anything about ${subject.replace(/_/g, " ")}! I'll help you think through it 🤔`} />
           </div>
         )}
 
@@ -194,9 +208,7 @@ export default function ChildChat() {
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
-              ) : (
-                msg.content
-              )}
+              ) : msg.content}
             </div>
           </div>
         ))}
@@ -212,18 +224,8 @@ export default function ChildChat() {
       </div>
 
       <div className="border-t border-border bg-card p-3 shrink-0">
-        <form
-          onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
-          className="flex gap-2 max-w-2xl mx-auto"
-        >
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your question..."
-            className="flex-1 rounded-full"
-            disabled={isStreaming}
-          />
+        <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-2 max-w-2xl mx-auto">
+          <Input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type your question..." className="flex-1 rounded-full" disabled={isStreaming} />
           <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={isStreaming || !input.trim()}>
             <Send className="w-4 h-4" />
           </Button>

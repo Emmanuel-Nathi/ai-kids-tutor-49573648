@@ -56,7 +56,7 @@ export default function ParentDashboard() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [rewardOpen, setRewardOpen] = useState(false);
-  const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary" });
+  const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
 
   useEffect(() => {
