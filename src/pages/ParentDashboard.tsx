@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight } from "lucide-react";
+import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface Child {
   id: string;
@@ -21,6 +22,7 @@ interface Child {
   avatar_url: string | null;
   selected_curriculum: string;
   preferred_language: string;
+  access_pin: string | null;
 }
 
 interface ChildWithStats extends Child {
@@ -34,9 +36,6 @@ interface RewardClaim {
   reward_id: string;
   status: string;
   created_at: string;
-  child_name?: string;
-  reward_name?: string;
-  point_cost?: number;
 }
 
 interface Reward {
@@ -56,6 +55,8 @@ export default function ParentDashboard() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [rewardOpen, setRewardOpen] = useState(false);
+  const [pinDialogChild, setPinDialogChild] = useState<ChildWithStats | null>(null);
+  const [newPin, setNewPin] = useState("");
   const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
 
@@ -69,39 +70,30 @@ export default function ParentDashboard() {
 
   const fetchAll = async () => {
     setLoading(true);
-    // Children
     const { data: childrenData } = await supabase.from("children").select("*").order("created_at");
-    
-    // Enrich with stats
+
     const enriched: ChildWithStats[] = [];
     for (const c of childrenData || []) {
       const { data: pts } = await supabase.from("points").select("amount").eq("child_id", c.id);
       const { count } = await supabase.from("sessions").select("*", { count: "exact", head: true }).eq("child_id", c.id);
       enriched.push({
-        ...c,
+        ...(c as any),
         totalPoints: (pts || []).reduce((s, p) => s + p.amount, 0),
         sessionCount: count || 0,
       });
     }
     setChildren(enriched);
 
-    // Rewards
     if (user) {
       const { data: rw } = await supabase.from("rewards").select("*").eq("parent_id", user.id).order("created_at");
       setRewards(rw || []);
     }
 
-    // Pending claims
     const childIds = (childrenData || []).map((c) => c.id);
     if (childIds.length > 0) {
-      const { data: cl } = await supabase
-        .from("reward_claims")
-        .select("*")
-        .in("child_id", childIds)
-        .order("created_at", { ascending: false });
+      const { data: cl } = await supabase.from("reward_claims").select("*").in("child_id", childIds).order("created_at", { ascending: false });
       setClaims(cl || []);
     }
-
     setLoading(false);
   };
 
@@ -142,10 +134,7 @@ export default function ParentDashboard() {
   };
 
   const handleClaim = async (claimId: string, status: "approved" | "denied") => {
-    const { error } = await supabase
-      .from("reward_claims")
-      .update({ status, reviewed_at: new Date().toISOString() })
-      .eq("id", claimId);
+    const { error } = await supabase.from("reward_claims").update({ status, reviewed_at: new Date().toISOString() }).eq("id", claimId);
     if (error) toast.error(error.message);
     else {
       toast.success(status === "approved" ? "Reward approved! 🎉" : "Claim denied");
@@ -153,9 +142,26 @@ export default function ParentDashboard() {
     }
   };
 
+  const copyKidLink = (childId: string) => {
+    const link = `${window.location.origin}/child/${childId}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Kid link copied! 📋");
+  };
+
+  const saveChildPin = async () => {
+    if (!pinDialogChild || newPin.length !== 4) return;
+    const { error } = await supabase.from("children").update({ access_pin: newPin } as any).eq("id", pinDialogChild.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`PIN set for ${pinDialogChild.name}!`);
+      setPinDialogChild(null);
+      setNewPin("");
+      fetchAll();
+    }
+  };
+
   const getChildName = (id: string) => children.find((c) => c.id === id)?.name || "Child";
   const getRewardName = (id: string) => rewards.find((r) => r.id === id)?.name || "Reward";
-
   const pendingClaims = claims.filter((c) => c.status === "pending");
 
   if (authLoading || loading) {
@@ -269,14 +275,10 @@ export default function ParentDashboard() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {children.map((child) => (
-                  <Card
-                    key={child.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/30"
-                    onClick={() => navigate(`/child/${child.id}`)}
-                  >
+                  <Card key={child.id} className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/30">
                     <CardHeader className="pb-2">
                       <CardTitle className="font-display text-xl flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={() => navigate(`/child/${child.id}`)}>
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
                             {child.name[0]}
                           </div>
@@ -292,13 +294,29 @@ export default function ParentDashboard() {
                         </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" /> Year {child.grade}</span>
-                      <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary">
-                        {(child as any).selected_curriculum || "cambridge"}
-                      </span>
-                      <span className="flex items-center gap-1"><Star className="w-4 h-4 text-star-gold" /> {child.totalPoints} pts</span>
-                      <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {child.sessionCount} sessions</span>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" /> Year {child.grade}</span>
+                        <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary">
+                          {child.selected_curriculum || "cambridge"}
+                        </span>
+                        <span className="flex items-center gap-1"><Star className="w-4 h-4 text-star-gold" /> {child.totalPoints} pts</span>
+                        <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {child.sessionCount} sessions</span>
+                      </div>
+                      {/* Kid Link + PIN */}
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={(e) => { e.stopPropagation(); copyKidLink(child.id); }}>
+                          <Copy className="w-3 h-3 mr-1" /> Copy Kid Link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={(e) => { e.stopPropagation(); setPinDialogChild(child); setNewPin(child.access_pin || ""); }}
+                        >
+                          <Key className="w-3 h-3 mr-1" /> {child.access_pin ? "Change PIN" : "Set PIN"}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -307,7 +325,6 @@ export default function ParentDashboard() {
           </TabsContent>
 
           <TabsContent value="rewards" className="space-y-4 mt-4">
-            {/* Pending claims */}
             {pendingClaims.length > 0 && (
               <div className="space-y-3">
                 <h3 className="font-display text-lg font-semibold">Pending Approvals</h3>
@@ -332,7 +349,6 @@ export default function ParentDashboard() {
               </div>
             )}
 
-            {/* Reward management */}
             <div className="flex items-center justify-between">
               <h3 className="font-display text-lg font-semibold">Reward Catalog</h3>
               <Dialog open={rewardOpen} onOpenChange={setRewardOpen}>
@@ -390,6 +406,31 @@ export default function ParentDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Set Child PIN dialog */}
+      <Dialog open={!!pinDialogChild} onOpenChange={() => setPinDialogChild(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {pinDialogChild?.access_pin ? "Change" : "Set"} PIN for {pinDialogChild?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Set a 4-digit PIN so {pinDialogChild?.name} can log in independently at <strong>/child-login</strong>
+            </p>
+            <InputOTP value={newPin} onChange={setNewPin} maxLength={4}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+              </InputOTPGroup>
+            </InputOTP>
+            <Button onClick={saveChildPin} disabled={newPin.length !== 4} className="w-full">Save PIN</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
