@@ -30,6 +30,7 @@ const activitiesByCurriculum: Record<string, Activity[]> = {
     { icon: Puzzle, title: "Life Orientation Challenge", desc: "Skills for everyday life", emoji: "🧭", chatContext: "Give me a CAPS Life Orientation challenge for my grade", points: 30 },
     { icon: Code, title: "Heritage Day Project", desc: "Celebrate SA's diversity", emoji: "🏛️", chatContext: "Help me with a Heritage Day project about South African culture", points: 40 },
     { icon: Pencil, title: "Natural Sciences Quiz", desc: "Explore the natural world", emoji: "🌿", chatContext: "Give me a CAPS Natural Sciences quiz for my grade", points: 35 },
+    { icon: Sparkles, title: "Science Explorer", desc: "Hands-on science experiments", emoji: "🧪", chatContext: "Give me a fun hands-on science experiment idea for CAPS curriculum at my grade level", points: 45 },
     { icon: Puzzle, title: "The Great SA Map Challenge", desc: "Identify all 9 provinces & capitals", emoji: "🗺️", chatContext: "Quiz me on all 9 South African provinces and their capital cities for CAPS Geography", points: 50 },
     { icon: Brain, title: "Legacy of a Hero", desc: "Learn about Ubuntu & Mandela", emoji: "✊", chatContext: "Tell me about Nelson Mandela and ask me 3 questions about Ubuntu for CAPS History", points: 60 },
     { icon: Sparkles, title: "Backyard Biodiversity", desc: "Explore life in your garden", emoji: "🌱", chatContext: "Help me do a CAPS Life and Living investigation about organisms I might find in a South African garden and their habitats", points: 40 },
