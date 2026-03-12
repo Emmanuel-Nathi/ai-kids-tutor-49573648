@@ -59,6 +59,10 @@ export default function ParentDashboard() {
   const [newPin, setNewPin] = useState("");
   const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
+  const [coParentEmail, setCoParentEmail] = useState("");
+  const [coParentOpen, setCoParentOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const childIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -67,6 +71,28 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (user) fetchAll();
   }, [user]);
+
+  // Realtime subscription for XP notifications
+  useEffect(() => {
+    if (childIdsRef.current.length === 0) return;
+
+    const channel = supabase
+      .channel("parent-points-notifications")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "points" },
+        (payload) => {
+          const newPoint = payload.new as { child_id: string; amount: number; reason: string };
+          if (childIdsRef.current.includes(newPoint.child_id)) {
+            const childName = children.find((c) => c.id === newPoint.child_id)?.name || "Your child";
+            toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [children]);
 
   const fetchAll = async () => {
     setLoading(true);
