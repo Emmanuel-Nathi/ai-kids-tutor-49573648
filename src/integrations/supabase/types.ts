@@ -56,6 +56,33 @@ export type Database = {
         }
         Relationships: []
       }
+      co_parents: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string
+          invited_user_id: string | null
+          primary_parent_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email: string
+          invited_user_id?: string | null
+          primary_parent_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string
+          invited_user_id?: string | null
+          primary_parent_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       homework: {
         Row: {
           child_id: string
