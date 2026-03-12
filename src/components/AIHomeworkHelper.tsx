@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Bot, Send } from "lucide-react";
+import { Bot, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,6 +22,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [childGrade, setChildGrade] = useState("");
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
@@ -126,89 +128,112 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   };
 
   return (
-    <Card className="border-2 border-secondary/20 rounded-2xl overflow-hidden">
-      <CardHeader className="py-3 px-4 bg-secondary/5">
-        <CardTitle className="font-display text-base flex items-center gap-2">
-          <Bot className="w-5 h-5 text-secondary" />
-          Ask Owl for Help 🦉
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0 flex flex-col" style={{ height: 360 }}>
-        <ScrollArea className="flex-1 px-3 py-2" ref={scrollRef as any}>
-          {messages.length === 0 && (
-            <p className="text-center text-muted-foreground text-sm py-8 font-display">
-              Ask me anything about your homework! 📚
-            </p>
-          )}
-          <div className="space-y-3">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "flex",
-                  m.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                {m.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center mr-2 mt-1 shrink-0">
-                    <Bot className="w-4 h-4 text-secondary" />
-                  </div>
-                )}
-                <div
-                  className={cn(
-                    "rounded-2xl px-4 py-2.5 max-w-[80%] text-base",
-                    m.role === "user"
-                      ? "bg-accent/10 text-foreground"
-                      : "bg-secondary/10 text-foreground"
-                  )}
-                >
-                  {m.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none [&>p]:m-0">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    m.content
-                  )}
-                </div>
-              </div>
-            ))}
-            {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
-              <div className="flex justify-start">
-                <div className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center mr-2 mt-1 shrink-0">
-                  <Bot className="w-4 h-4 text-secondary" />
-                </div>
-                <div className="bg-secondary/10 rounded-2xl px-4 py-2.5 text-base text-muted-foreground">
-                  <span className="inline-flex gap-1">
-                    typing
-                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>.</span>
-                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>.</span>
-                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>.</span>
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+    <div className="space-y-3">
+      <Button
+        variant="default"
+        className="w-full rounded-2xl text-base py-6 font-display gap-2"
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        💬 Need help? Chat with your AI Study Buddy!
+        {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+      </Button>
 
-        <div className="border-t border-border p-3 flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder="Type your question..."
-            className="rounded-full text-base"
-            disabled={isStreaming}
-          />
-          <Button
-            size="icon"
-            className="rounded-full shrink-0"
-            onClick={sendMessage}
-            disabled={isStreaming || !input.trim()}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
           >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <Card className="border-2 border-secondary/20 rounded-2xl overflow-hidden">
+              <CardHeader className="py-3 px-4 bg-secondary/5">
+                <CardTitle className="font-display text-base flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-secondary" />
+                  Ask Owl for Help 🦉
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 flex flex-col" style={{ height: 360 }}>
+                <ScrollArea className="flex-1 px-3 py-2" ref={scrollRef as any}>
+                  {messages.length === 0 && (
+                    <p className="text-center text-muted-foreground text-sm py-8 font-display">
+                      Ask me anything about your homework! 📚
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    {messages.map((m, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "flex",
+                          m.role === "user" ? "justify-end" : "justify-start"
+                        )}
+                      >
+                        {m.role === "assistant" && (
+                          <div className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center mr-2 mt-1 shrink-0">
+                            <Bot className="w-4 h-4 text-secondary" />
+                          </div>
+                        )}
+                        <div
+                          className={cn(
+                            "rounded-2xl px-4 py-2.5 max-w-[80%] text-base",
+                            m.role === "user"
+                              ? "bg-accent/10 text-foreground"
+                              : "bg-secondary/10 text-foreground"
+                          )}
+                        >
+                          {m.role === "assistant" ? (
+                            <div className="prose prose-sm max-w-none [&>p]:m-0">
+                              <ReactMarkdown>{m.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            m.content
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+                      <div className="flex justify-start">
+                        <div className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center mr-2 mt-1 shrink-0">
+                          <Bot className="w-4 h-4 text-secondary" />
+                        </div>
+                        <div className="bg-secondary/10 rounded-2xl px-4 py-2.5 text-base text-muted-foreground">
+                          <span className="inline-flex gap-1">
+                            typing
+                            <span className="animate-bounce" style={{ animationDelay: "0ms" }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: "150ms" }}>.</span>
+                            <span className="animate-bounce" style={{ animationDelay: "300ms" }}>.</span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                <div className="border-t border-border p-3 flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                    placeholder="Type your question..."
+                    className="rounded-full text-base"
+                    disabled={isStreaming}
+                  />
+                  <Button
+                    size="icon"
+                    className="rounded-full shrink-0"
+                    onClick={sendMessage}
+                    disabled={isStreaming || !input.trim()}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
