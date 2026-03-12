@@ -17,6 +17,7 @@ export default function ChildProfile() {
   const [child, setChild] = useState<any>(null);
   const [totalXP, setTotalXP] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     if (!childId) return;
