@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
 import { BookOpen, Shield, Star, Zap } from "lucide-react";
+import logo from "@/assets/logo.png";
+import TransparentLogo from "@/components/TransparentLogo";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -25,7 +27,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <img src="/favicon.ico" alt="" className="w-8 h-8" />
+          <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
         </div>
         <Button onClick={() => navigate("/auth")} size="sm">Get Started</Button>
