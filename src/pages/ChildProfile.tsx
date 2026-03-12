@@ -10,6 +10,7 @@ const curriculumLabels: Record<string, string> = {
   cambridge: "Cambridge",
   caps: "CAPS (South Africa)",
   ieb: "IEB (South Africa)",
+  general: "General",
 };
 
 export default function ChildProfile() {
