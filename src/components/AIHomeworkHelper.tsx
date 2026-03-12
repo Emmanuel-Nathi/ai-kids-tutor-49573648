@@ -4,9 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Bot, ChevronDown, ChevronUp, Send } from "lucide-react";
+import { Bot, ChevronDown, ChevronUp, Mic, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition: new () => SpeechRecognitionInstance;
+  }
+}
 import { AnimatePresence, motion } from "framer-motion";
 
 interface Message {
@@ -23,10 +41,43 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [childGrade, setChildGrade] = useState("");
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) return;
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = "en-ZA";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsListening(true);
+  };
 
   useEffect(() => {
     if (childId) {
@@ -216,10 +267,21 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                    placeholder="Type your question..."
+                    placeholder="Type or speak your question..."
                     className="rounded-full text-base"
                     disabled={isStreaming}
                   />
+                  <Button
+                    size="icon"
+                    className={cn(
+                      "rounded-full shrink-0",
+                      isListening && "bg-destructive hover:bg-destructive/90 animate-pulse"
+                    )}
+                    onClick={toggleListening}
+                    disabled={isStreaming}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </Button>
                   <Button
                     size="icon"
                     className="rounded-full shrink-0"
