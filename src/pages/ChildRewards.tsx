@@ -84,9 +84,6 @@ export default function ChildRewards() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/child/${childId}`)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
         <span className="font-display font-bold text-lg">🎁 Rewards Store</span>
       </header>
       <main className="p-4 max-w-lg mx-auto space-y-6">
