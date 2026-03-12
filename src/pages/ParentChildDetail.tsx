@@ -22,6 +22,8 @@ interface SessionWithMessages {
   active_time_seconds: number;
   idle_time_seconds: number;
   status: string;
+  interaction_summary: string | null;
+  curriculum_alignment_score: number | null;
   messages: { role: string; content: string; created_at: string }[];
 }
 
