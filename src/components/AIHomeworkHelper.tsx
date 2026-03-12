@@ -8,10 +8,21 @@ import { Bot, ChevronDown, ChevronUp, Mic, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition: new () => SpeechRecognitionInstance;
   }
 }
 import { AnimatePresence, motion } from "framer-motion";
