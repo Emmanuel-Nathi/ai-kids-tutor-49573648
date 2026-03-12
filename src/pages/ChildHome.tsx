@@ -54,6 +54,21 @@ export default function ChildHome() {
       supabase.from("points").select("amount").eq("child_id", childId).then(({ data }) => {
         setTotalPoints((data || []).reduce((s, p) => s + p.amount, 0));
       });
+
+      // Calculate streak from sessions
+      supabase.from("sessions").select("started_at").eq("child_id", childId).order("started_at", { ascending: false }).then(({ data }) => {
+        if (!data || data.length === 0) { setStreak(0); return; }
+        const days = [...new Set(data.map(s => new Date(s.started_at).toDateString()))];
+        let count = 0;
+        const today = new Date();
+        for (let i = 0; i < days.length; i++) {
+          const expected = new Date(today);
+          expected.setDate(today.getDate() - i);
+          if (days[i] === expected.toDateString()) count++;
+          else break;
+        }
+        setStreak(count);
+      });
     }
   }, [childId]);
 
