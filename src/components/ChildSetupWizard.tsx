@@ -191,7 +191,13 @@ export function ChildSetupWizard() {
               </Button>
             )}
             {step < TOTAL_STEPS ? (
-              <Button className="flex-1" disabled={!canNext} onClick={() => setStep(step + 1)}>
+              <Button className="flex-1" disabled={!canNext} onClick={() => {
+                const nextStep = step + 1;
+                setStep(nextStep);
+                if (typeof window !== "undefined" && (window as any).posthog) {
+                  (window as any).posthog.capture("onboarding_step_completed", { step, next_step: nextStep });
+                }
+              }}>
                 Next <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (

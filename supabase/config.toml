@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.invite-coparent]
 verify_jwt = false
+
+[functions.admin-dashboard]
+verify_jwt = false
