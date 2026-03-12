@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OwlMascot } from "@/components/OwlMascot";
-import { User, Star, BookOpen, Trophy } from "lucide-react";
+import { User, Star, BookOpen, Flame } from "lucide-react";
 
 const curriculumLabels: Record<string, string> = {
   cambridge: "Cambridge",
