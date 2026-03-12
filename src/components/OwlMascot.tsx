@@ -21,17 +21,17 @@ const variants = {
   idle: {
     y: [0, -8, 0],
     rotate: [0, 2, 0],
-    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" as const },
   },
   celebrate: {
     y: [0, -16, 0, -10, 0],
     scale: [1, 1.15, 1, 1.1, 1],
     rotate: [0, -5, 5, -3, 0],
-    transition: { duration: 0.8, ease: "easeOut" },
+    transition: { duration: 0.8, ease: "easeOut" as const },
   },
   thinking: {
     rotate: [-3, 3, -3],
-    transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" },
+    transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const },
   },
   blink: {
     opacity: [1, 0.3, 1],
