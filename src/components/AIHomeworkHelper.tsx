@@ -46,7 +46,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const toggleListening = () => {
     if (isListening) {
