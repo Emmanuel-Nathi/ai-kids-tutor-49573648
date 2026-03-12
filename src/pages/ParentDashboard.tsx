@@ -19,6 +19,8 @@ interface Child {
   grade: string;
   curriculum_level: string;
   avatar_url: string | null;
+  selected_curriculum: string;
+  preferred_language: string;
 }
 
 interface ChildWithStats extends Child {
