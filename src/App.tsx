@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import Paywall from "./pages/Paywall";
 import ParentDashboard from "./pages/ParentDashboard";
 import ParentChildDetail from "./pages/ParentChildDetail";
 import ChildHome from "./pages/ChildHome";
@@ -31,8 +33,9 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/child-login" element={<ChildLogin />} />
-            <Route path="/parent" element={<ParentDashboard />} />
-            <Route path="/parent/child/:childId" element={<ParentChildDetail />} />
+            <Route path="/paywall" element={<Paywall />} />
+            <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
+            <Route path="/parent/child/:childId" element={<SubscriptionGuard><ParentChildDetail /></SubscriptionGuard>} />
             <Route path="/child/:childId" element={<AppLayout><ChildHome /></AppLayout>} />
             <Route path="/child/:childId/chat" element={<AppLayout><ChildChat /></AppLayout>} />
             <Route path="/child/:childId/homework" element={<AppLayout><ChildHomework /></AppLayout>} />
