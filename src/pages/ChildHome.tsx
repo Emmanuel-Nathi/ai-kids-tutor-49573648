@@ -163,6 +163,8 @@ export default function ChildHome() {
             <span className="text-xs font-display">Activities</span>
           </Button>
         </div>
+
+        <AIHomeworkHelper childId={childId!} />
       </main>
     </div>
   );
