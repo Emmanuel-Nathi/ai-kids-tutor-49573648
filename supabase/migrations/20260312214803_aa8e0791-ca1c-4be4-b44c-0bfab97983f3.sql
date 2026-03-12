@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN subscription_status text NOT NULL DEFAULT 'trial';

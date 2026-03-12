@@ -195,6 +195,7 @@ export type Database = {
           display_name: string | null
           id: string
           parent_pin: string | null
+          subscription_status: string
           updated_at: string
           user_id: string
         }
@@ -204,6 +205,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           parent_pin?: string | null
+          subscription_status?: string
           updated_at?: string
           user_id: string
         }
@@ -213,6 +215,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           parent_pin?: string | null
+          subscription_status?: string
           updated_at?: string
           user_id?: string
         }
