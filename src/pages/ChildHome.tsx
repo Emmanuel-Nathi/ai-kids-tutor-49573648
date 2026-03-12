@@ -36,6 +36,7 @@ export default function ChildHome() {
   const [childName, setChildName] = useState("");
   const [totalPoints, setTotalPoints] = useState(0);
   const [curriculum, setCurriculum] = useState("cambridge");
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
