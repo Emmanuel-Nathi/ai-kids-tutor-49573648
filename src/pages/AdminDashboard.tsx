@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -18,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Users, CreditCard, Zap, MoreHorizontal, ShieldX, Loader2 } from "lucide-react";
+import { Users, CreditCard, Zap, MoreHorizontal, ShieldX, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 
@@ -48,6 +50,11 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+
+  // Change password state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Check admin role
   useEffect(() => {
@@ -79,9 +86,29 @@ export default function AdminDashboard() {
     setSubscribers((prev) =>
       prev.map((s) => (s.id === profileId ? { ...s, subscription_status: status } : s))
     );
-    // refresh stats
     const { data } = await adminCall("get-stats");
     if (data) setStats(data);
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChangingPassword(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password updated successfully");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
   };
 
   if (authLoading || isAdmin === null) {
@@ -140,71 +167,113 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Subscribers Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display">Subscribers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingData ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Trial Ends</TableHead>
-                  <TableHead className="w-[80px]">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscribers.map((sub) => (
-                  <TableRow key={sub.id}>
-                    <TableCell className="font-medium">
-                      {sub.display_name || "Unknown"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusColor(sub.subscription_status)}>
-                        {sub.subscription_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(addDays(new Date(sub.created_at), 30), "dd MMM yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => updateSubscription(sub.id, "active")}>
-                            Activate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateSubscription(sub.id, "cancelled")}>
-                            Cancel
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {subscribers.length === 0 && (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Subscribers Table */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="font-display">Subscribers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingData ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No subscribers yet
-                    </TableCell>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Trial Ends</TableHead>
+                    <TableHead className="w-[80px]">Action</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {subscribers.map((sub) => (
+                    <TableRow key={sub.id}>
+                      <TableCell className="font-medium">
+                        {sub.display_name || "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusColor(sub.subscription_status)}>
+                          {sub.subscription_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {format(addDays(new Date(sub.created_at), 30), "dd MMM yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => updateSubscription(sub.id, "active")}>
+                              Activate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateSubscription(sub.id, "cancelled")}>
+                              Cancel
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {subscribers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No subscribers yet
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Change Password Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2">
+            <KeyRound className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="font-display text-lg">Change Password</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Min 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleChangePassword}
+              disabled={changingPassword || !newPassword}
+              className="w-full"
+            >
+              {changingPassword ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Update Password
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
