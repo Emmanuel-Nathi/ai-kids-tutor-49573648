@@ -321,6 +321,46 @@ export default function ParentDashboard() {
               </Dialog>
             </div>
 
+            {/* Invite Co-Parent */}
+            <Card className="border-dashed border-2 border-muted-foreground/20">
+              <CardContent className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">Invite Co-Parent</p>
+                    <p className="text-xs text-muted-foreground">Share access with a partner or family member</p>
+                  </div>
+                </div>
+                <Dialog open={coParentOpen} onOpenChange={setCoParentOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline"><Mail className="w-4 h-4 mr-1" /> Invite</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Invite Co-Parent</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Enter their email address. They'll receive an invitation to join and access your children's profiles.
+                      </p>
+                      <div className="space-y-2">
+                        <Label>Email Address</Label>
+                        <Input
+                          type="email"
+                          placeholder="partner@example.com"
+                          value={coParentEmail}
+                          onChange={(e) => setCoParentEmail(e.target.value)}
+                        />
+                      </div>
+                      <Button className="w-full" onClick={inviteCoParent} disabled={inviting || !coParentEmail.trim()}>
+                        {inviting ? "Sending..." : "Send Invitation"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+
             {children.length === 0 ? (
               <Card className="text-center py-12">
                 <CardContent>
