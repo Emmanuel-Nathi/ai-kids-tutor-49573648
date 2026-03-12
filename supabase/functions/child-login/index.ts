@@ -11,22 +11,24 @@ serve(async (req) => {
 
   try {
     const { name, pin } = await req.json();
-    if (!name || !pin) throw new Error("Name and PIN are required");
+    if (!pin) throw new Error("PIN is required");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: child, error } = await supabase
-      .from("children")
-      .select("id, name, access_pin")
-      .ilike("name", name.trim())
-      .eq("access_pin", pin)
-      .single();
+    let query = supabase.from("children").select("id, name, access_pin").eq("access_pin", pin);
+
+    // If name is provided, also filter by name
+    if (name && name.trim()) {
+      query = query.ilike("name", name.trim());
+    }
+
+    const { data: child, error } = await query.single();
 
     if (error || !child) {
       return new Response(
-        JSON.stringify({ error: "No child found with that name and PIN" }),
+        JSON.stringify({ error: "No child found with that PIN" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

@@ -1,26 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
+import { Delete, ArrowRight } from "lucide-react";
 
 export default function ChildLogin() {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!name.trim() || pin.length !== 4) return;
+  const handleKey = (key: number) => {
+    if (pin.length < 4) setPin((p) => p + key);
+  };
+
+  const handleClear = () => setPin("");
+
+  const handleGo = async () => {
+    if (pin.length !== 4) return;
     setLoading(true);
 
     try {
-      // Use edge function to validate child PIN (bypasses RLS)
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/child-login`,
         {
@@ -29,7 +29,7 @@ export default function ChildLogin() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ name: name.trim(), pin }),
+          body: JSON.stringify({ pin }),
         }
       );
 
@@ -39,53 +39,81 @@ export default function ChildLogin() {
       toast.success(`Welcome, ${data.name}! 🎉`);
       navigate(`/child/${data.child_id}`);
     } catch (err: any) {
-      toast.error(err.message || "Could not log in. Check your name and PIN.");
+      toast.error(err.message || "Wrong PIN. Try again! 🤔");
+      setPin("");
     } finally {
       setLoading(false);
     }
   };
 
+  const stars = Array.from({ length: 4 }, (_, i) => (i < pin.length ? "⭐" : "☆"));
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <OwlMascot size="lg" message="Hi there! Enter your name and PIN 🦉" className="mx-auto mb-2" />
-          <CardTitle className="font-display">Kid Login</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Your Name</Label>
-            <Input
-              placeholder="e.g. Sarah"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Your PIN</Label>
-            <div className="flex justify-center">
-              <InputOTP value={pin} onChange={setPin} maxLength={4}>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-          </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-xs space-y-6">
+        <OwlMascot size="lg" message="Enter your secret PIN! 🔒" className="mx-auto" />
+
+        <h1 className="font-display text-2xl font-bold text-center text-foreground">
+          Kid Login
+        </h1>
+
+        {/* PIN stars display */}
+        <div className="flex justify-center gap-3 text-4xl select-none" aria-label={`${pin.length} of 4 digits entered`}>
+          {stars.map((s, i) => (
+            <span key={i} className="transition-transform duration-150" style={{ transform: i < pin.length ? "scale(1.2)" : "scale(1)" }}>
+              {s}
+            </span>
+          ))}
+        </div>
+
+        {/* Numeric keypad */}
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <Button
+              key={n}
+              variant="outline"
+              className="h-16 text-2xl font-display font-bold rounded-2xl border-2 hover:bg-primary/10 hover:border-primary active:scale-95 transition-all"
+              onClick={() => handleKey(n)}
+              disabled={loading || pin.length >= 4}
+            >
+              {n}
+            </Button>
+          ))}
+
+          {/* Clear */}
           <Button
-            className="w-full"
-            onClick={handleLogin}
-            disabled={loading || !name.trim() || pin.length !== 4}
+            variant="outline"
+            className="h-16 text-lg font-display rounded-2xl border-2 border-destructive/30 text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
+            onClick={handleClear}
+            disabled={loading}
           >
-            {loading ? "Logging in..." : "Let's Go! 🚀"}
+            <Delete className="w-6 h-6" />
           </Button>
-          <Button variant="link" className="w-full" onClick={() => navigate("/auth")}>
-            Parent Login Instead
+
+          {/* 0 */}
+          <Button
+            variant="outline"
+            className="h-16 text-2xl font-display font-bold rounded-2xl border-2 hover:bg-primary/10 hover:border-primary active:scale-95 transition-all"
+            onClick={() => handleKey(0)}
+            disabled={loading || pin.length >= 4}
+          >
+            0
           </Button>
-        </CardContent>
-      </Card>
+
+          {/* Go */}
+          <Button
+            className="h-16 text-lg font-display font-bold rounded-2xl active:scale-95 transition-all"
+            onClick={handleGo}
+            disabled={loading || pin.length !== 4}
+          >
+            {loading ? "..." : <ArrowRight className="w-6 h-6" />}
+          </Button>
+        </div>
+
+        <Button variant="link" className="w-full text-muted-foreground" onClick={() => navigate("/auth")}>
+          Parent Login Instead
+        </Button>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Badge } from "@/components/ui/badge";
-import { Code, Brain, Pencil, Puzzle, Sparkles } from "lucide-react";
+import { Code, Brain, Pencil, Puzzle, Sparkles, BookOpen, Microscope, Globe, FlaskConical } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -20,10 +20,16 @@ interface Activity {
 
 const activitiesByCurriculum: Record<string, Activity[]> = {
   cambridge: [
-    { icon: Code, title: "Coding Puzzles", desc: "Learn logic with fun challenges", emoji: "💻", chatContext: "Let's do a coding logic puzzle suitable for my grade level" },
-    { icon: Brain, title: "Science Investigation", desc: "Explore a Cambridge science puzzle", emoji: "🔬", chatContext: "Give me a Cambridge-level science investigation to explore" },
-    { icon: Pencil, title: "Global Perspectives", desc: "Think globally, act locally", emoji: "🌍", chatContext: "Let's explore a global perspectives topic for my grade" },
-    { icon: Puzzle, title: "Quiz Challenge", desc: "Test your knowledge", emoji: "❓", chatContext: "Give me a Cambridge curriculum quiz for my grade level" },
+    { icon: Code, title: "Coding Puzzles", desc: "Learn logic with fun challenges", emoji: "💻", chatContext: "Let's do a coding logic puzzle suitable for my grade level", points: 40 },
+    { icon: Brain, title: "Science Investigation", desc: "Explore a Cambridge science puzzle", emoji: "🔬", chatContext: "Give me a Cambridge-level science investigation to explore", points: 45 },
+    { icon: Pencil, title: "Global Perspectives", desc: "Think globally, act locally", emoji: "🌍", chatContext: "Let's explore a global perspectives topic for my grade", points: 40 },
+    { icon: Puzzle, title: "Quiz Challenge", desc: "Test your knowledge", emoji: "❓", chatContext: "Give me a Cambridge curriculum quiz for my grade level", points: 35 },
+    { icon: Brain, title: "IGCSE Problem Solving", desc: "Tackle real-world problems step by step", emoji: "🧮", chatContext: "Give me an IGCSE-style problem solving challenge for my grade level", points: 50 },
+    { icon: Pencil, title: "Cambridge Essay", desc: "Write a structured essay", emoji: "📝", chatContext: "Give me a Cambridge-style essay writing exercise with a clear structure for my grade", points: 45 },
+    { icon: Puzzle, title: "Historical Source Analysis", desc: "Analyse primary sources like a historian", emoji: "📜", chatContext: "Give me a Cambridge History source analysis exercise for my grade level", points: 40 },
+    { icon: Sparkles, title: "Environmental Science", desc: "Explore ecosystems and sustainability", emoji: "🌱", chatContext: "Give me a Cambridge Environmental Science investigation about ecosystems for my grade", points: 45 },
+    { icon: Code, title: "Mathematical Reasoning", desc: "Patterns, proofs & puzzles", emoji: "📐", chatContext: "Give me a Cambridge-style mathematical reasoning puzzle for my grade level", points: 50 },
+    { icon: Brain, title: "Cambridge Literature", desc: "Explore classic and modern texts", emoji: "📖", chatContext: "Give me a Cambridge English Literature analysis exercise for my grade level", points: 40 },
   ],
   caps: [
     { icon: Brain, title: "SA History Quiz", desc: "Test your South African knowledge", emoji: "🇿🇦", chatContext: "Give me a South African history quiz based on CAPS curriculum", points: 50 },
@@ -42,6 +48,12 @@ const activitiesByCurriculum: Record<string, Activity[]> = {
     { icon: Pencil, title: "Analytical Writing", desc: "Write with precision", emoji: "✍️", chatContext: "Give me an IEB-level analytical writing exercise", points: 45 },
     { icon: Code, title: "Research Project", desc: "Dive deep into a topic", emoji: "📚", chatContext: "Help me start a mini research project on a topic relevant to IEB curriculum", points: 40 },
     { icon: Puzzle, title: "IEB Quiz Challenge", desc: "Test your IEB knowledge", emoji: "❓", chatContext: "Give me an IEB curriculum quiz for my grade level", points: 35 },
+    { icon: Brain, title: "Debate Prep", desc: "Build persuasive arguments", emoji: "🎤", chatContext: "Give me an IEB-style debate topic and help me build arguments for and against it", points: 55 },
+    { icon: Sparkles, title: "Data Analysis", desc: "Interpret graphs and statistics", emoji: "📊", chatContext: "Give me an IEB-level data analysis exercise with graphs and questions for my grade", points: 50 },
+    { icon: Pencil, title: "Literature Review", desc: "Analyse novels and poetry", emoji: "📖", chatContext: "Give me an IEB English Literature analysis exercise on a poem or novel extract", points: 40 },
+    { icon: Puzzle, title: "Ethical Reasoning", desc: "Explore moral dilemmas", emoji: "⚖️", chatContext: "Give me an IEB Life Orientation ethical reasoning scenario to analyse for my grade", points: 45 },
+    { icon: Code, title: "Scientific Method", desc: "Design experiments like a scientist", emoji: "🔬", chatContext: "Help me design a scientific experiment following the IEB scientific method for my grade level", points: 50 },
+    { icon: Brain, title: "IEB Essay Writing", desc: "Master structured essays", emoji: "📝", chatContext: "Give me an IEB-style essay writing exercise with introduction, body, and conclusion guidance", points: 55 },
   ],
   general: [
     { icon: Brain, title: "Brain Teaser", desc: "Fun logic puzzles for everyone", emoji: "🧠", chatContext: "Give me a fun brain teaser or logic puzzle for my grade level", points: 30 },
@@ -79,7 +91,6 @@ export default function ChildActivities() {
 
   const startActivity = async (activity: Activity) => {
     if (!childId) return;
-    // Create a session for the activity
     const { data, error } = await supabase.from("sessions").insert({
       child_id: childId,
       subject: "general",

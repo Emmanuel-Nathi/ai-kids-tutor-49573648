@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key } from "lucide-react";
+import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key, UserPlus, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,6 +59,10 @@ export default function ParentDashboard() {
   const [newPin, setNewPin] = useState("");
   const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
+  const [coParentEmail, setCoParentEmail] = useState("");
+  const [coParentOpen, setCoParentOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const childIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -67,6 +71,28 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (user) fetchAll();
   }, [user]);
+
+  // Realtime subscription for XP notifications
+  useEffect(() => {
+    if (childIdsRef.current.length === 0) return;
+
+    const channel = supabase
+      .channel("parent-points-notifications")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "points" },
+        (payload) => {
+          const newPoint = payload.new as { child_id: string; amount: number; reason: string };
+          if (childIdsRef.current.includes(newPoint.child_id)) {
+            const childName = children.find((c) => c.id === newPoint.child_id)?.name || "Your child";
+            toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [children]);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -83,6 +109,7 @@ export default function ParentDashboard() {
       });
     }
     setChildren(enriched);
+    childIdsRef.current = enriched.map((c) => c.id);
 
     if (user) {
       const { data: rw } = await supabase.from("rewards").select("*").eq("parent_id", user.id).order("created_at");
@@ -157,6 +184,33 @@ export default function ParentDashboard() {
       setPinDialogChild(null);
       setNewPin("");
       fetchAll();
+    }
+  };
+
+  const inviteCoParent = async () => {
+    if (!user || !coParentEmail.trim()) return;
+    setInviting(true);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-coparent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ email: coParentEmail.trim(), parent_id: user.id }),
+        }
+      );
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed to invite");
+      toast.success(data.message || "Invitation sent!");
+      setCoParentEmail("");
+      setCoParentOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Could not send invitation");
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -266,6 +320,46 @@ export default function ParentDashboard() {
                 </DialogContent>
               </Dialog>
             </div>
+
+            {/* Invite Co-Parent */}
+            <Card className="border-dashed border-2 border-muted-foreground/20">
+              <CardContent className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">Invite Co-Parent</p>
+                    <p className="text-xs text-muted-foreground">Share access with a partner or family member</p>
+                  </div>
+                </div>
+                <Dialog open={coParentOpen} onOpenChange={setCoParentOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline"><Mail className="w-4 h-4 mr-1" /> Invite</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="font-display">Invite Co-Parent</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Enter their email address. They'll receive an invitation to join and access your children's profiles.
+                      </p>
+                      <div className="space-y-2">
+                        <Label>Email Address</Label>
+                        <Input
+                          type="email"
+                          placeholder="partner@example.com"
+                          value={coParentEmail}
+                          onChange={(e) => setCoParentEmail(e.target.value)}
+                        />
+                      </div>
+                      <Button className="w-full" onClick={inviteCoParent} disabled={inviting || !coParentEmail.trim()}>
+                        {inviting ? "Sending..." : "Send Invitation"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
 
             {children.length === 0 ? (
               <Card className="text-center py-12">
