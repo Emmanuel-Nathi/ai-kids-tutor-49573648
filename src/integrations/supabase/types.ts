@@ -23,6 +23,8 @@ export type Database = {
           id: string
           name: string
           parent_id: string
+          preferred_language: string | null
+          selected_curriculum: string
           updated_at: string
         }
         Insert: {
@@ -33,6 +35,8 @@ export type Database = {
           id?: string
           name: string
           parent_id: string
+          preferred_language?: string | null
+          selected_curriculum?: string
           updated_at?: string
         }
         Update: {
@@ -43,6 +47,8 @@ export type Database = {
           id?: string
           name?: string
           parent_id?: string
+          preferred_language?: string | null
+          selected_curriculum?: string
           updated_at?: string
         }
         Relationships: []
@@ -259,9 +265,11 @@ export type Database = {
           active_time_seconds: number
           child_id: string
           created_at: string
+          curriculum_alignment_score: number | null
           ended_at: string | null
           id: string
           idle_time_seconds: number
+          interaction_summary: string | null
           started_at: string
           status: string
           subject: string | null
@@ -270,9 +278,11 @@ export type Database = {
           active_time_seconds?: number
           child_id: string
           created_at?: string
+          curriculum_alignment_score?: number | null
           ended_at?: string | null
           id?: string
           idle_time_seconds?: number
+          interaction_summary?: string | null
           started_at?: string
           status?: string
           subject?: string | null
@@ -281,9 +291,11 @@ export type Database = {
           active_time_seconds?: number
           child_id?: string
           created_at?: string
+          curriculum_alignment_score?: number | null
           ended_at?: string | null
           id?: string
           idle_time_seconds?: number
+          interaction_summary?: string | null
           started_at?: string
           status?: string
           subject?: string | null
