@@ -28,8 +28,19 @@ export default function ChildProfile() {
       setTotalXP(data?.reduce((sum, p) => sum + p.amount, 0) || 0);
     });
 
-    supabase.from("sessions").select("id").eq("child_id", childId).then(({ data }) => {
+    supabase.from("sessions").select("id, started_at").eq("child_id", childId).order("started_at", { ascending: false }).then(({ data }) => {
       setSessionCount(data?.length || 0);
+      if (!data || data.length === 0) { setStreak(0); return; }
+      const days = [...new Set(data.map(s => new Date(s.started_at).toDateString()))];
+      let count = 0;
+      const today = new Date();
+      for (let i = 0; i < days.length; i++) {
+        const expected = new Date(today);
+        expected.setDate(today.getDate() - i);
+        if (days[i] === expected.toDateString()) count++;
+        else break;
+      }
+      setStreak(count);
     });
   }, [childId]);
 
