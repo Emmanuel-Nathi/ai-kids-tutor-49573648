@@ -55,6 +55,7 @@ const curriculumLabels: Record<string, string> = {
   cambridge: "Cambridge",
   caps: "CAPS",
   ieb: "IEB",
+  general: "General",
 };
 
 export default function ChildActivities() {

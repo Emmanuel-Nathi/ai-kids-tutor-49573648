@@ -242,8 +242,9 @@ export default function ParentDashboard() {
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="cambridge">Cambridge International</SelectItem>
-                          <SelectItem value="caps">CAPS (South Africa)</SelectItem>
-                          <SelectItem value="ieb">IEB (South Africa)</SelectItem>
+                          <SelectItem value="caps">CAPS (Public Schools)</SelectItem>
+                          <SelectItem value="ieb">IEB (Private Schools)</SelectItem>
+                          <SelectItem value="general">General</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
