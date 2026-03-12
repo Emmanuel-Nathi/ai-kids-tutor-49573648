@@ -38,6 +38,7 @@ const App = () => (
             <Route path="/child/:childId/homework" element={<AppLayout><ChildHomework /></AppLayout>} />
             <Route path="/child/:childId/rewards" element={<AppLayout><ChildRewards /></AppLayout>} />
             <Route path="/child/:childId/activities" element={<AppLayout><ChildActivities /></AppLayout>} />
+            <Route path="/child/:childId/profile" element={<AppLayout><ChildProfile /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

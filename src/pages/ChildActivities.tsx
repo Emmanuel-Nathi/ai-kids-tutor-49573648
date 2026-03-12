@@ -15,6 +15,7 @@ interface Activity {
   desc: string;
   emoji: string;
   chatContext: string;
+  points?: number;
 }
 
 const activitiesByCurriculum: Record<string, Activity[]> = {
