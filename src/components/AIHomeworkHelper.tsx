@@ -256,10 +256,21 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                    placeholder="Type your question..."
+                    placeholder="Type or speak your question..."
                     className="rounded-full text-base"
                     disabled={isStreaming}
                   />
+                  <Button
+                    size="icon"
+                    className={cn(
+                      "rounded-full shrink-0",
+                      isListening && "bg-red-500 hover:bg-red-600 animate-pulse"
+                    )}
+                    onClick={toggleListening}
+                    disabled={isStreaming}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </Button>
                   <Button
                     size="icon"
                     className="rounded-full shrink-0"
