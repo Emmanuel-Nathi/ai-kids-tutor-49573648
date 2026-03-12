@@ -114,6 +114,11 @@ export default function ChildActivities() {
                   <span className="text-3xl">{a.emoji}</span>
                   <span className="font-display font-semibold text-sm">{a.title}</span>
                   <span className="text-xs text-muted-foreground text-center">{a.desc}</span>
+                  {a.points && (
+                    <Badge variant="secondary" className="text-[10px] mt-1">
+                      {a.points} XP
+                    </Badge>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
