@@ -10,14 +10,35 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { session_id, bonus_points = 0, bonus_reason = "" } = await req.json();
-    if (!session_id) throw new Error("session_id is required");
-
+    const body = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get session data
+    // Mode 1: Direct child_id + amount (for homework completion, activities, etc.)
+    if (body.child_id && body.amount) {
+      const { child_id, amount, reason = "Activity" } = body;
+
+      const { error: pErr } = await supabase.from("points").insert({
+        child_id,
+        amount,
+        reason,
+      });
+      if (pErr) throw pErr;
+
+      // Get new total
+      const { data: pts } = await supabase.from("points").select("amount").eq("child_id", child_id);
+      const total = (pts || []).reduce((s: number, p: any) => s + p.amount, 0);
+
+      return new Response(JSON.stringify({ points: amount, total }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Mode 2: Session-based calculation (existing logic)
+    const { session_id, bonus_points = 0, bonus_reason = "" } = body;
+    if (!session_id) throw new Error("session_id or (child_id + amount) is required");
+
     const { data: session, error: sErr } = await supabase
       .from("sessions")
       .select("*")
@@ -30,7 +51,6 @@ serve(async (req) => {
     const totalTime = session.active_time_seconds + session.idle_time_seconds;
     const focusScore = totalTime > 0 ? session.active_time_seconds / totalTime : 1;
 
-    // Formula: (activeMinutes × focusScore) + bonus
     const basePoints = Math.round(activeMinutes * focusScore);
     const totalPoints = basePoints + bonus_points;
 
