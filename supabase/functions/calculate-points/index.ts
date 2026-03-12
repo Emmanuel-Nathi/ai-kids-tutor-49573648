@@ -15,9 +15,32 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Mode 1: Direct child_id + amount (for homework completion, activities, etc.)
-    if (body.child_id && body.amount) {
+    // Mode 1: Direct child_id + amount (for homework completion, activities, redemptions)
+    if (body.child_id && body.amount !== undefined) {
       const { child_id, amount, reason = "Activity" } = body;
+
+      // Server-side anti-rush: for positive awards, check if child has an active session < 3 min old
+      if (amount > 0) {
+        const { data: activeSessions } = await supabase
+          .from("sessions")
+          .select("started_at")
+          .eq("child_id", child_id)
+          .eq("status", "active")
+          .order("started_at", { ascending: false })
+          .limit(1);
+
+        if (activeSessions && activeSessions.length > 0) {
+          const started = new Date(activeSessions[0].started_at).getTime();
+          const elapsed = Date.now() - started;
+          const MIN_MS = 3 * 60 * 1000;
+          if (elapsed < MIN_MS) {
+            return new Response(
+              JSON.stringify({ error: "Too fast! Keep learning for a bit longer to earn XP.", anti_rush: true }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+      }
 
       const { error: pErr } = await supabase.from("points").insert({
         child_id,

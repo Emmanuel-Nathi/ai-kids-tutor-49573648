@@ -85,7 +85,24 @@ export default function ParentDashboard() {
           const newPoint = payload.new as { child_id: string; amount: number; reason: string };
           if (childIdsRef.current.includes(newPoint.child_id)) {
             const childName = children.find((c) => c.id === newPoint.child_id)?.name || "Your child";
-            toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+            if (newPoint.amount < 0) {
+              toast.info(`${childName} spent ${Math.abs(newPoint.amount)} XP — ${newPoint.reason} 🎁`);
+            } else {
+              toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "reward_claims" },
+        (payload) => {
+          const claim = payload.new as { child_id: string; reward_id: string };
+          if (childIdsRef.current.includes(claim.child_id)) {
+            const childName = children.find((c) => c.id === claim.child_id)?.name || "Your child";
+            const rewardName = rewards.find((r) => r.id === claim.reward_id)?.name || "a reward";
+            toast.info(`${childName} just claimed "${rewardName}"! 🎁`, { duration: 5000 });
+            fetchAll();
           }
         }
       )
