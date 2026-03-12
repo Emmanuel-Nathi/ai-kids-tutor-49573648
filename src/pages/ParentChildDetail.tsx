@@ -22,6 +22,8 @@ interface SessionWithMessages {
   active_time_seconds: number;
   idle_time_seconds: number;
   status: string;
+  interaction_summary: string | null;
+  curriculum_alignment_score: number | null;
   messages: { role: string; content: string; created_at: string }[];
 }
 
@@ -287,15 +289,21 @@ export default function ParentChildDetail() {
                   onClick={() => setSelectedSession(s)}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{s.subject === "math" ? "🔢" : s.subject === "english" ? "📖" : s.subject === "science" ? "🔬" : "🌍"}</span>
+                    <span className="text-lg">{s.subject === "math" ? "🔢" : s.subject === "english" ? "📖" : s.subject === "science" ? "🔬" : s.subject === "life_orientation" ? "🧭" : s.subject === "natural_sciences" ? "🌿" : "🌍"}</span>
                     <div>
-                      <p className="text-sm font-medium capitalize">{s.subject || "General"}</p>
+                      <p className="text-sm font-medium capitalize">{(s.subject || "General").replace(/_/g, " ")}</p>
                       <p className="text-xs text-muted-foreground">{new Date(s.started_at).toLocaleDateString()}</p>
+                      {(s as any).interaction_summary && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{(s as any).interaction_summary}</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-display">{s.messages.length} msgs</p>
                     <p className="text-xs text-muted-foreground">{Math.round(s.active_time_seconds / 60)}m focus</p>
+                    {(s as any).curriculum_alignment_score != null && (
+                      <p className="text-[10px] text-primary font-medium">{(s as any).curriculum_alignment_score}% aligned</p>
+                    )}
                   </div>
                 </div>
               ))

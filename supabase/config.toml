@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.calculate-points]
 verify_jwt = false
+
+[functions.homework-parse]
+verify_jwt = false

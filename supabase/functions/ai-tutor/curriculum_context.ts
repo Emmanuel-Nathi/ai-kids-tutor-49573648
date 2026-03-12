@@ -1,380 +1,120 @@
-// Cambridge International Curriculum context by grade and subject
+// Multi-curriculum context provider for Cambridge, CAPS, and IEB
 
-interface SubjectContext {
-  terminology: string[];
-  topics: string[];
-  approach: string;
+interface CurriculumMap {
+  [grade: string]: {
+    phase: string;
+    subjects: Record<string, string[]>;
+  };
 }
 
-interface GradeContext {
-  level: string;
-  maths: SubjectContext;
-  english: SubjectContext;
-  science: SubjectContext;
-  ict: SubjectContext;
-  general: SubjectContext;
-}
+// ─── Cambridge International Curriculum ───
+const cambridgeMap: CurriculumMap = {
+  "1": { phase: "Key Stage 1", subjects: { math: ["Number Bonds", "Part-Whole Model", "Place Value to 20", "Addition & Subtraction within 20"], english: ["Phonics", "CVC Words", "Simple Sentences", "Reading Comprehension"], science: ["Living Things", "Materials", "Seasons"], general: ["Cambridge Learner Attributes: Inquirers"] } },
+  "2": { phase: "Key Stage 1", subjects: { math: ["Place Value to 100", "Multiplication Concepts", "Fractions (halves/quarters)", "Measurement"], english: ["Sentence Structure", "Punctuation", "Story Writing", "Comprehension"], science: ["Plants", "Animals", "Light & Dark"], general: ["Cambridge Learner Attributes: Thinkers"] } },
+  "3": { phase: "Lower Key Stage 2", subjects: { math: ["Place Value to 1000", "Written Addition/Subtraction", "Fractions", "Time", "Data Handling"], english: ["Grammar & Punctuation", "Paragraphs", "Poetry", "Non-fiction Writing"], science: ["Rocks & Soils", "Forces & Magnets", "Light", "Plants"], general: ["Cambridge Learner Attributes: Communicators"] } },
+  "4": { phase: "Lower Key Stage 2", subjects: { math: ["Multiplication Tables", "Decimals", "Area & Perimeter", "Angles"], english: ["Expanded Noun Phrases", "Fronted Adverbials", "Narrative Writing"], science: ["Sound", "Electricity", "Digestive System", "States of Matter"], general: ["Cambridge Learner Attributes: Collaborators"] } },
+  "5": { phase: "Upper Key Stage 2", subjects: { math: ["Long Division", "Fractions/Decimals/Percentages", "Volume", "Coordinates"], english: ["Relative Clauses", "Cohesive Devices", "Persuasive Writing"], science: ["Forces", "Earth & Space", "Life Cycles", "Properties of Materials"], general: ["Cambridge Learner Attributes: Reflective"] } },
+  "6": { phase: "Upper Key Stage 2", subjects: { math: ["Ratio & Proportion", "Algebra Introduction", "Statistics", "Geometry"], english: ["Formal/Informal Writing", "Active/Passive Voice", "Debate & Discussion"], science: ["Classification", "Circuits", "Evolution", "Light"], general: ["Cambridge Checkpoint Preparation"] } },
+  "7": { phase: "Key Stage 3", subjects: { math: ["Algebraic Expressions", "Integers", "Sequences", "Transformations"], english: ["Literary Analysis", "Persuasive Techniques", "Shakespeare Introduction"], science: ["Cells", "Atoms & Elements", "Forces & Energy"], general: ["Cambridge Lower Secondary"] } },
+  "8": { phase: "Key Stage 3", subjects: { math: ["Linear Equations", "Pythagoras Introduction", "Probability", "Constructions"], english: ["Analytical Writing", "Poetry Analysis", "Media Texts"], science: ["Periodic Table", "Reproduction", "Waves", "Chemical Reactions"], general: ["Cambridge Lower Secondary"] } },
+  "9": { phase: "Key Stage 3", subjects: { math: ["Simultaneous Equations", "Trigonometry Basics", "Standard Form", "Inequalities"], english: ["Critical Analysis", "Comparative Writing", "Speech Writing"], science: ["Genetics", "Electromagnetism", "Rate of Reaction"], general: ["Cambridge Checkpoint Exams"] } },
+  "10": { phase: "Key Stage 4 (IGCSE)", subjects: { math: ["Quadratics", "Circle Theorems", "Vectors", "Functions"], english: ["IGCSE Literature", "Directed Writing", "Argumentative Essays"], science: ["IGCSE Biology/Chemistry/Physics Syllabi"], general: ["IGCSE Exam Preparation"] } },
+  "11": { phase: "Key Stage 4 (IGCSE)", subjects: { math: ["Calculus Introduction", "Advanced Probability", "Matrices"], english: ["Coursework Preparation", "Unseen Poetry", "Critical Commentary"], science: ["Extended IGCSE Content", "Practical Skills"], general: ["IGCSE Final Exams"] } },
+  "12": { phase: "Key Stage 5 (AS/A Level)", subjects: { math: ["Pure Mathematics", "Statistics & Mechanics", "Further Maths"], english: ["A Level Literature", "Comparative Studies", "Independent Research"], science: ["A Level Biology/Chemistry/Physics"], general: ["University Preparation"] } },
+};
 
-const curriculumMap: Record<string, GradeContext> = {
-  "1": {
-    level: "Primary (Stage 1)",
-    maths: {
-      terminology: ["Number Bonds", "Part-Whole Model", "Tens Frame", "Number Line", "More Than / Less Than"],
-      topics: ["Counting to 100", "Addition within 20", "Subtraction within 20", "Shapes (2D)", "Comparing lengths"],
-      approach: "Use concrete objects and pictures. Focus on counting, grouping, and simple patterns.",
-    },
-    english: {
-      terminology: ["Phonics", "CVC Words", "Blending", "Segmenting", "High-Frequency Words"],
-      topics: ["Letter sounds", "Simple sentences", "Capital letters and full stops", "Listening comprehension"],
-      approach: "Sound out words together. Encourage reading aloud. Praise attempts at writing.",
-    },
-    science: {
-      terminology: ["Living Things", "Materials", "Senses", "Observe", "Describe"],
-      topics: ["Plants and animals", "Everyday materials", "Using our senses", "Seasons"],
-      approach: "Connect to what the child sees every day. Ask 'What do you notice?' questions.",
-    },
-    ict: {
-      terminology: ["Keyboard", "Mouse", "Screen", "Click", "Program"],
-      topics: ["Using a computer", "Simple instructions", "Following sequences"],
-      approach: "Keep it playful. Relate to games and simple step-by-step instructions.",
-    },
-    general: {
-      terminology: ["Community", "Family", "Environment", "Respect", "Curiosity"],
-      topics: ["Myself and others", "My school", "My neighbourhood"],
-      approach: "Encourage reflection on personal experiences. Build communication skills.",
-    },
+// ─── CAPS (South African National Curriculum) ───
+const capsMap: CurriculumMap = {
+  "1": { phase: "Foundation Phase", subjects: { math: ["Number Concepts 1-20", "Patterns", "Space & Shape", "Measurement"], english: ["Home Language Literacy", "Phonemic Awareness", "Emergent Reading"], science: ["Beginning Knowledge: Natural Sciences"], general: ["Life Skills", "Life Orientation"], life_orientation: ["Health & Safety", "Social Responsibility"], natural_sciences: ["Planet Earth", "Living Things"] } },
+  "2": { phase: "Foundation Phase", subjects: { math: ["Number Concepts 1-99", "Addition & Subtraction", "Money", "Time"], english: ["Reading & Viewing", "Writing & Presenting", "Handwriting"], science: ["Natural Sciences & Technology"], general: ["Life Skills"], life_orientation: ["Physical Development", "Creative Arts"], natural_sciences: ["Matter & Materials", "Energy & Change"] } },
+  "3": { phase: "Foundation Phase", subjects: { math: ["Number Concepts 1-999", "Multiplication", "Division", "Common Fractions"], english: ["Language Structures", "Creative Writing", "Oral Communication"], science: ["Natural Sciences & Technology"], general: ["Life Skills", "End of Foundation Phase Assessment"], life_orientation: ["Personal & Social Well-being"], natural_sciences: ["Life & Living", "Matter & Materials"] } },
+  "4": { phase: "Intermediate Phase", subjects: { math: ["Whole Numbers to 10 000", "Common Fractions", "Decimal Fractions", "Capacity/Volume"], english: ["FAL: First Additional Language Skills", "Reading Strategies", "Grammar & Spelling"], science: ["Natural Sciences & Technology: Formal Introduction"], general: ["Social Sciences (History & Geography)"], life_orientation: ["Development of Self", "Health & Environmental Responsibility"], natural_sciences: ["Living & Non-living Things", "Energy & Change", "Planet Earth & Beyond"] } },
+  "5": { phase: "Intermediate Phase", subjects: { math: ["Whole Numbers to 100 000", "Percentages", "Area", "Data Handling"], english: ["Comprehension", "Transactional Writing", "Visual Literacy"], science: ["Scientific Process Skills", "Ecosystems"], general: ["Social Sciences", "Economic & Management Sciences"], life_orientation: ["Constitutional Rights", "Study Skills"], natural_sciences: ["Biodiversity", "Processing Materials", "Forces"] } },
+  "6": { phase: "Intermediate Phase", subjects: { math: ["Whole Numbers to 9-digit", "Ratio & Rate", "Transformation Geometry"], english: ["Literature Study", "Language Conventions", "Oral Presentations"], science: ["Natural Sciences & Technology: Consolidation"], general: ["ANA Preparation", "Social Sciences"], life_orientation: ["Peer Pressure", "Goal Setting"], natural_sciences: ["Photosynthesis", "Electric Circuits", "The Solar System"] } },
+  "7": { phase: "Senior Phase", subjects: { math: ["Integers", "Algebraic Expressions", "Geometry of 2D Shapes", "Probability"], english: ["Literary Genres", "Essay Writing", "Comprehension & Summary"], science: ["Natural Sciences (Formal)"], general: ["Economic & Management Sciences", "Technology"], life_orientation: ["Self-image & Media", "Human Rights"], natural_sciences: ["Biodiversity", "Properties of Materials", "Acids & Bases"] } },
+  "8": { phase: "Senior Phase", subjects: { math: ["Algebraic Equations", "Theorem of Pythagoras", "Functions & Relationships"], english: ["Transactional Texts", "Poetry", "Critical Language Awareness"], science: ["Particle Model of Matter", "Chemical Reactions"], general: ["Social Sciences", "Arts & Culture"], life_orientation: ["Substance Abuse", "Career Awareness"], natural_sciences: ["Reactions in Everyday Life", "Light & Sound"] } },
+  "9": { phase: "Senior Phase", subjects: { math: ["Number Patterns", "Geometry of 3D Shapes", "Surface Area & Volume", "Data Handling"], english: ["Film Study", "Creative & Transactional Writing", "Debate"], science: ["Systems in the Human Body", "Forces & Energy"], general: ["GET Exit Level Assessment"], life_orientation: ["Democracy & Citizenship", "Study Skills for FET"], natural_sciences: ["Electric Cells & Circuits", "Compounds", "Earth & Beyond"] } },
+  "10": { phase: "FET Phase", subjects: { math: ["Functions (Linear, Quadratic, Hyperbola)", "Euclidean Geometry", "Trigonometry", "Statistics"], english: ["Literature: Novel, Poetry, Drama", "Transactional Writing", "Visual Literacy"], science: ["Physical Sciences: Mechanics, Waves", "Life Sciences: Chemistry of Life"], general: ["Accounting", "Business Studies", "Geography"], life_orientation: ["Development of Self in Society", "Career & Career Choices"], natural_sciences: ["Covered under Physical Sciences & Life Sciences"] } },
+  "11": { phase: "FET Phase", subjects: { math: ["Quadratic Functions", "Financial Maths", "Measurement", "Probability"], english: ["Comparative Essay", "Contextual Questions", "Oral Assessment"], science: ["Physical Sciences: Electricity, Chemical Change", "Life Sciences: Animal Nutrition, Gaseous Exchange"], general: ["PAT Projects", "Controlled Tests"], life_orientation: ["Responsible Citizenship", "Environmental Issues"], natural_sciences: ["Covered under Physical Sciences & Life Sciences"] } },
+  "12": { phase: "FET Phase (Matric)", subjects: { math: ["Differential Calculus", "Sequences & Series", "Counting & Probability"], english: ["NSC Exam Preparation", "Paper 1, 2, 3 Practice"], science: ["Physical Sciences: Organic Chemistry, Electrochemistry", "Life Sciences: DNA, Evolution, Human Impact"], general: ["NSC Final Exams", "Matric Preparation"], life_orientation: ["Plans for Post-school Life", "Physical Fitness Programme"], natural_sciences: ["Covered under Physical Sciences & Life Sciences"] } },
+};
+
+// ─── IEB (Independent Examinations Board — South Africa) ───
+const iebMap: CurriculumMap = {
+  "1": { phase: "Foundation Phase", subjects: { math: ["Number Sense", "Patterns", "Shape & Space", "Measurement", "Data Handling"], english: ["Literacy: Phonics & Sight Words", "Creative Expression", "Listening & Speaking"], science: ["Natural Sciences & Technology Exploration"], general: ["Life Skills", "Inquiry-Based Learning"] } },
+  "2": { phase: "Foundation Phase", subjects: { math: ["Number Concepts to 100", "Problem Solving Strategies", "Spatial Reasoning"], english: ["Independent Reading", "Writing Process", "Oral Presentations"], science: ["Observing & Recording", "Living & Non-living"], general: ["Creative Arts", "Critical Thinking Introduction"] } },
+  "3": { phase: "Foundation Phase", subjects: { math: ["Number Concepts to 1000", "Fractions", "Multiplication & Division", "Symmetry"], english: ["Comprehension Strategies", "Creative & Factual Writing", "Phonics Mastery"], science: ["Simple Investigations", "Materials & Change"], general: ["Foundation Phase Exit Assessment"] } },
+  "4": { phase: "Intermediate Phase", subjects: { math: ["Advanced Problem Solving", "Fractions & Decimals", "Geometry", "Data Analysis"], english: ["Analytical Reading", "Structured Writing", "Grammar in Context"], science: ["Scientific Method", "Living Systems"], general: ["Project-Based Inquiry", "Thinking Skills"] } },
+  "5": { phase: "Intermediate Phase", subjects: { math: ["Ratio", "Percentages", "Algebraic Thinking", "Transformations"], english: ["Genre Study", "Argumentative Writing", "Research Skills"], science: ["Ecosystems", "Energy", "Earth Science"], general: ["Independent Research Projects", "Higher-Order Thinking"] } },
+  "6": { phase: "Intermediate Phase", subjects: { math: ["Pre-Algebra", "Advanced Geometry", "Statistics & Probability"], english: ["Critical Literacy", "Multi-modal Texts", "Debating"], science: ["Chemical & Physical Change", "Forces"], general: ["IEB Common Assessment", "Analytical Skills"] } },
+  "7": { phase: "Senior Phase", subjects: { math: ["Integers & Algebra", "Euclidean Geometry Foundations", "Functions"], english: ["Literary Analysis", "Essay Writing", "Media Studies"], science: ["Particle Theory", "Chemical Reactions", "Biodiversity"], general: ["Research Methodology", "Critical Analysis"] } },
+  "8": { phase: "Senior Phase", subjects: { math: ["Equations & Inequalities", "Geometry Proofs", "Data & Probability"], english: ["Comparative Analysis", "Poetry & Prose Study", "Oral Skills"], science: ["Human Body Systems", "Electricity", "Ecology"], general: ["Extended Projects", "Analytical Thinking"] } },
+  "9": { phase: "Senior Phase", subjects: { math: ["Advanced Algebra", "Trigonometry Introduction", "3D Geometry"], english: ["Film & Visual Texts", "Creative Portfolio", "Critical Evaluation"], science: ["Chemical Bonding", "Energy Transfer", "Genetics Intro"], general: ["IEB Senior Phase Exit Assessment"] } },
+  "10": { phase: "FET Phase", subjects: { math: ["Functions & Graphs", "Analytical Geometry", "Trigonometry", "Statistics"], english: ["IEB Literature Paper", "Transactional & Essay Writing", "Oral Assessment"], science: ["Physical Sciences: Mechanics", "Life Sciences: Molecules to Organs"], general: ["Inquiry-Based Learning", "IEB Analytical Exam Style"] } },
+  "11": { phase: "FET Phase", subjects: { math: ["Quadratic Theory", "Financial Maths", "Measurement & Probability"], english: ["Comparative Literary Essay", "Critical Analysis", "Language in Context"], science: ["Physical Sciences: Waves & Electricity", "Life Sciences: Animal Systems"], general: ["Research Task (IEB Requirement)", "PAT Projects"] } },
+  "12": { phase: "FET Phase (Matric — IEB)", subjects: { math: ["Calculus", "Sequences & Series", "Counting Principles"], english: ["IEB Paper 1, 2, 3 Exam Prep", "Unseen Poetry", "Visual Literacy"], science: ["Physical Sciences: Organic Chemistry, Electrochem", "Life Sciences: Evolution, Genetics, Human Impact"], general: ["IEB Final Exams", "Distinction-level Analytical Prep"] } },
+};
+
+const curriculumMaps: Record<string, CurriculumMap> = {
+  cambridge: cambridgeMap,
+  caps: capsMap,
+  ieb: iebMap,
+};
+
+// ─── Language Support ───
+const languageTerms: Record<string, Record<string, Record<string, string>>> = {
+  afrikaans: {
+    math: { addition: "optel", subtraction: "aftrek", multiplication: "vermenigvuldiging", division: "deling", fraction: "breuk", equation: "vergelyking", geometry: "meetkunde", algebra: "algebra", number: "getal", pattern: "patroon" },
+    english: { reading: "lees", writing: "skryf", grammar: "grammatika", comprehension: "begrip", vocabulary: "woordeskat", paragraph: "paragraaf", sentence: "sin" },
+    science: { experiment: "eksperiment", observation: "waarneming", hypothesis: "hipotese", energy: "energie", force: "krag", matter: "materie", cell: "sel", ecosystem: "ekosisteem" },
+    general: { learning: "leer", study: "studeer", question: "vraag", answer: "antwoord", test: "toets", homework: "huiswerk" },
   },
-  "2": {
-    level: "Primary (Stage 2)",
-    maths: {
-      terminology: ["Number Bonds to 20", "Place Value", "Tens and Ones", "Number Sentences", "Halving", "Doubling"],
-      topics: ["Addition/subtraction within 100", "Multiplication (2, 5, 10 times tables)", "Fractions (halves, quarters)", "Time (hours, half hours)", "2D and 3D shapes"],
-      approach: "Use part-whole models and bar models. Encourage mental calculation strategies.",
-    },
-    english: {
-      terminology: ["Noun", "Verb", "Adjective", "Sentence", "Question Mark", "Exclamation Mark"],
-      topics: ["Writing simple stories", "Reading comprehension", "Handwriting", "Expanded noun phrases"],
-      approach: "Guide creative expression. Ask about characters and settings in stories.",
-    },
-    science: {
-      terminology: ["Habitat", "Life Cycle", "Waterproof", "Rigid", "Flexible"],
-      topics: ["Living things and habitats", "Properties of materials", "Basic forces (push/pull)"],
-      approach: "Hands-on thinking. 'What would happen if...?' questions.",
-    },
-    ict: {
-      terminology: ["Algorithm", "Sequence", "Debug", "Input", "Output"],
-      topics: ["Simple algorithms", "Creating sequences", "Using software tools"],
-      approach: "Think of algorithms as recipes. Step-by-step problem solving.",
-    },
-    general: {
-      terminology: ["Culture", "Tradition", "Responsibility", "Cooperation"],
-      topics: ["Communities around the world", "Taking care of our environment"],
-      approach: "Compare and contrast different ways of life. Build empathy.",
-    },
-  },
-  "3": {
-    level: "Primary (Stage 3)",
-    maths: {
-      terminology: ["Column Addition", "Column Subtraction", "Array", "Commutative", "Remainder"],
-      topics: ["3, 4, 6, 8 times tables", "Written methods for +/-", "Fractions on number line", "Perimeter", "Right angles"],
-      approach: "Transition from concrete to pictorial. Use arrays for multiplication.",
-    },
-    english: {
-      terminology: ["Paragraph", "Conjunction", "Adverb", "Preposition", "Inverted Commas"],
-      topics: ["Story writing with structure", "Non-fiction texts", "Grammar and punctuation", "Poetry"],
-      approach: "Focus on text structure. Guide planning before writing.",
-    },
-    science: {
-      terminology: ["Evaporation", "Condensation", "Skeleton", "Muscle", "Nutrition"],
-      topics: ["States of matter basics", "Human body", "Plants and growth", "Light and shadow"],
-      approach: "Encourage predictions and simple experiments in thinking.",
-    },
-    ict: {
-      terminology: ["Loop", "Repeat", "Variable", "Data", "Search"],
-      topics: ["Repetition in programs", "Collecting data", "Presenting information"],
-      approach: "Introduce the idea of efficiency — why loops save time.",
-    },
-    general: {
-      terminology: ["Perspective", "Global", "Sustainability", "Research"],
-      topics: ["Water and its importance", "Different perspectives on issues"],
-      approach: "Start building research skills. Ask children to consider multiple viewpoints.",
-    },
-  },
-  "4": {
-    level: "Primary (Stage 4)",
-    maths: {
-      terminology: ["Factor", "Multiple", "Equivalent Fractions", "Decimal", "Area"],
-      topics: ["All times tables to 12×12", "Equivalent fractions", "Decimals (tenths, hundredths)", "Area and perimeter", "Coordinates"],
-      approach: "Link fractions and decimals. Use visual models like fraction walls.",
-    },
-    english: {
-      terminology: ["Clause", "Subordinate Clause", "Fronted Adverbial", "Apostrophe", "Determiner"],
-      topics: ["Narrative writing", "Persuasive writing", "Comprehension strategies", "Spelling patterns"],
-      approach: "Analyse author's choices. Guide structured writing with clear paragraphs.",
-    },
-    science: {
-      terminology: ["Circuit", "Conductor", "Insulator", "Solid", "Liquid", "Gas", "Digestive System"],
-      topics: ["Electricity basics", "States of matter", "Sound", "Teeth and digestion"],
-      approach: "Classify and group. Use diagrams to explain processes.",
-    },
-    ict: {
-      terminology: ["Selection", "Condition", "IF-THEN", "Spreadsheet", "Formula"],
-      topics: ["Selection in programming", "Using spreadsheets", "Internet safety"],
-      approach: "Introduce decision-making in code. Connect to real-life choices.",
-    },
-    general: {
-      terminology: ["Evidence", "Argument", "Impact", "Wellbeing"],
-      topics: ["Migration and movement", "Health and wellbeing globally"],
-      approach: "Build argumentation skills. Use evidence to support opinions.",
-    },
-  },
-  "5": {
-    level: "Primary (Stage 5)",
-    maths: {
-      terminology: ["Prime Number", "Square Number", "Mixed Number", "Improper Fraction", "Volume", "Translation", "Reflection"],
-      topics: ["Prime numbers", "Fractions (add, subtract, multiply)", "Percentages", "Volume", "Angles", "Negative numbers"],
-      approach: "Move toward abstract thinking. Encourage multiple solution strategies.",
-    },
-    english: {
-      terminology: ["Relative Clause", "Modal Verb", "Parenthesis", "Cohesion", "Formality"],
-      topics: ["Balanced arguments", "Formal/informal writing", "Advanced comprehension", "Figurative language"],
-      approach: "Discuss authorial intent. Guide editing and redrafting.",
-    },
-    science: {
-      terminology: ["Force", "Gravity", "Friction", "Air Resistance", "Reversible", "Irreversible", "Puberty"],
-      topics: ["Forces and mechanisms", "Properties of materials", "Earth and space", "Life cycles and reproduction"],
-      approach: "Design fair tests. Explain cause and effect relationships.",
-    },
-    ict: {
-      terminology: ["Function", "Procedure", "Database", "Record", "Field", "Query"],
-      topics: ["Procedures in programming", "Databases", "Digital communication safety"],
-      approach: "Break complex problems into sub-problems. Introduce abstraction.",
-    },
-    general: {
-      terminology: ["Bias", "Reliability", "Consequence", "Ethical"],
-      topics: ["Trade and economics", "Digital citizenship", "Environmental responsibility"],
-      approach: "Critical thinking about sources. Evaluate consequences of actions.",
-    },
-  },
-  "6": {
-    level: "Primary (Stage 6)",
-    maths: {
-      terminology: ["Ratio", "Proportion", "Order of Operations", "Algebra", "Mean", "Pie Chart"],
-      topics: ["Ratio and proportion", "Simple algebra", "Statistics (mean, pie charts)", "Geometry (nets, angles)", "Problem solving"],
-      approach: "Prepare for secondary. Multi-step problems. Algebraic thinking.",
-    },
-    english: {
-      terminology: ["Active Voice", "Passive Voice", "Subjunctive", "Synonym", "Antonym", "Inference"],
-      topics: ["Extended writing across genres", "Critical reading", "Grammar revision", "Speaking and listening"],
-      approach: "Refine voice and style. Prepare for checkpoint assessments.",
-    },
-    science: {
-      terminology: ["Classification", "Micro-organism", "Photosynthesis", "Voltage", "Resistance"],
-      topics: ["Classification of organisms", "Electricity (voltage, resistance)", "Light (reflection, refraction)", "Evolution basics"],
-      approach: "Scientific enquiry methods. Plan investigations. Draw conclusions from data.",
-    },
-    ict: {
-      terminology: ["Algorithm Efficiency", "Decomposition", "Abstraction", "Binary"],
-      topics: ["Complex algorithms", "Binary representation", "Web design basics", "Cyber security"],
-      approach: "Computational thinking. Decompose complex problems systematically.",
-    },
-    general: {
-      terminology: ["Democracy", "Human Rights", "Globalisation", "Interdependence"],
-      topics: ["Global challenges", "Rights and responsibilities", "Preparing for secondary school"],
-      approach: "Independent research projects. Present findings with evidence.",
-    },
-  },
-  "7": {
-    level: "Lower Secondary (Stage 7)",
-    maths: {
-      terminology: ["Algebraic Expression", "Linear Equation", "Integer", "Rational Number", "Probability", "Transformation"],
-      topics: ["Integers and place value", "Expressions and formulae", "Fractions/decimals/percentages", "Geometry (transformations)", "Probability", "Sequences"],
-      approach: "Formal algebraic notation. Link topics together. Justify reasoning.",
-    },
-    english: {
-      terminology: ["Protagonist", "Antagonist", "Narrative Voice", "Rhetoric", "Register", "Connotation"],
-      topics: ["Analysing fiction and non-fiction", "Creative writing", "Transactional writing", "Speaking skills"],
-      approach: "Close reading techniques. PEE (Point, Evidence, Explain) paragraphs.",
-    },
-    science: {
-      terminology: ["Cell", "Tissue", "Organ", "Element", "Compound", "Mixture", "Energy Transfer"],
-      topics: ["Cells and organisms", "Matter and materials", "Energy and forces", "Earth and space"],
-      approach: "Link structure to function. Use scientific method explicitly.",
-    },
-    ict: {
-      terminology: ["Pseudocode", "Flowchart", "String", "Integer", "Boolean", "Array"],
-      topics: ["Programming fundamentals", "Data types", "Flowcharts and pseudocode", "Networks basics"],
-      approach: "Write pseudocode before coding. Trace through algorithms step by step.",
-    },
-    general: {
-      terminology: ["Stakeholder", "Sustainability", "Development", "Cultural Diversity"],
-      topics: ["Demographic change", "Sustainability challenges", "Cultural identity"],
-      approach: "Research-based learning. Multiple perspectives on global issues.",
-    },
-  },
-  "8": {
-    level: "Lower Secondary (Stage 8)",
-    maths: {
-      terminology: ["Simultaneous Equations", "Quadratic", "Pythagoras", "Trigonometry Basics", "Standard Form", "Compound Interest"],
-      topics: ["Linear equations", "Graphs of functions", "Pythagoras' theorem intro", "Compound measures", "Statistical diagrams", "Constructions"],
-      approach: "Build fluency with algebra. Connect geometry to real-world problems.",
-    },
-    english: {
-      terminology: ["Theme", "Motif", "Dramatic Irony", "Soliloquy", "Stanza", "Imagery"],
-      topics: ["Shakespeare introduction", "Poetry analysis", "Discursive writing", "Media texts"],
-      approach: "Explore themes across texts. Develop analytical writing skills.",
-    },
-    science: {
-      terminology: ["Photosynthesis", "Respiration", "Periodic Table", "Chemical Reaction", "Wave", "Frequency"],
-      topics: ["Photosynthesis and respiration", "Periodic table", "Chemical reactions", "Waves and sound", "Forces and motion"],
-      approach: "Quantitative science. Calculate and interpret data. Lab skills.",
-    },
-    ict: {
-      terminology: ["Iteration", "Nested Loop", "Subroutine", "Parameter", "Validation", "SQL"],
-      topics: ["Iteration and selection", "Subroutines", "Databases and SQL", "Cyber security"],
-      approach: "Modular programming. Testing and debugging systematically.",
-    },
-    general: {
-      terminology: ["Correlation", "Causation", "Ethics", "Policy"],
-      topics: ["Conflict and peace", "Technology and ethics", "Water security"],
-      approach: "Distinguish correlation from causation. Evidence-based arguments.",
-    },
-  },
-  "9": {
-    level: "Lower Secondary (Stage 9)",
-    maths: {
-      terminology: ["Inequality", "Quadratic Expression", "Trigonometric Ratio", "Cumulative Frequency", "Upper/Lower Bound"],
-      topics: ["Quadratic expressions", "Trigonometry", "Cumulative frequency", "Bounds", "Direct/inverse proportion", "Vectors intro"],
-      approach: "IGCSE preparation. Problem-solving across topic areas. Past paper technique.",
-    },
-    english: {
-      terminology: ["Allegory", "Satire", "Pathetic Fallacy", "Unreliable Narrator", "Thesis Statement"],
-      topics: ["Extended literary analysis", "Argumentative essays", "IGCSE text types", "Comparative analysis"],
-      approach: "Structured essay writing. Thesis-driven arguments. Exam technique.",
-    },
-    science: {
-      terminology: ["Mole", "Atomic Structure", "Covalent Bond", "Ecosystem", "Natural Selection", "Electromagnetic Spectrum"],
-      topics: ["Atomic structure", "Bonding", "Ecosystems", "Genetics basics", "Electromagnetic spectrum", "Energy resources"],
-      approach: "IGCSE foundations. Link theory to applications. Practice calculations.",
-    },
-    ict: {
-      terminology: ["Object-Oriented", "Class", "Method", "Inheritance", "Encryption", "Protocol"],
-      topics: ["OOP concepts", "Advanced data structures", "Network protocols", "Ethical computing"],
-      approach: "Design before code. Use OOP principles. Consider ethical implications.",
-    },
-    general: {
-      terminology: ["Geopolitics", "Economic Inequality", "Media Literacy", "Critical Analysis"],
-      topics: ["Global economics", "Media and information literacy", "Individual project preparation"],
-      approach: "Independent research. Critical evaluation of sources. Present balanced views.",
-    },
-  },
-  "10": {
-    level: "Upper Secondary (IGCSE Year 1)",
-    maths: {
-      terminology: ["Quadratic Formula", "Completing the Square", "Sine Rule", "Cosine Rule", "Histogram", "Differentiation"],
-      topics: ["Quadratic equations", "Trigonometry (sine/cosine rules)", "Circle theorems", "Probability", "Statistics", "Functions"],
-      approach: "IGCSE exam focus. Past paper practice. Show full working for marks.",
-    },
-    english: {
-      terminology: ["Writer's Craft", "Discourse Markers", "Juxtaposition", "Ambiguity", "Audience Awareness"],
-      topics: ["IGCSE Literature set texts", "Directed writing", "Composition", "Summary and note-making"],
-      approach: "Exam technique: time management, question decoding, PEA/PEEL paragraphs.",
-    },
-    science: {
-      terminology: ["Rate of Reaction", "Equilibrium", "Hormones", "Homeostasis", "Momentum", "Radioactivity"],
-      topics: ["Rates of reaction", "Organic chemistry intro", "Hormones and homeostasis", "Electricity", "Nuclear physics"],
-      approach: "IGCSE specification coverage. Command word understanding. Extended response practice.",
-    },
-    ict: {
-      terminology: ["Normalisation", "Entity Relationship", "TCP/IP", "Fetch-Execute Cycle", "Logic Gate"],
-      topics: ["Database design", "Computer architecture", "Networking", "Web development"],
-      approach: "Theory and practical balance. Past paper questions. Diagram skills.",
-    },
-    general: {
-      terminology: ["Research Methodology", "Primary Source", "Secondary Source", "Hypothesis"],
-      topics: ["Individual research project", "Cross-cultural studies", "Global perspectives coursework"],
-      approach: "Coursework methodology. Harvard referencing. Structured research.",
-    },
-  },
-  "11": {
-    level: "Upper Secondary (IGCSE Year 2)",
-    maths: {
-      terminology: ["Matrix", "Set Notation", "Venn Diagram", "Upper Bound", "Lower Bound", "Vector Geometry"],
-      topics: ["Matrices", "Sets and Venn diagrams", "Advanced probability", "Calculus intro", "IGCSE revision"],
-      approach: "Exam readiness. Timed practice. Common mistake awareness. Grade boundary targets.",
-    },
-    english: {
-      terminology: ["Critical Essay", "Textual Analysis", "Authorial Purpose", "Stylistic Choices"],
-      topics: ["IGCSE exam preparation", "Unseen text analysis", "Extended writing under timed conditions"],
-      approach: "Final exam preparation. Focus on weak areas. Model answers analysis.",
-    },
-    science: {
-      terminology: ["Electrolysis", "Genetic Engineering", "Half-life", "Electromagnetic Induction"],
-      topics: ["IGCSE revision across all topics", "Practical skills assessment", "Extended experimental investigations"],
-      approach: "Revision strategies. Topic-by-topic consolidation. Exam question practice.",
-    },
-    ict: {
-      terminology: ["System Life Cycle", "Testing Strategy", "Trace Table", "Big O Notation"],
-      topics: ["System design", "Testing", "IGCSE practical preparation", "Pre-AS level concepts"],
-      approach: "Complete projects. Systematic testing. Prepare for AS Level transition.",
-    },
-    general: {
-      terminology: ["Synthesis", "Evaluation", "Recommendation", "Reflection"],
-      topics: ["Team project", "Global perspectives exam preparation", "Portfolio completion"],
-      approach: "Synthesise learning. Reflective practice. Exam preparation.",
-    },
-  },
-  "12": {
-    level: "Upper Secondary (AS/A Level Year 1)",
-    maths: {
-      terminology: ["Differentiation", "Integration", "Complex Numbers", "Binomial Theorem", "Normal Distribution"],
-      topics: ["Pure mathematics", "Statistics", "Mechanics", "Further mathematics topics"],
-      approach: "University preparation. Rigorous mathematical proof. Extended problem solving.",
-    },
-    english: {
-      terminology: ["Literary Criticism", "Post-colonial", "Feminist Reading", "Contextual Analysis"],
-      topics: ["AS Level Literature", "Language analysis", "Comparative essays", "Coursework"],
-      approach: "Critical theory introduction. Independent analysis. Academic writing.",
-    },
-    science: {
-      terminology: ["Enthalpy", "Entropy", "Action Potential", "Quantum", "Field Theory"],
-      topics: ["AS Level content across sciences", "Practical endorsement", "Research skills"],
-      approach: "University-level thinking. Independent research. Scientific paper reading.",
-    },
-    ict: {
-      terminology: ["Recursion", "Stack", "Queue", "Hashing", "Sorting Algorithm", "Computational Complexity"],
-      topics: ["AS Level Computer Science", "Advanced programming", "Theory of computation"],
-      approach: "Abstract thinking. Algorithm analysis. Prepare for university CS.",
-    },
-    general: {
-      terminology: ["Epistemology", "Paradigm", "Interdisciplinary", "Metacognition"],
-      topics: ["Global Perspectives AS", "Research report", "Presentation skills"],
-      approach: "Academic rigour. Cross-disciplinary connections. Self-directed learning.",
-    },
+  isizulu: {
+    math: { addition: "ukuhlanganisa", subtraction: "ukususa", multiplication: "ukuphindaphinda", division: "ukuhlukanisa", fraction: "ingxenye", number: "inombolo", pattern: "iphethini" },
+    english: { reading: "ukufunda", writing: "ukubhala", grammar: "uhlelo lolimi", comprehension: "ukuqonda", vocabulary: "amagama", sentence: "umusho" },
+    science: { experiment: "umfanekiso", observation: "ukubuka", energy: "amandla", force: "umfutho", matter: "into", cell: "iseli" },
+    general: { learning: "ukufunda", study: "ukutadisha", question: "umbuzo", answer: "impendulo", test: "isivivinyo", homework: "umsebenzi wasekhaya" },
   },
 };
 
-export function getCurriculumContext(grade: string, subject: string): string {
-  const gradeCtx = curriculumMap[grade];
-  if (!gradeCtx) return "";
+export function getCurriculumContext(
+  grade: string,
+  subject: string,
+  curriculum: string = "cambridge",
+  preferredLanguage: string = "english"
+): string {
+  const map = curriculumMaps[curriculum] || curriculumMaps.cambridge;
+  const gradeData = map[grade];
+  if (!gradeData) return "";
 
-  const subjectKey = subject.toLowerCase() as keyof Omit<GradeContext, "level">;
-  const subjectCtx = gradeCtx[subjectKey] || gradeCtx.general;
-  if (!subjectCtx || typeof subjectCtx === "string") return "";
+  const curriculumLabel = curriculum === "cambridge" ? "Cambridge International" : curriculum === "caps" ? "CAPS (South African National)" : "IEB (South African Independent)";
+  const phaseLabel = gradeData.phase;
+  const subjectTopics = gradeData.subjects[subject] || gradeData.subjects["general"] || [];
 
-  const ctx = subjectCtx as SubjectContext;
+  let context = `CURRICULUM: ${curriculumLabel}\nPHASE: ${phaseLabel} — Grade/Year ${grade}\n`;
 
-  return `
-CURRICULUM CONTEXT — ${gradeCtx.level} (Year ${grade}), Subject: ${subject.toUpperCase()}
+  if (curriculum === "cambridge") {
+    context += `Use Cambridge "Key Stage" terminology. Focus on problem-solving and inquiry-based learning.\n`;
+  } else if (curriculum === "caps") {
+    context += `Use CAPS "Phase" terminology (Foundation, Intermediate, Senior, FET). Follow structured sequential learning. Include South African context and examples where possible.\n`;
+    if (gradeData.subjects["life_orientation"]) {
+      context += `Life Orientation topics for this grade: ${gradeData.subjects["life_orientation"].join(", ")}.\n`;
+    }
+    if (gradeData.subjects["natural_sciences"]) {
+      context += `Natural Sciences topics: ${gradeData.subjects["natural_sciences"].join(", ")}.\n`;
+    }
+  } else if (curriculum === "ieb") {
+    context += `Use IEB "Phase" terminology. Prioritize higher-order thinking, analytical reasoning, and project-based inquiry. Prepare for IEB-style analytical exam questions.\n`;
+  }
 
-KEY TERMINOLOGY the child should learn and you should use naturally:
-${ctx.terminology.join(", ")}
+  context += `RELEVANT TOPICS for ${subject}: ${subjectTopics.join(", ")}.\n`;
+  context += `Guide the student using age-appropriate language for Grade ${grade} (${phaseLabel}).`;
 
-TOPICS at this level:
-${ctx.topics.join(", ")}
+  if (preferredLanguage !== "english" && languageTerms[preferredLanguage]) {
+    const terms = languageTerms[preferredLanguage][subject] || languageTerms[preferredLanguage]["general"] || {};
+    const termsList = Object.entries(terms).map(([en, tr]) => `${en} = ${tr}`).join(", ");
+    context += `\n\nLANGUAGE SUPPORT (${preferredLanguage}): When helpful, provide key terms in ${preferredLanguage} alongside English. Key translations: ${termsList}.`;
+  }
 
-TEACHING APPROACH for this level:
-${ctx.approach}
-
-IMPORTANT: Use the terminology listed above when explaining concepts. If the child uses simpler terms, acknowledge them but gently introduce the correct Cambridge terminology. Always stay within the scope of topics appropriate for Year ${grade}.`;
+  return context;
 }

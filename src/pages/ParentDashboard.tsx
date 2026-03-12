@@ -19,6 +19,8 @@ interface Child {
   grade: string;
   curriculum_level: string;
   avatar_url: string | null;
+  selected_curriculum: string;
+  preferred_language: string;
 }
 
 interface ChildWithStats extends Child {
@@ -54,7 +56,7 @@ export default function ParentDashboard() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [rewardOpen, setRewardOpen] = useState(false);
-  const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary" });
+  const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
 
   useEffect(() => {
@@ -110,11 +112,13 @@ export default function ParentDashboard() {
       name: newChild.name.trim(),
       grade: newChild.grade,
       curriculum_level: newChild.curriculum_level,
-    });
+      selected_curriculum: newChild.selected_curriculum,
+      preferred_language: newChild.preferred_language,
+    } as any);
     if (error) toast.error(error.message);
     else {
       toast.success(`${newChild.name} added!`);
-      setNewChild({ name: "", grade: "1", curriculum_level: "primary" });
+      setNewChild({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
       setAddOpen(false);
       fetchAll();
     }
@@ -226,6 +230,30 @@ export default function ParentDashboard() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Curriculum</Label>
+                      <Select value={newChild.selected_curriculum} onValueChange={(v) => setNewChild({ ...newChild, selected_curriculum: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cambridge">Cambridge International</SelectItem>
+                          <SelectItem value="caps">CAPS (South Africa)</SelectItem>
+                          <SelectItem value="ieb">IEB (South Africa)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {(newChild.selected_curriculum === "caps" || newChild.selected_curriculum === "ieb") && (
+                      <div className="space-y-2">
+                        <Label>Preferred Language</Label>
+                        <Select value={newChild.preferred_language} onValueChange={(v) => setNewChild({ ...newChild, preferred_language: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="english">English</SelectItem>
+                            <SelectItem value="afrikaans">Afrikaans</SelectItem>
+                            <SelectItem value="isizulu">isiZulu</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <Button className="w-full" onClick={addChild}>Add Child</Button>
                   </div>
                 </DialogContent>
@@ -264,8 +292,11 @@ export default function ParentDashboard() {
                         </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <CardContent className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" /> Year {child.grade}</span>
+                      <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary">
+                        {(child as any).selected_curriculum || "cambridge"}
+                      </span>
                       <span className="flex items-center gap-1"><Star className="w-4 h-4 text-star-gold" /> {child.totalPoints} pts</span>
                       <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {child.sessionCount} sessions</span>
                     </CardContent>
