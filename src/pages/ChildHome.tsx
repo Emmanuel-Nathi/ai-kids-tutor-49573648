@@ -100,9 +100,17 @@ export default function ChildHome() {
             {curriculumLabels[curriculum] || curriculum}
           </Badge>
         </div>
-        <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1 relative">
-          <Star className="w-4 h-4 text-star-gold fill-star-gold" />
-          <span className="font-display font-bold text-sm">{totalPoints}</span>
+        <div className="flex items-center gap-2">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 bg-primary/10 rounded-full px-3 py-1">
+              <Flame className="w-4 h-4 text-primary fill-primary" />
+              <span className="font-display font-bold text-sm">{streak}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1">
+            <Star className="w-4 h-4 text-star-gold fill-star-gold" />
+            <span className="font-display font-bold text-sm">{totalPoints}</span>
+          </div>
         </div>
       </header>
 

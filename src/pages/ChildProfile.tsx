@@ -77,12 +77,19 @@ export default function ChildProfile() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Card>
             <CardContent className="flex flex-col items-center gap-1 py-6">
               <Star className="h-8 w-8 text-[hsl(var(--star-gold))]" />
               <span className="font-display font-bold text-2xl">{totalXP}</span>
               <span className="text-xs text-muted-foreground">Total XP</span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-1 py-6">
+              <Flame className="h-8 w-8 text-primary fill-primary" />
+              <span className="font-display font-bold text-2xl">{streak}</span>
+              <span className="text-xs text-muted-foreground">Day Streak</span>
             </CardContent>
           </Card>
           <Card>
