@@ -275,7 +275,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                     size="icon"
                     className={cn(
                       "rounded-full shrink-0",
-                      isListening && "bg-red-500 hover:bg-red-600 animate-pulse"
+                      isListening && "bg-destructive hover:bg-destructive/90 animate-pulse"
                     )}
                     onClick={toggleListening}
                     disabled={isStreaming}
