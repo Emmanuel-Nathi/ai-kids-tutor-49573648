@@ -267,6 +267,7 @@ export default function ParentDashboard() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="account" className="flex-1">Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="children" className="space-y-4 mt-4">

@@ -321,6 +321,9 @@ export default function ParentChildDetail() {
           </CardContent>
         </Card>
 
+        {/* Analytics */}
+        <ParentAnalytics childId={childId!} />
+
         {/* Subject chart */}
         {chartData.length > 0 && (
           <Card>
