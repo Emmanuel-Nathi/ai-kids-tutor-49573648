@@ -15,6 +15,7 @@ import ChildHomework from "./pages/ChildHomework";
 import ChildRewards from "./pages/ChildRewards";
 import ChildActivities from "./pages/ChildActivities";
 import ChildLogin from "./pages/ChildLogin";
+import ChildProfile from "./pages/ChildProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
