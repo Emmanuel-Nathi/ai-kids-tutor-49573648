@@ -64,6 +64,28 @@ export default function ChildRewards() {
       toast.error(`You need ${reward.point_cost - totalPoints} more points!`);
       return;
     }
+
+    // Deduct XP immediately via edge function (bypasses RLS since child isn't parent-authed)
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-points`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          child_id: childId,
+          amount: -reward.point_cost,
+          reason: `🎁 Redeemed: ${reward.name}`,
+        }),
+      });
+      if (!resp.ok) throw new Error("Failed to deduct points");
+    } catch {
+      toast.error("Could not deduct points. Try again!");
+      return;
+    }
+
+    // Insert claim record
     const { error } = await supabase.from("reward_claims").insert({
       child_id: childId!,
       reward_id: reward.id,

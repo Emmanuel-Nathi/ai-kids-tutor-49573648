@@ -34,6 +34,7 @@ export default function ChildChat() {
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
   const [userMsgCount, setUserMsgCount] = useState(0);
+  const [sessionStart] = useState(() => Date.now());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextSent = useRef(false);
@@ -97,9 +98,19 @@ export default function ChildChat() {
 
     await saveMessage("user", text.trim());
 
-    // Award 5 XP every 3rd message
+    // Award 5 XP every 3rd message — but enforce 3-minute anti-rush minimum
     if (newCount % 3 === 0) {
-      awardXP(5, `💬 Asked ${newCount} questions in ${subject}`);
+      const elapsedMs = Date.now() - sessionStart;
+      const MIN_TIME_MS = 3 * 60 * 1000; // 3 minutes
+      if (elapsedMs < MIN_TIME_MS) {
+        const remaining = Math.ceil((MIN_TIME_MS - elapsedMs) / 1000);
+        toast("Whoa there, Speedster! 🏎️", {
+          description: `Keep learning for ${remaining} more seconds to earn your XP!`,
+          duration: 4000,
+        });
+      } else {
+        awardXP(5, `💬 Asked ${newCount} questions in ${subject}`);
+      }
     }
 
     let assistantSoFar = "";
