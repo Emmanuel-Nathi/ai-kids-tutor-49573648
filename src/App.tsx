@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
+import { ChildSetupWizard } from "@/components/ChildSetupWizard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Paywall from "./pages/Paywall";
