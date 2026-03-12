@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key } from "lucide-react";
+import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key, UserPlus, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
