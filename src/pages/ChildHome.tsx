@@ -7,7 +7,7 @@ import { Sparkle } from "@/components/Sparkle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Gift, Sparkles, Star } from "lucide-react";
+import { Camera, Flame, Gift, Sparkles, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -36,6 +36,7 @@ export default function ChildHome() {
   const [childName, setChildName] = useState("");
   const [totalPoints, setTotalPoints] = useState(0);
   const [curriculum, setCurriculum] = useState("cambridge");
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -52,6 +53,21 @@ export default function ChildHome() {
       });
       supabase.from("points").select("amount").eq("child_id", childId).then(({ data }) => {
         setTotalPoints((data || []).reduce((s, p) => s + p.amount, 0));
+      });
+
+      // Calculate streak from sessions
+      supabase.from("sessions").select("started_at").eq("child_id", childId).order("started_at", { ascending: false }).then(({ data }) => {
+        if (!data || data.length === 0) { setStreak(0); return; }
+        const days = [...new Set(data.map(s => new Date(s.started_at).toDateString()))];
+        let count = 0;
+        const today = new Date();
+        for (let i = 0; i < days.length; i++) {
+          const expected = new Date(today);
+          expected.setDate(today.getDate() - i);
+          if (days[i] === expected.toDateString()) count++;
+          else break;
+        }
+        setStreak(count);
       });
     }
   }, [childId]);
@@ -84,9 +100,17 @@ export default function ChildHome() {
             {curriculumLabels[curriculum] || curriculum}
           </Badge>
         </div>
-        <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1 relative">
-          <Star className="w-4 h-4 text-star-gold fill-star-gold" />
-          <span className="font-display font-bold text-sm">{totalPoints}</span>
+        <div className="flex items-center gap-2">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 bg-primary/10 rounded-full px-3 py-1">
+              <Flame className="w-4 h-4 text-primary fill-primary" />
+              <span className="font-display font-bold text-sm">{streak}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1">
+            <Star className="w-4 h-4 text-star-gold fill-star-gold" />
+            <span className="font-display font-bold text-sm">{totalPoints}</span>
+          </div>
         </div>
       </header>
 
