@@ -1,6 +1,7 @@
 import owlLogo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import TransparentLogo from "@/components/TransparentLogo";
 
 interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
