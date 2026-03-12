@@ -15,6 +15,7 @@ import ChildHomework from "./pages/ChildHomework";
 import ChildRewards from "./pages/ChildRewards";
 import ChildActivities from "./pages/ChildActivities";
 import ChildLogin from "./pages/ChildLogin";
+import ChildProfile from "./pages/ChildProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/child/:childId/homework" element={<AppLayout><ChildHomework /></AppLayout>} />
             <Route path="/child/:childId/rewards" element={<AppLayout><ChildRewards /></AppLayout>} />
             <Route path="/child/:childId/activities" element={<AppLayout><ChildActivities /></AppLayout>} />
+            <Route path="/child/:childId/profile" element={<AppLayout><ChildProfile /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
