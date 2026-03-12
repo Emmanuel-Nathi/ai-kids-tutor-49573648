@@ -217,8 +217,9 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        © 2026 AI Kids Tutor. Safe learning for every child.
+      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border flex items-center justify-center gap-4">
+        <span>© 2026 AI Kids Tutor. Safe learning for every child.</span>
+        <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate("/admin")}>Admin</span>
       </footer>
     </div>
   );

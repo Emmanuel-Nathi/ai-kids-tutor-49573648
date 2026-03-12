@@ -20,6 +20,7 @@ import ChildActivities from "./pages/ChildActivities";
 import ChildLogin from "./pages/ChildLogin";
 import ChildProfile from "./pages/ChildProfile";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/child-login" element={<ChildLogin />} />
             <Route path="/paywall" element={<Paywall />} />
             <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
