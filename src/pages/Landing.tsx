@@ -26,7 +26,10 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate("/")}
+        >
           <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
         </div>
