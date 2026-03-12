@@ -1,6 +1,7 @@
 import owlLogo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import TransparentLogo from "@/components/TransparentLogo";
 
 interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -42,12 +43,16 @@ const variants = {
 export function OwlMascot({ size = "md", animate = true, variant = "idle", className, message }: OwlMascotProps) {
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
-      <motion.img
-        src={owlLogo}
-        alt="Owl Tutor mascot"
-        className={cn(sizeMap[size], "object-contain drop-shadow-lg")}
+      <motion.div
         animate={animate ? variants[variant] : undefined}
-      />
+        className={cn(sizeMap[size])}
+      >
+        <TransparentLogo
+          src={owlLogo}
+          alt="Owl Tutor mascot"
+          className="w-full h-full object-contain drop-shadow-lg"
+        />
+      </motion.div>
       {message && (
         <div className="relative max-w-[240px] rounded-2xl bg-card px-4 py-2 text-center text-sm font-display shadow-md border border-border">
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-card" />
