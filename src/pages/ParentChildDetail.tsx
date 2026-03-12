@@ -9,6 +9,7 @@ import { ArrowLeft, Clock, MessageSquare, Star, TrendingUp, Camera, Gift, Zap } 
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { ParentAnalytics } from "@/components/ParentAnalytics";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Badge } from "@/components/ui/badge";
