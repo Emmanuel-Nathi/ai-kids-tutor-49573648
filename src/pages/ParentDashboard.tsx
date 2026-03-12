@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -267,6 +268,7 @@ export default function ParentDashboard() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="account" className="flex-1">Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="children" className="space-y-4 mt-4">
@@ -515,6 +517,11 @@ export default function ParentDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="account" className="space-y-4 mt-4">
+            <h2 className="font-display text-2xl font-bold">Account</h2>
+            <SubscriptionManager />
           </TabsContent>
         </Tabs>
       </main>
