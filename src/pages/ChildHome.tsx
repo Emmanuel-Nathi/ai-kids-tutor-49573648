@@ -1,0 +1,124 @@
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { OwlMascot } from "@/components/OwlMascot";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { MessageSquare, Camera, Gift, Sparkles, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+
+const subjects = [
+  { id: "math", label: "Maths", emoji: "🔢", color: "bg-secondary/10 text-secondary" },
+  { id: "english", label: "English", emoji: "📖", color: "bg-primary/10 text-primary" },
+  { id: "science", label: "Science", emoji: "🔬", color: "bg-accent/10 text-accent" },
+  { id: "general", label: "General", emoji: "🌍", color: "bg-star-gold/20 text-foreground" },
+];
+
+export default function ChildHome() {
+  const { childId } = useParams<{ childId: string }>();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [childName, setChildName] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/auth");
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (childId) {
+      supabase.from("children").select("name").eq("id", childId).single().then(({ data, error }) => {
+        if (error) toast.error("Child not found");
+        else setChildName(data?.name || "");
+      });
+    }
+  }, [childId]);
+
+  const startSession = async (subject: string) => {
+    if (!childId) return;
+    const { data, error } = await supabase.from("sessions").insert({
+      child_id: childId,
+      subject,
+      status: "active",
+    }).select("id").single();
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    navigate(`/child/${childId}/chat?session=${data.id}&subject=${subject}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/parent")}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
+      </header>
+
+      <main className="p-4 max-w-lg mx-auto space-y-6">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center pt-4"
+        >
+          <OwlMascot size="lg" message={`Hi ${childName}! What shall we learn today? 🎉`} />
+        </motion.div>
+
+        <div className="space-y-3">
+          <h3 className="font-display text-lg font-semibold text-center">Pick a Subject</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {subjects.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card
+                  className="cursor-pointer hover:shadow-md transition-all active:scale-95 border-2 hover:border-primary/30"
+                  onClick={() => startSession(s.id)}
+                >
+                  <CardContent className="flex flex-col items-center gap-2 py-6">
+                    <span className="text-3xl">{s.emoji}</span>
+                    <span className="font-display font-semibold">{s.label}</span>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-1"
+            onClick={() => navigate(`/child/${childId}/homework`)}
+          >
+            <Camera className="w-6 h-6 text-secondary" />
+            <span className="text-xs font-display">Homework</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-1"
+            onClick={() => navigate(`/child/${childId}/rewards`)}
+          >
+            <Gift className="w-6 h-6 text-primary" />
+            <span className="text-xs font-display">Rewards</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-1"
+            onClick={() => navigate(`/child/${childId}/activities`)}
+          >
+            <Sparkles className="w-6 h-6 text-accent" />
+            <span className="text-xs font-display">Activities</span>
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
+}
