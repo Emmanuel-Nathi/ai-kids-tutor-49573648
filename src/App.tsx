@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/paywall" element={<Paywall />} />
             <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
             <Route path="/parent/child/:childId" element={<SubscriptionGuard><ParentChildDetail /></SubscriptionGuard>} />
+            <Route path="/parent/add-child" element={<SubscriptionGuard><ChildSetupWizard /></SubscriptionGuard>} />
             <Route path="/child/:childId" element={<AppLayout><ChildHome /></AppLayout>} />
             <Route path="/child/:childId/chat" element={<AppLayout><ChildChat /></AppLayout>} />
             <Route path="/child/:childId/homework" element={<AppLayout><ChildHomework /></AppLayout>} />

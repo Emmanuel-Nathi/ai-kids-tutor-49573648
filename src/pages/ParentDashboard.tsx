@@ -274,10 +274,9 @@ export default function ParentDashboard() {
           <TabsContent value="children" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-bold">Your Children</h2>
-              <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Add Child</Button>
-                </DialogTrigger>
+              <Button size="sm" onClick={() => navigate("/parent/add-child")}>
+                <Plus className="w-4 h-4 mr-1" /> Add Child
+              </Button>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle className="font-display">Add a Child</DialogTitle>
