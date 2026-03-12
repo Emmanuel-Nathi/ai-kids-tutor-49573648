@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Flame, Gift, Sparkles, Star } from "lucide-react";
+import { AIHomeworkHelper } from "@/components/AIHomeworkHelper";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -162,6 +163,8 @@ export default function ChildHome() {
             <span className="text-xs font-display">Activities</span>
           </Button>
         </div>
+
+        <AIHomeworkHelper childId={childId!} />
       </main>
     </div>
   );
