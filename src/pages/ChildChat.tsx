@@ -34,6 +34,7 @@ export default function ChildChat() {
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
   const [userMsgCount, setUserMsgCount] = useState(0);
+  const [sessionStart] = useState(() => Date.now());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextSent = useRef(false);
