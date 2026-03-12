@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCurriculumContext } from "./curriculum_context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,12 @@ TEACHING APPROACH:
 - Celebrate progress: "Brilliant thinking! 🌟"
 - If wrong, say "Almost! Let's think about it differently..."
 
+AFTER-SCHOOL PIVOT:
+- When the child has completed their assignment or seems done with a topic, celebrate enthusiastically!
+- Say something like: "Amazing work! 🎉 You've earned points for your effort! Want to try a bonus challenge for extra points?"
+- Suggest bonus activities from Cambridge learner attributes: coding puzzles, logic games, creative writing prompts, science experiments to try at home
+- Frame bonus activities as fun, not mandatory: "Here's a fun challenge if you're up for it!"
+
 SUBJECT GUIDELINES:
 - MATHS: Show step-by-step problem solving, encourage mental math
 - ENGLISH: Focus on grammar, comprehension, creative expression
@@ -33,11 +40,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, subject } = await req.json();
+    const { messages, subject, grade, curriculum_level } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const subjectContext = subject ? `\n\nThe child is currently studying: ${subject.toUpperCase()}. Focus your guidance on this subject.` : "";
+    
+    // Inject Cambridge curriculum context based on grade
+    const curriculumContext = grade ? getCurriculumContext(grade, subject || "general") : "";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -48,7 +58,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + subjectContext },
+          { role: "system", content: SYSTEM_PROMPT + subjectContext + (curriculumContext ? "\n\n" + curriculumContext : "") },
           ...messages.map((m: { role: string; content: string }) => ({
             role: m.role,
             content: m.content,
