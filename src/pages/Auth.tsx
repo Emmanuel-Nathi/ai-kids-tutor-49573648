@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { OwlMascot } from "@/components/OwlMascot";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { lovable } from "@/integrations/lovable/index";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
