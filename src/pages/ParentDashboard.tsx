@@ -292,8 +292,11 @@ export default function ParentDashboard() {
                         </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <CardContent className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" /> Year {child.grade}</span>
+                      <span className="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-secondary">
+                        {(child as any).selected_curriculum || "cambridge"}
+                      </span>
                       <span className="flex items-center gap-1"><Star className="w-4 h-4 text-star-gold" /> {child.totalPoints} pts</span>
                       <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {child.sessionCount} sessions</span>
                     </CardContent>
