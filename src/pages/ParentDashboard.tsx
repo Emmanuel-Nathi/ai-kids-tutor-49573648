@@ -80,6 +80,7 @@ export default function ParentDashboard() {
       if (window.posthog) {
         window.posthog.capture('Subscription Started', { amount: 199.99, currency: 'ZAR', plan: 'Monthly' });
       }
+      toast.success("Payment successful! 🎉 Your subscription is now active.");
       window.history.replaceState({}, document.title, "/parent");
     }
   }, [searchParams]);

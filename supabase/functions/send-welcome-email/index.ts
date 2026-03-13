@@ -38,8 +38,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send welcome email via Lovable email API
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const emailHtml = `
       <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
         <div style="text-align: center; margin-bottom: 24px;">
@@ -72,23 +70,18 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    const emailResp = await fetch("https://email.lovable.dev/api/v1/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: "Welcome to AI Kids Tutor! 🦉",
-        html: emailHtml,
-      }),
+    // Enqueue via the email queue for reliable delivery
+    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+      p_queue_name: 'transactional_emails',
+      p_to_email: email,
+      p_subject: 'Welcome to AI Kids Tutor! 🦉',
+      p_html: emailHtml,
+      p_template_name: 'welcome',
     });
 
-    if (!emailResp.ok) {
-      const errText = await emailResp.text();
-      console.error("Email send failed:", errText);
-      return new Response(JSON.stringify({ error: "Failed to send email" }), {
+    if (enqueueError) {
+      console.error("Enqueue failed:", enqueueError);
+      return new Response(JSON.stringify({ error: "Failed to enqueue email" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
