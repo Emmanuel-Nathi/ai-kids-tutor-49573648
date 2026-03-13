@@ -418,10 +418,10 @@ export default function ParentDashboard() {
                         <p className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="icon" variant="outline" className="h-8 w-8 text-accent" onClick={() => handleClaim(c.id, "approved")}>
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-accent" onClick={() => handleClaim(c.id, "approved")} disabled={claimLoading === c.id}>
                           <Check className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive" onClick={() => handleClaim(c.id, "denied")}>
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive" onClick={() => handleClaim(c.id, "denied")} disabled={claimLoading === c.id}>
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
