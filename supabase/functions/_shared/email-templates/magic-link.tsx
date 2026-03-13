@@ -9,9 +9,12 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://ai-kids-tutor.lovable.app/email-logo.png'
 
 interface MagicLinkEmailProps {
   siteName: string
@@ -27,6 +30,7 @@ export const MagicLinkEmail = ({
     <Preview>Your login link for AI Kids Tutor</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt="AI Kids Tutor" width="64" height="64" style={logo} />
         <Heading style={h1}>Your login link 🦉</Heading>
         <Text style={text}>
           Click the button below to log in to AI Kids Tutor. This link will expire
@@ -47,6 +51,7 @@ export default MagicLinkEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Fredoka', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
+const logo = { borderRadius: '16px', margin: '0 0 20px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,

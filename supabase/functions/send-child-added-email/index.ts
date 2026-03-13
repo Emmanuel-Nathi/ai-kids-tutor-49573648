@@ -7,38 +7,55 @@ const corsHeaders = {
 
 const LOGO_URL = "https://ai-kids-tutor.lovable.app/email-logo.png";
 
+const CURRICULUM_LABELS: Record<string, string> = {
+  caps: "CAPS (Public Schools SA)",
+  ieb: "IEB (Private Schools SA)",
+  cambridge: "Cambridge (International)",
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { user_id, email, display_name } = await req.json();
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    if (!user_id || !email) {
-      return new Response(JSON.stringify({ error: "Missing user_id or email" }), {
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Verify the calling user
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { child_name, grade, curriculum } = await req.json();
+
+    if (!child_name || !grade || !curriculum) {
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Check if already sent
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("welcome_email_sent")
-      .eq("user_id", user_id)
-      .single();
-
-    if (profile?.welcome_email_sent) {
-      return new Response(JSON.stringify({ message: "Already sent" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const curriculumLabel = CURRICULUM_LABELS[curriculum] || curriculum;
 
     const emailHtml = `
       <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
@@ -46,27 +63,26 @@ Deno.serve(async (req) => {
           <img src="${LOGO_URL}" alt="AI Kids Tutor" width="64" height="64" style="border-radius: 16px;" />
         </div>
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">Welcome to AI Kids Tutor! 🦉</h1>
+          <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">${child_name}'s Profile is Ready! 🎉</h1>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Hi ${display_name || "there"},
-        </p>
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          We're thrilled to have you on board! Your 30-day free trial has started — here's how to get the most out of it:
+          Great news! You've successfully added <strong>${child_name}</strong> to AI Kids Tutor.
         </p>
         <div style="background: hsl(24, 95%, 53%, 0.1); border-radius: 16px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0 0 12px; font-weight: bold; color: hsl(24, 95%, 53%);">🚀 Getting Started:</p>
-          <ol style="color: #333; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
-            <li><strong>Add your child's profile</strong> — Set their grade, curriculum (CAPS, IEB, or Cambridge), and a fun access PIN</li>
-            <li><strong>Let them chat with Owl</strong> — Our AI tutor uses the Socratic method to build real understanding</li>
-            <li><strong>Scan homework</strong> — Take a photo and get instant, step-by-step guidance</li>
-            <li><strong>Set up rewards</strong> — Motivate learning with points they can redeem for real treats!</li>
-          </ol>
+          <p style="margin: 0 0 12px; font-weight: bold; color: hsl(24, 95%, 53%);">📋 Profile Details:</p>
+          <ul style="color: #333; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
+            <li><strong>Name:</strong> ${child_name}</li>
+            <li><strong>Grade:</strong> ${grade}</li>
+            <li><strong>Curriculum:</strong> ${curriculumLabel}</li>
+          </ul>
         </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          ${child_name} can now start learning with Owl! Log in and let them try their first tutoring session.
+        </p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="https://ai-kids-tutor.lovable.app/auth" 
+          <a href="https://ai-kids-tutor.lovable.app/parent" 
              style="background: hsl(24, 95%, 53%); color: white; padding: 14px 32px; border-radius: 16px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
-            Open AI Kids Tutor
+            Go to Dashboard
           </a>
         </div>
         <p style="color: #888; font-size: 13px; text-align: center; margin-top: 32px;">
@@ -77,24 +93,24 @@ Deno.serve(async (req) => {
 
     const messageId = crypto.randomUUID();
 
-    await supabase.from("email_send_log").insert({
+    await supabaseAdmin.from("email_send_log").insert({
       message_id: messageId,
-      template_name: "welcome",
-      recipient_email: email,
+      template_name: "child_added",
+      recipient_email: user.email,
       status: "pending",
     });
 
-    const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-      queue_name: 'transactional_emails',
+    const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
       payload: {
         message_id: messageId,
-        to: email,
-        from: 'AI Kids Tutor <noreply@www.aikidstutor.co.za>',
-        sender_domain: 'notify.www.aikidstutor.co.za',
-        subject: 'Welcome to AI Kids Tutor! 🦉',
+        to: user.email,
+        from: "AI Kids Tutor <noreply@www.aikidstutor.co.za>",
+        sender_domain: "notify.www.aikidstutor.co.za",
+        subject: `${child_name}'s profile is ready! 🎉`,
         html: emailHtml,
-        purpose: 'transactional',
-        label: 'welcome',
+        purpose: "transactional",
+        label: "child_added",
         queued_at: new Date().toISOString(),
       },
     });
@@ -106,12 +122,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Mark as sent
-    await supabase
-      .from("profiles")
-      .update({ welcome_email_sent: true })
-      .eq("user_id", user_id);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

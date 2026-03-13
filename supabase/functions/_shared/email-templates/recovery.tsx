@@ -9,9 +9,12 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://ai-kids-tutor.lovable.app/email-logo.png'
 
 interface RecoveryEmailProps {
   siteName: string
@@ -27,6 +30,7 @@ export const RecoveryEmail = ({
     <Preview>Reset your AI Kids Tutor password</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img src={LOGO_URL} alt="AI Kids Tutor" width="64" height="64" style={logo} />
         <Heading style={h1}>Reset your password 🔑</Heading>
         <Text style={text}>
           We received a request to reset your password for AI Kids Tutor. Click
@@ -48,6 +52,7 @@ export default RecoveryEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Fredoka', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
+const logo = { borderRadius: '16px', margin: '0 0 20px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,

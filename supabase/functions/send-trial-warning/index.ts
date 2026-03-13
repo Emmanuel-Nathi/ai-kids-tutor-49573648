@@ -5,6 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const LOGO_URL = "https://ai-kids-tutor.lovable.app/email-logo.png";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,6 +38,9 @@ Deno.serve(async (req) => {
       const emailHtml = `
         <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
           <div style="text-align: center; margin-bottom: 24px;">
+            <img src="${LOGO_URL}" alt="AI Kids Tutor" width="64" height="64" style="border-radius: 16px;" />
+          </div>
+          <div style="text-align: center; margin-bottom: 24px;">
             <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">Your Trial Ends in ${daysLeft} Days! ⏰</h1>
           </div>
           <p style="color: #333; font-size: 16px; line-height: 1.6;">
@@ -60,12 +65,28 @@ Deno.serve(async (req) => {
         </div>
       `;
 
+      const messageId = crypto.randomUUID();
+
+      await supabase.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "trial_warning",
+        recipient_email: user.email,
+        status: "pending",
+      });
+
       const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-        p_queue_name: 'transactional_emails',
-        p_to_email: user.email,
-        p_subject: `Your AI Kids Tutor trial ends in ${daysLeft} days ⏰`,
-        p_html: emailHtml,
-        p_template_name: 'trial_warning',
+        queue_name: 'transactional_emails',
+        payload: {
+          message_id: messageId,
+          to: user.email,
+          from: 'AI Kids Tutor <noreply@www.aikidstutor.co.za>',
+          sender_domain: 'notify.www.aikidstutor.co.za',
+          subject: `Your AI Kids Tutor trial ends in ${daysLeft} days ⏰`,
+          html: emailHtml,
+          purpose: 'transactional',
+          label: 'trial_warning',
+          queued_at: new Date().toISOString(),
+        },
       });
 
       if (!enqueueError) sent++;
