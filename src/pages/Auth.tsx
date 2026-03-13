@@ -37,11 +37,27 @@ export default function Auth() {
         // PostHog identify after sign-in
         const { data: { user: signedInUser } } = await supabase.auth.getUser();
         if (signedInUser) {
-          const { data: profile } = await supabase.from("profiles").select("subscription_status").eq("user_id", signedInUser.id).single();
+          const { data: profile } = await supabase.from("profiles").select("subscription_status, welcome_email_sent").eq("user_id", signedInUser.id).single();
           window.posthog?.identify(signedInUser.id, {
             email: signedInUser.email,
             plan: profile?.subscription_status,
           });
+
+          // Send welcome email on first login
+          if (profile && !profile.welcome_email_sent) {
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                user_id: signedInUser.id,
+                email: signedInUser.email,
+                display_name: profile?.display_name || signedInUser.user_metadata?.display_name,
+              }),
+            }).catch(() => {});
+          }
         }
         navigate("/parent");
       }
