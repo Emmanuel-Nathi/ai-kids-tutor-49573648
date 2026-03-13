@@ -84,6 +84,7 @@ export default function ChildRewards() {
       if (!resp.ok) throw new Error("Failed to deduct points");
     } catch {
       toast.error("Could not deduct points. Try again!");
+      setClaimingId(null);
       return;
     }
 
