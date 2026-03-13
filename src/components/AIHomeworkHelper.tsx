@@ -71,7 +71,12 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
       setInput(transcript);
     };
 
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      if (event.error === 'not-allowed') {
+        toast.error("Microphone access denied. Please allow microphone in your browser settings.");
+      }
+    };
     recognition.onend = () => setIsListening(false);
 
     recognition.start();
