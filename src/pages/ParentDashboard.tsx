@@ -64,6 +64,9 @@ export default function ParentDashboard() {
   const [coParentEmail, setCoParentEmail] = useState("");
   const [coParentOpen, setCoParentOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
+  const [addingReward, setAddingReward] = useState(false);
+  const [claimLoading, setClaimLoading] = useState<string | null>(null);
   const childIdsRef = useRef<string[]>([]);
 
   // Payment success tracking
