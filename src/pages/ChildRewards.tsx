@@ -31,6 +31,7 @@ export default function ChildRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [showSparkle, setShowSparkle] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (childId) fetchData();
@@ -64,6 +65,7 @@ export default function ChildRewards() {
       toast.error(`You need ${reward.point_cost - totalPoints} more points!`);
       return;
     }
+    setClaimingId(reward.id);
 
     // Deduct XP immediately via edge function (bypasses RLS since child isn't parent-authed)
     try {
@@ -82,6 +84,7 @@ export default function ChildRewards() {
       if (!resp.ok) throw new Error("Failed to deduct points");
     } catch {
       toast.error("Could not deduct points. Try again!");
+      setClaimingId(null);
       return;
     }
 
@@ -103,6 +106,7 @@ export default function ChildRewards() {
       setTimeout(() => setShowSparkle(false), 1500);
       fetchData();
     }
+    setClaimingId(null);
   };
 
   const getRewardName = (rewardId: string) => rewards.find((r) => r.id === rewardId)?.name || "Reward";
@@ -128,7 +132,7 @@ export default function ChildRewards() {
         <OwlMascot
           size="md"
           variant={showSparkle ? "celebrate" : "idle"}
-          message={totalPoints > 0 ? "Great work! Check out your rewards! ⭐" : "Keep learning to earn more points! ⭐"}
+          message={totalPoints > 0 ? "Great work! Check out your rewards! ⭐" : "Earn your first stars to unlock rewards! 🌟"}
           className="mx-auto"
         />
 
@@ -149,10 +153,10 @@ export default function ChildRewards() {
                   </div>
                   <Button
                     size="sm"
-                    disabled={totalPoints < r.point_cost}
+                    disabled={totalPoints < r.point_cost || claimingId === r.id}
                     onClick={() => claimReward(r)}
                   >
-                    Claim
+                    {claimingId === r.id ? "Claiming..." : "Claim"}
                   </Button>
                 </CardContent>
               </Card>
@@ -162,7 +166,8 @@ export default function ChildRewards() {
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-8">
               <Gift className="w-12 h-12 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">No rewards available yet. Ask your parent to set some up!</p>
+              <p className="font-display font-semibold text-foreground">Coming Soon!</p>
+              <p className="text-sm text-muted-foreground">Ask your parent to set up some awesome rewards!</p>
             </CardContent>
           </Card>
         )}

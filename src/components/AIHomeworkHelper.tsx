@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Bot, ChevronDown, ChevronUp, Mic, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 interface SpeechRecognitionInstance {
   lang: string;
@@ -71,7 +72,12 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
       setInput(transcript);
     };
 
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      if (event.error === 'not-allowed') {
+        toast.error("Microphone access denied. Please allow microphone in your browser settings.");
+      }
+    };
     recognition.onend = () => setIsListening(false);
 
     recognition.start();
@@ -132,6 +138,8 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
         }
       );
 
+      if (resp.status === 429) { toast.error("Too many requests. Please wait a moment."); setIsStreaming(false); return; }
+      if (resp.status === 402) { toast.error("AI credits exhausted."); setIsStreaming(false); return; }
       if (!resp.ok || !resp.body) throw new Error("Failed to connect");
 
       const reader = resp.body.getReader();
@@ -171,7 +179,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Oops! I couldn't connect. Try again! 🦉" },
+        { role: "assistant", content: "My brain is taking a quick nap! 💤 Please try again in a moment." },
       ]);
     } finally {
       setIsStreaming(false);

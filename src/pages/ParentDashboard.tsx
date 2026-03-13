@@ -64,6 +64,9 @@ export default function ParentDashboard() {
   const [coParentEmail, setCoParentEmail] = useState("");
   const [coParentOpen, setCoParentOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
+  const [addingReward, setAddingReward] = useState(false);
+  const [claimLoading, setClaimLoading] = useState<string | null>(null);
   const childIdsRef = useRef<string[]>([]);
 
   // Payment success tracking
@@ -164,6 +167,7 @@ export default function ParentDashboard() {
 
   const addChild = async () => {
     if (!user || !newChild.name.trim()) return;
+    setAddingChild(true);
     const { error } = await supabase.from("children").insert({
       parent_id: user.id,
       name: newChild.name.trim(),
@@ -179,10 +183,12 @@ export default function ParentDashboard() {
       setAddOpen(false);
       fetchAll();
     }
+    setAddingChild(false);
   };
 
   const addReward = async () => {
     if (!user || !newReward.name.trim()) return;
+    setAddingReward(true);
     const { error } = await supabase.from("rewards").insert({
       parent_id: user.id,
       name: newReward.name.trim(),
@@ -196,15 +202,18 @@ export default function ParentDashboard() {
       setRewardOpen(false);
       fetchAll();
     }
+    setAddingReward(false);
   };
 
   const handleClaim = async (claimId: string, status: "approved" | "denied") => {
+    setClaimLoading(claimId);
     const { error } = await supabase.from("reward_claims").update({ status, reviewed_at: new Date().toISOString() }).eq("id", claimId);
     if (error) toast.error(error.message);
     else {
       toast.success(status === "approved" ? "Reward approved! 🎉" : "Claim denied");
       fetchAll();
     }
+    setClaimLoading(null);
   };
 
   const copyKidLink = (childId: string) => {
@@ -409,10 +418,10 @@ export default function ParentDashboard() {
                         <p className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="icon" variant="outline" className="h-8 w-8 text-accent" onClick={() => handleClaim(c.id, "approved")}>
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-accent" onClick={() => handleClaim(c.id, "approved")} disabled={claimLoading === c.id}>
                           <Check className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive" onClick={() => handleClaim(c.id, "denied")}>
+                        <Button size="icon" variant="outline" className="h-8 w-8 text-destructive" onClick={() => handleClaim(c.id, "denied")} disabled={claimLoading === c.id}>
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
@@ -445,7 +454,7 @@ export default function ParentDashboard() {
                       <Label>Point Cost</Label>
                       <Input type="number" value={newReward.point_cost} onChange={(e) => setNewReward({ ...newReward, point_cost: e.target.value })} />
                     </div>
-                    <Button className="w-full" onClick={addReward}>Create Reward</Button>
+                    <Button className="w-full" onClick={addReward} disabled={addingReward}>{addingReward ? "Creating..." : "Create Reward"}</Button>
                   </div>
                 </DialogContent>
               </Dialog>

@@ -258,7 +258,7 @@ export default function ChildChat() {
         )}
       </div>
 
-      <div className="border-t border-border bg-card p-3 shrink-0">
+      <div className="border-t border-border bg-card p-3 shrink-0" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
         <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-2 max-w-2xl mx-auto">
           <Input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type your question..." className="flex-1 rounded-full" disabled={isStreaming} />
           <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={isStreaming || !input.trim()}>

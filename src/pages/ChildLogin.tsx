@@ -49,7 +49,7 @@ export default function ChildLogin() {
   const stars = Array.from({ length: 4 }, (_, i) => (i < pin.length ? "⭐" : "☆"));
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
       <div className="w-full max-w-xs space-y-6">
         <OwlMascot size="lg" message="Enter your secret PIN! 🔒" className="mx-auto" />
 
