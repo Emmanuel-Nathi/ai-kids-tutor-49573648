@@ -106,6 +106,7 @@ export default function ChildRewards() {
       setTimeout(() => setShowSparkle(false), 1500);
       fetchData();
     }
+    setClaimingId(null);
   };
 
   const getRewardName = (rewardId: string) => rewards.find((r) => r.id === rewardId)?.name || "Reward";
