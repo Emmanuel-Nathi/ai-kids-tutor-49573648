@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Bot, ChevronDown, ChevronUp, Mic, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 interface SpeechRecognitionInstance {
   lang: string;
