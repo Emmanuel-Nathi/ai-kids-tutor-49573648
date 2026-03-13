@@ -54,9 +54,14 @@ export default function Landing() {
           <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 object-contain" loading="lazy" />
           <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
         </div>
-        <Button onClick={() => navigate("/auth")} size="sm">
-          Get Started
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/child-login")}>
+            I'm a Kid 🎒
+          </Button>
+          <Button onClick={() => navigate("/auth")} size="sm">
+            Get Started
+          </Button>
+        </div>
       </header>
 
       {/* Hero */}
