@@ -166,7 +166,8 @@ export default function ChildRewards() {
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-8">
               <Gift className="w-12 h-12 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">No rewards available yet. Ask your parent to set some up!</p>
+              <p className="font-display font-semibold text-foreground">Coming Soon!</p>
+              <p className="text-sm text-muted-foreground">Ask your parent to set up some awesome rewards!</p>
             </CardContent>
           </Card>
         )}

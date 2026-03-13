@@ -179,7 +179,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Oops! I couldn't connect. Try again! 🦉" },
+        { role: "assistant", content: "My brain is taking a quick nap! 💤 Please try again in a moment." },
       ]);
     } finally {
       setIsStreaming(false);

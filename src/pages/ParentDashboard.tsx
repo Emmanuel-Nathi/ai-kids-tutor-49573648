@@ -454,7 +454,7 @@ export default function ParentDashboard() {
                       <Label>Point Cost</Label>
                       <Input type="number" value={newReward.point_cost} onChange={(e) => setNewReward({ ...newReward, point_cost: e.target.value })} />
                     </div>
-                    <Button className="w-full" onClick={addReward}>Create Reward</Button>
+                    <Button className="w-full" onClick={addReward} disabled={addingReward}>{addingReward ? "Creating..." : "Create Reward"}</Button>
                   </div>
                 </DialogContent>
               </Dialog>
