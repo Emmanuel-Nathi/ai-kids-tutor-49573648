@@ -138,6 +138,8 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
         }
       );
 
+      if (resp.status === 429) { toast.error("Too many requests. Please wait a moment."); setIsStreaming(false); return; }
+      if (resp.status === 402) { toast.error("AI credits exhausted."); setIsStreaming(false); return; }
       if (!resp.ok || !resp.body) throw new Error("Failed to connect");
 
       const reader = resp.body.getReader();
