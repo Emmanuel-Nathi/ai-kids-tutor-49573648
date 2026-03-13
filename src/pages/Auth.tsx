@@ -37,7 +37,7 @@ export default function Auth() {
         // PostHog identify after sign-in
         const { data: { user: signedInUser } } = await supabase.auth.getUser();
         if (signedInUser) {
-          const { data: profile } = await supabase.from("profiles").select("subscription_status, welcome_email_sent").eq("user_id", signedInUser.id).single();
+          const { data: profile } = await supabase.from("profiles").select("subscription_status, welcome_email_sent, display_name").eq("user_id", signedInUser.id).single();
           window.posthog?.identify(signedInUser.id, {
             email: signedInUser.email,
             plan: profile?.subscription_status,
