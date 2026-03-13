@@ -50,6 +50,7 @@ interface Reward {
 export default function ParentDashboard() {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [children, setChildren] = useState<ChildWithStats[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [claims, setClaims] = useState<RewardClaim[]>([]);
