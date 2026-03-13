@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
