@@ -31,6 +31,7 @@ export default function ChildRewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [showSparkle, setShowSparkle] = useState(false);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (childId) fetchData();
