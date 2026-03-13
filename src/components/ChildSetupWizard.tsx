@@ -57,6 +57,10 @@ export function ChildSetupWizard() {
       toast.error(error.message);
     } else {
       toast.success(`${name} has been added! 🎉`);
+      // Send child-added notification email (fire and forget)
+      supabase.functions.invoke("send-child-added-email", {
+        body: { child_name: name.trim(), grade, curriculum },
+      }).catch(console.error);
       navigate("/parent");
     }
   };

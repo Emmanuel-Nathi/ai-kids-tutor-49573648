@@ -234,6 +234,8 @@ export default function Landing() {
         <span>© 2026 AI Kids Tutor. Safe learning for every child.</span>
         <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate("/admin")}>Admin</span>
       </footer>
+
+      <CookieConsent />
     </div>
   );
 }
