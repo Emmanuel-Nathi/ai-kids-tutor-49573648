@@ -1,28 +1,23 @@
 project_id = "uejizyyawomenkzqixfm"
 
-[functions.ai-tutor]
-verify_jwt = false
-
-[functions.calculate-points]
-verify_jwt = false
-
-[functions.homework-parse]
-verify_jwt = false
-
-[functions.child-login]
-verify_jwt = false
-
-[functions.invite-coparent]
-verify_jwt = false
-
-[functions.admin-dashboard]
-verify_jwt = false
-
-[functions.send-welcome-email]
-verify_jwt = false
-
-[functions.send-trial-warning]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.admin-dashboard]
+    verify_jwt = false
+  [functions.ai-tutor]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.calculate-points]
+    verify_jwt = false
+  [functions.child-login]
+    verify_jwt = false
+  [functions.homework-parse]
+    verify_jwt = false
+  [functions.invite-coparent]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.send-trial-warning]
+    verify_jwt = false
+  [functions.send-welcome-email]
+    verify_jwt = false
