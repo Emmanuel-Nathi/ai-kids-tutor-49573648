@@ -188,6 +188,7 @@ export default function ParentDashboard() {
 
   const addReward = async () => {
     if (!user || !newReward.name.trim()) return;
+    setAddingReward(true);
     const { error } = await supabase.from("rewards").insert({
       parent_id: user.id,
       name: newReward.name.trim(),
@@ -201,6 +202,7 @@ export default function ParentDashboard() {
       setRewardOpen(false);
       fetchAll();
     }
+    setAddingReward(false);
   };
 
   const handleClaim = async (claimId: string, status: "approved" | "denied") => {
