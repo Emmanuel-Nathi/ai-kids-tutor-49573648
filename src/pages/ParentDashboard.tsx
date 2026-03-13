@@ -206,12 +206,14 @@ export default function ParentDashboard() {
   };
 
   const handleClaim = async (claimId: string, status: "approved" | "denied") => {
+    setClaimLoading(claimId);
     const { error } = await supabase.from("reward_claims").update({ status, reviewed_at: new Date().toISOString() }).eq("id", claimId);
     if (error) toast.error(error.message);
     else {
       toast.success(status === "approved" ? "Reward approved! 🎉" : "Claim denied");
       fetchAll();
     }
+    setClaimLoading(null);
   };
 
   const copyKidLink = (childId: string) => {
