@@ -66,6 +66,24 @@ export default function ParentDashboard() {
   const [inviting, setInviting] = useState(false);
   const childIdsRef = useRef<string[]>([]);
 
+  // Payment success tracking
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      if (window.gtag) {
+        window.gtag('event', 'purchase', {
+          transaction_id: `PF_${Math.random().toString(36).substr(2, 9)}`,
+          value: 199.99,
+          currency: 'ZAR',
+          items: [{ item_id: 'sub_monthly_199', item_name: 'AI Kids Tutor Monthly Subscription', price: 199.99, quantity: 1 }]
+        });
+      }
+      if (window.posthog) {
+        window.posthog.capture('Subscription Started', { amount: 199.99, currency: 'ZAR', plan: 'Monthly' });
+      }
+      window.history.replaceState({}, document.title, "/parent");
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
