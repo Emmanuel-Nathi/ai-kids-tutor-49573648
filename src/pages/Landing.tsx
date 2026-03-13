@@ -96,6 +96,14 @@ export default function Landing() {
               Start your 30-Day Free Trial
               <ArrowRight className="w-5 h-5 ml-1" />
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="font-display text-lg px-8 py-6"
+              onClick={() => navigate("/child-login")}
+            >
+              I'm a Kid 🎒
+            </Button>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             No credit card required • Cancel anytime
