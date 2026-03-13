@@ -15,25 +15,28 @@ AI Kids Tutor - design system, architecture decisions, and key patterns
 - Auth: Supabase auth with auto-profile creation trigger
 - Roles: user_roles table (parent/child enum), has_role() security definer function
 - AI: Lovable AI Gateway → google/gemini-3-flash-preview, Socratic method, Cambridge curriculum
-- Edge functions: ai-tutor, homework-parse, calculate-points, child-login, send-welcome-email, send-trial-warning, invite-coparent, admin-dashboard (all verify_jwt=false)
+- Edge functions: ai-tutor, homework-parse, calculate-points, child-login, send-welcome-email, send-trial-warning, invite-coparent, admin-dashboard, auth-email-hook, process-email-queue (all verify_jwt=false except process-email-queue)
 - Owl mascot: src/components/OwlMascot.tsx, transparent logo at src/assets/logo.png
 - AppLayout: SidebarProvider wrapper for child-facing pages (AppSidebar.tsx + AppLayout.tsx)
 - Child pages use AppLayout (no back buttons), Parent pages keep standalone layout
 
 ## Analytics
-- PostHog: phc_85IDA0KgURTFV76O3gPlPvAGPLYhrlwbhfe6isvVHx (US region)
+- PostHog: phc_CfjCPuQ7ioIArPqPWfcN0rPuYWcYL3eL5AvCoIZvAvg (US region)
 - GA4: G-DKK2RDXFNT
-- Events tracked: homework_uploaded, homework_completed, chat_session_started, reward_claimed, user_signed_up, begin_checkout
+- Events tracked: homework_uploaded, homework_completed, chat_session_started, reward_claimed, user_signed_up, begin_checkout, purchase, Subscription Started
 - PostHog identify on auth state change and sign-in (with email, plan)
 - Type declarations in src/types/analytics.d.ts
+- Payment success tracking: ParentDashboard checks ?payment=success, fires GA4 purchase + PostHog Subscription Started, cleans URL
 
 ## Database Tables
-profiles (has welcome_email_sent), user_roles, children (has access_pin), sessions, messages, homework, points, rewards, reward_claims
+profiles (has welcome_email_sent), user_roles, children (has access_pin), sessions, messages, homework, points, rewards, reward_claims, email_send_log, email_send_state, suppressed_emails, email_unsubscribe_tokens
 
-## Transactional Emails
-- Domain: notify.www.soulfulsound.co.za (verified)
-- send-welcome-email: triggered on first login, branded HTML
-- send-trial-warning: daily cron at 9am UTC, targets trial users at day 25 (5 days before expiry)
+## Email Infrastructure
+- Domain: notify.www.aikidstutor.co.za (active_provisioning, DNS verifying)
+- Email queue: pgmq-based (auth_emails + transactional_emails queues)
+- process-email-queue: cron every 5s, dispatches queued emails
+- auth-email-hook: branded templates (Fredoka font, orange buttons, owl theme)
+- send-welcome-email & send-trial-warning: use enqueue_email RPC instead of direct API calls
 
 ## Routes
 / → Landing, /auth → Auth, /child-login → ChildLogin (PIN-based)
