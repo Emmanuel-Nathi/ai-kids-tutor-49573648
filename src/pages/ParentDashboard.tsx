@@ -167,6 +167,7 @@ export default function ParentDashboard() {
 
   const addChild = async () => {
     if (!user || !newChild.name.trim()) return;
+    setAddingChild(true);
     const { error } = await supabase.from("children").insert({
       parent_id: user.id,
       name: newChild.name.trim(),
@@ -182,6 +183,7 @@ export default function ParentDashboard() {
       setAddOpen(false);
       fetchAll();
     }
+    setAddingChild(false);
   };
 
   const addReward = async () => {
