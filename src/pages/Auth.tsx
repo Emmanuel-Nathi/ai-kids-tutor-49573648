@@ -8,6 +8,7 @@ import { OwlMascot } from "@/components/OwlMascot";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
