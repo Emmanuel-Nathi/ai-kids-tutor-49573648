@@ -153,10 +153,10 @@ export default function ChildRewards() {
                   </div>
                   <Button
                     size="sm"
-                    disabled={totalPoints < r.point_cost}
+                    disabled={totalPoints < r.point_cost || claimingId === r.id}
                     onClick={() => claimReward(r)}
                   >
-                    Claim
+                    {claimingId === r.id ? "Claiming..." : "Claim"}
                   </Button>
                 </CardContent>
               </Card>
