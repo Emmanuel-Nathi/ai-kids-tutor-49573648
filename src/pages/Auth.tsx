@@ -29,8 +29,19 @@ export default function Auth() {
       if (isSignUp) {
         await signUp(email, password, displayName);
         toast.success("Account created! Check your email to confirm.");
+        window.posthog?.capture('user_signed_up', { email });
+        window.gtag?.('event', 'sign_up', { method: 'email' });
       } else {
         await signIn(email, password);
+        // PostHog identify after sign-in
+        const { data: { user: signedInUser } } = await supabase.auth.getUser();
+        if (signedInUser) {
+          const { data: profile } = await supabase.from("profiles").select("subscription_status").eq("user_id", signedInUser.id).single();
+          window.posthog?.identify(signedInUser.id, {
+            email: signedInUser.email,
+            plan: profile?.subscription_status,
+          });
+        }
         navigate("/parent");
       }
     } catch (err: any) {

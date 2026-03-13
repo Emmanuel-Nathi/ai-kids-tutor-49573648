@@ -23,6 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // PostHog identify on any auth state change
+      if (session?.user) {
+        window.posthog?.identify(session.user.id, {
+          email: session.user.email,
+        });
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
