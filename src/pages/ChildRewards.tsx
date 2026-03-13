@@ -65,6 +65,7 @@ export default function ChildRewards() {
       toast.error(`You need ${reward.point_cost - totalPoints} more points!`);
       return;
     }
+    setClaimingId(reward.id);
 
     // Deduct XP immediately via edge function (bypasses RLS since child isn't parent-authed)
     try {
