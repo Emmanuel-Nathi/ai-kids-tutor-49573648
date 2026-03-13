@@ -26,11 +26,9 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let sent = 0;
 
     for (const profile of profiles || []) {
-      // Get user email from auth
       const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
       if (!user?.email) continue;
 
@@ -62,21 +60,16 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      const resp = await fetch("https://email.lovable.dev/api/v1/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          to: user.email,
-          subject: `Your AI Kids Tutor trial ends in ${daysLeft} days ⏰`,
-          html: emailHtml,
-        }),
+      const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+        p_queue_name: 'transactional_emails',
+        p_to_email: user.email,
+        p_subject: `Your AI Kids Tutor trial ends in ${daysLeft} days ⏰`,
+        p_html: emailHtml,
+        p_template_name: 'trial_warning',
       });
 
-      if (resp.ok) sent++;
-      else console.error(`Failed to send to ${user.email}:`, await resp.text());
+      if (!enqueueError) sent++;
+      else console.error(`Failed to enqueue for ${user.email}:`, enqueueError);
     }
 
     return new Response(JSON.stringify({ sent, total: profiles?.length || 0 }), {
