@@ -132,7 +132,7 @@ export default function ChildRewards() {
         <OwlMascot
           size="md"
           variant={showSparkle ? "celebrate" : "idle"}
-          message={totalPoints > 0 ? "Great work! Check out your rewards! ⭐" : "Keep learning to earn more points! ⭐"}
+          message={totalPoints > 0 ? "Great work! Check out your rewards! ⭐" : "Earn your first stars to unlock rewards! 🌟"}
           className="mx-auto"
         />
 
