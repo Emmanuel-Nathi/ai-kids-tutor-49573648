@@ -198,6 +198,7 @@ export type Database = {
           subscription_status: string
           updated_at: string
           user_id: string
+          welcome_email_sent: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -208,6 +209,7 @@ export type Database = {
           subscription_status?: string
           updated_at?: string
           user_id: string
+          welcome_email_sent?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           subscription_status?: string
           updated_at?: string
           user_id?: string
+          welcome_email_sent?: boolean
         }
         Relationships: []
       }

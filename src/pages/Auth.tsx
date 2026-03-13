@@ -8,6 +8,7 @@ import { OwlMascot } from "@/components/OwlMascot";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -29,8 +30,35 @@ export default function Auth() {
       if (isSignUp) {
         await signUp(email, password, displayName);
         toast.success("Account created! Check your email to confirm.");
+        window.posthog?.capture('user_signed_up', { email });
+        window.gtag?.('event', 'sign_up', { method: 'email' });
       } else {
         await signIn(email, password);
+        // PostHog identify after sign-in
+        const { data: { user: signedInUser } } = await supabase.auth.getUser();
+        if (signedInUser) {
+          const { data: profile } = await supabase.from("profiles").select("subscription_status, welcome_email_sent, display_name").eq("user_id", signedInUser.id).single();
+          window.posthog?.identify(signedInUser.id, {
+            email: signedInUser.email,
+            plan: profile?.subscription_status,
+          });
+
+          // Send welcome email on first login
+          if (profile && !profile.welcome_email_sent) {
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                user_id: signedInUser.id,
+                email: signedInUser.email,
+                display_name: profile?.display_name || signedInUser.user_metadata?.display_name,
+              }),
+            }).catch(() => {});
+          }
+        }
         navigate("/parent");
       }
     } catch (err: any) {

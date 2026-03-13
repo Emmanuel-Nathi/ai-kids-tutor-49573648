@@ -107,6 +107,10 @@ export default function ChildHomework() {
       setEarnedPoints(10);
       toast.success("Homework uploaded! +10 XP 📸");
 
+      // Analytics tracking
+      window.posthog?.capture('homework_uploaded', { child_id: childId, subject: childData?.selected_curriculum });
+      window.gtag?.('event', 'homework_upload', { child_id: childId });
+
       setUploading(false);
       setParsing(true);
 
@@ -162,6 +166,10 @@ export default function ChildHomework() {
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
     toast.success("Homework complete! +20 XP 🎉");
+
+    // Analytics tracking
+    window.posthog?.capture('homework_completed', { child_id: childId });
+    window.gtag?.('event', 'homework_complete', { child_id: childId });
   };
 
   const getStatusIcon = (correct: boolean | null) => {

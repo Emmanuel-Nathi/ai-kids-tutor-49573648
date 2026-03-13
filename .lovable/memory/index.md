@@ -15,13 +15,25 @@ AI Kids Tutor - design system, architecture decisions, and key patterns
 - Auth: Supabase auth with auto-profile creation trigger
 - Roles: user_roles table (parent/child enum), has_role() security definer function
 - AI: Lovable AI Gateway → google/gemini-3-flash-preview, Socratic method, Cambridge curriculum
-- Edge functions: ai-tutor, homework-parse, calculate-points, child-login (all verify_jwt=false)
+- Edge functions: ai-tutor, homework-parse, calculate-points, child-login, send-welcome-email, send-trial-warning, invite-coparent, admin-dashboard (all verify_jwt=false)
 - Owl mascot: src/components/OwlMascot.tsx, transparent logo at src/assets/logo.png
 - AppLayout: SidebarProvider wrapper for child-facing pages (AppSidebar.tsx + AppLayout.tsx)
 - Child pages use AppLayout (no back buttons), Parent pages keep standalone layout
 
+## Analytics
+- PostHog: phc_85IDA0KgURTFV76O3gPlPvAGPLYhrlwbhfe6isvVHx (US region)
+- GA4: G-DKK2RDXFNT
+- Events tracked: homework_uploaded, homework_completed, chat_session_started, reward_claimed, user_signed_up, begin_checkout
+- PostHog identify on auth state change and sign-in (with email, plan)
+- Type declarations in src/types/analytics.d.ts
+
 ## Database Tables
-profiles, user_roles, children (has access_pin), sessions, messages, homework, points, rewards, reward_claims
+profiles (has welcome_email_sent), user_roles, children (has access_pin), sessions, messages, homework, points, rewards, reward_claims
+
+## Transactional Emails
+- Domain: notify.www.soulfulsound.co.za (verified)
+- send-welcome-email: triggered on first login, branded HTML
+- send-trial-warning: daily cron at 9am UTC, targets trial users at day 25 (5 days before expiry)
 
 ## Routes
 / → Landing, /auth → Auth, /child-login → ChildLogin (PIN-based)

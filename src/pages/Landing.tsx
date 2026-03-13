@@ -77,7 +77,13 @@ export default function Landing() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => navigate("/auth")}
+              onClick={() => {
+                window.gtag?.('event', 'begin_checkout', {
+                  items: [{ item_name: 'AI Kids Tutor Subscription', price: 199.99, currency: 'ZAR' }],
+                });
+                window.posthog?.capture('begin_checkout', { price: 199.99, currency: 'ZAR' });
+                navigate("/auth");
+              }}
               size="lg"
               className="font-display text-lg px-8 py-6"
             >
@@ -190,7 +196,13 @@ export default function Landing() {
                   Free for 30 days — no credit card needed
                 </p>
                 <Button
-                  onClick={() => navigate("/auth")}
+                  onClick={() => {
+                    window.gtag?.('event', 'begin_checkout', {
+                      items: [{ item_name: 'AI Kids Tutor Subscription', price: 199.99, currency: 'ZAR' }],
+                    });
+                    window.posthog?.capture('begin_checkout', { price: 199.99, currency: 'ZAR' });
+                    navigate("/auth");
+                  }}
                   size="lg"
                   className="mt-6 w-full font-display text-lg"
                 >

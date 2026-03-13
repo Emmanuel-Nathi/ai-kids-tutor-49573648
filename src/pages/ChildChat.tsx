@@ -96,6 +96,12 @@ export default function ChildChat() {
     const newCount = userMsgCount + 1;
     setUserMsgCount(newCount);
 
+    // Track first message as session start
+    if (newCount === 1) {
+      window.posthog?.capture('chat_session_started', { child_id: childId, subject });
+      window.gtag?.('event', 'chat_session_start', { subject });
+    }
+
     await saveMessage("user", text.trim());
 
     // Award 5 XP every 3rd message — but enforce 3-minute anti-rush minimum

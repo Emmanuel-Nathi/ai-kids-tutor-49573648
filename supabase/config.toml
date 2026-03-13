@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.admin-dashboard]
 verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-trial-warning]
+verify_jwt = false

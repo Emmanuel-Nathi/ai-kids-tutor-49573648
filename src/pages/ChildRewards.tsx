@@ -95,6 +95,10 @@ export default function ChildRewards() {
       toast.error(error.message);
     } else {
       toast.success("Reward claimed! Waiting for parent approval 🎉");
+
+      // Analytics tracking
+      window.posthog?.capture('reward_claimed', { child_id: childId, reward_name: reward.name, point_cost: reward.point_cost });
+      window.gtag?.('event', 'reward_claim', { reward_name: reward.name, point_cost: reward.point_cost });
       setShowSparkle(true);
       setTimeout(() => setShowSparkle(false), 1500);
       fetchData();
