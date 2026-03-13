@@ -107,6 +107,10 @@ export default function ChildHomework() {
       setEarnedPoints(10);
       toast.success("Homework uploaded! +10 XP 📸");
 
+      // Analytics tracking
+      window.posthog?.capture('homework_uploaded', { child_id: childId, subject: childData?.selected_curriculum });
+      window.gtag?.('event', 'homework_upload', { child_id: childId });
+
       setUploading(false);
       setParsing(true);
 
