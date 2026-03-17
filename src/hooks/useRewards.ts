@@ -32,8 +32,8 @@ export function useRewards(userId: string | undefined, childIds: string[]) {
       : Promise.resolve({ data: [] as RewardClaim[] });
 
     const [rewardsResult, claimsResult] = await Promise.all([rewardsPromise, claimsPromise]);
-    setRewards(results[0].data || []);
-    setClaims(results[1]?.data || []);
+    setRewards(rewardsResult.data || []);
+    setClaims((claimsResult as any).data || []);
     setLoading(false);
   }, [userId, childIds.join(",")]);
 
