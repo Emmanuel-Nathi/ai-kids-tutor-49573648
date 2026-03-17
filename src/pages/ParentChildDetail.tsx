@@ -16,6 +16,7 @@ import { ActivityLog } from "@/components/parent/ActivityLog";
 import { SessionHistory } from "@/components/parent/SessionHistory";
 import { CurriculumMastery } from "@/components/parent/CurriculumMastery";
 import { SubjectChart } from "@/components/parent/SubjectChart";
+import { AnalyticsSkeleton } from "@/components/parent/AnalyticsSkeleton";
 
 export default function ParentChildDetail() {
   const { childId } = useParams<{ childId: string }>();
@@ -95,21 +96,13 @@ export default function ParentChildDetail() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <OwlMascot size="lg" message="Loading reports..." />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
         <Button variant="ghost" size="icon" onClick={() => navigate("/parent")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <span className="font-display font-bold text-lg">{childName}'s Report</span>
+        <span className="font-display font-bold text-lg">{childName || "Loading..."}'s Report</span>
         {!hasPin && (
           <Button variant="outline" size="sm" className="ml-auto" onClick={() => setSettingPin(true)}>
             Set PIN
@@ -118,7 +111,11 @@ export default function ParentChildDetail() {
       </header>
 
       <main className="p-4 max-w-4xl mx-auto space-y-6">
-        <ChildStatsRow sessions={sessions} totalPoints={totalPoints} />
+        {loading ? (
+          <AnalyticsSkeleton />
+        ) : (
+          <>
+            <ChildStatsRow sessions={sessions} totalPoints={totalPoints} />
 
         <ActivityLog
           items={todayLog}
@@ -140,7 +137,9 @@ export default function ParentChildDetail() {
           showDate
         />
 
-        <SessionHistory sessions={sessions} />
+            <SessionHistory sessions={sessions} />
+          </>
+        )}
       </main>
 
       <Dialog open={settingPin} onOpenChange={setSettingPin}>
