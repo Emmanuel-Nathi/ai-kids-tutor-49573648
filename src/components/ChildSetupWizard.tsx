@@ -82,102 +82,10 @@ export function ChildSetupWizard() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Step 1: Name */}
-          {step === 1 && (
-            <div className="space-y-2">
-              <Label>Child's First Name</Label>
-              <Input
-                autoFocus
-                placeholder="e.g. Sarah"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && canNext && setStep(2)}
-              />
-            </div>
-          )}
-
-          {/* Step 2: Curriculum */}
-          {step === 2 && (
-            <div className="grid gap-3">
-              {CURRICULUMS.map((c) => (
-                <Card
-                  key={c.value}
-                  className={`cursor-pointer transition-all border-2 ${
-                    curriculum === c.value
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-border hover:border-primary/30"
-                  }`}
-                  onClick={() => setCurriculum(c.value)}
-                >
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      curriculum === c.value ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}>
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-display font-bold">{c.label}</p>
-                      <p className="text-sm text-muted-foreground">{c.description}</p>
-                    </div>
-                    {curriculum === c.value && <Check className="w-5 h-5 text-primary ml-auto" />}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Step 3: Grade */}
-          {step === 3 && (
-            <div className="space-y-3">
-              <Label className="text-center block">Select Grade</Label>
-              <div className="grid grid-cols-4 gap-3">
-                {GRADES.map((g) => (
-                  <Button
-                    key={g}
-                    variant={grade === g ? "default" : "outline"}
-                    className={`h-14 text-lg font-display ${
-                      grade === g ? "" : "hover:border-primary/30"
-                    }`}
-                    onClick={() => setGrade(g)}
-                  >
-                    {g}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: PIN */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <div className="flex justify-center gap-3">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-bold font-display transition-all ${
-                      pin[i] ? "border-primary bg-primary/5" : "border-border"
-                    }`}
-                  >
-                    {pin[i] ? "●" : ""}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                  <Button key={d} variant="outline" size="lg" className="text-xl font-display h-14" onClick={() => handlePinDigit(String(d))}>
-                    {d}
-                  </Button>
-                ))}
-                <div />
-                <Button variant="outline" size="lg" className="text-xl font-display h-14" onClick={() => handlePinDigit("0")}>
-                  0
-                </Button>
-                <Button variant="ghost" size="lg" className="h-14" onClick={handlePinDelete}>
-                  <Delete className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          )}
+          {step === 1 && <NameStep name={name} setName={setName} onNext={() => canNext && setStep(2)} />}
+          {step === 2 && <CurriculumStep curriculum={curriculum} setCurriculum={setCurriculum} />}
+          {step === 3 && <GradeStep grade={grade} setGrade={setGrade} />}
+          {step === 4 && <PinStep pin={pin} setPin={setPin} />}
 
           {/* Navigation */}
           <div className="flex gap-3">
