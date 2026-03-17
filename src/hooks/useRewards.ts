@@ -1,0 +1,45 @@
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string | null;
+  point_cost: number;
+  is_active: boolean;
+}
+
+export interface RewardClaim {
+  id: string;
+  child_id: string;
+  reward_id: string;
+  status: string;
+  created_at: string;
+}
+
+export function useRewards(userId: string | undefined, childIds: string[]) {
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [claims, setClaims] = useState<RewardClaim[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+
+    const rewardsPromise = supabase.from("rewards").select("*").eq("parent_id", userId).order("created_at");
+    const claimsPromise = childIds.length > 0
+      ? supabase.from("reward_claims").select("*").in("child_id", childIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as RewardClaim[] });
+
+    const [rewardsResult, claimsResult] = await Promise.all([rewardsPromise, claimsPromise]);
+    setRewards(rewardsResult.data || []);
+    setClaims((claimsResult as any).data || []);
+    setLoading(false);
+  }, [userId, childIds.join(",")]);
+
+  useEffect(() => {
+    if (userId) fetchAll();
+  }, [userId, fetchAll]);
+
+  return { rewards, claims, loading, refetch: fetchAll };
+}
