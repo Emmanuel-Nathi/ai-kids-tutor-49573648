@@ -139,6 +139,7 @@ export default function Auth() {
               </form>
             )
           ) : (
+          <>
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
@@ -271,6 +272,7 @@ export default function Auth() {
           >
             Get Started
           </Button>
+          </>
           )}
         </CardContent>
       </Card>
