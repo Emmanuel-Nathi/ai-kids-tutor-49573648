@@ -21,6 +21,7 @@ import ChildLogin from "./pages/ChildLogin";
 import ChildProfile from "./pages/ChildProfile";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/child-login" element={<ChildLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/paywall" element={<Paywall />} />
             <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
             <Route path="/parent/child/:childId" element={<SubscriptionGuard><ParentChildDetail /></SubscriptionGuard>} />

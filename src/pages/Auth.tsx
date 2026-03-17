@@ -17,12 +17,31 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!authLoading && user) navigate("/parent");
   }, [user, authLoading, navigate]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      if (error) throw error;
+      setResetSent(true);
+      toast.success("Check your email for a password reset link!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,13 +94,52 @@ export default function Auth() {
         <CardHeader className="text-center">
           <OwlMascot size="md" className="mx-auto mb-2" />
           <CardTitle className="font-display text-2xl">
-            {isSignUp ? "Create Parent Account" : "Welcome Back"}
+            {forgotPassword ? "Reset Password" : isSignUp ? "Create Parent Account" : "Welcome Back"}
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Sign up to manage your child's learning" : "Sign in to your parent dashboard"}
+            {forgotPassword
+              ? "Enter your email and we'll send you a reset link"
+              : isSignUp ? "Sign up to manage your child's learning" : "Sign in to your parent dashboard"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {forgotPassword ? (
+            resetSent ? (
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  We've sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the link to set a new password.
+                </p>
+                <Button variant="outline" className="w-full font-display" onClick={() => { setForgotPassword(false); setResetSent(false); }}>
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="parent@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full font-display" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setForgotPassword(false)}
+                  className="w-full text-sm text-primary hover:underline"
+                >
+                  Back to Sign In
+                </button>
+              </form>
+            )
+          ) : (
+          <>
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
@@ -118,6 +176,15 @@ export default function Auth() {
                 minLength={6}
               />
             </div>
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={() => setForgotPassword(true)}
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot Password?
+              </button>
+            )}
             <Button type="submit" className="w-full font-display" disabled={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
@@ -205,6 +272,8 @@ export default function Auth() {
           >
             Get Started
           </Button>
+          </>
+          )}
         </CardContent>
       </Card>
     </div>
