@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useChildData } from "@/hooks/useChildData";
 import { supabase } from "@/integrations/supabase/client";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
@@ -35,44 +36,14 @@ export default function ChildHome() {
   const { childId } = useParams<{ childId: string }>();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [childName, setChildName] = useState("");
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [curriculum, setCurriculum] = useState("cambridge");
-  const [streak, setStreak] = useState(0);
+  const { child, totalPoints, streak } = useChildData(childId);
+
+  const childName = child?.name || "";
+  const curriculum = child?.selected_curriculum || "cambridge";
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (childId) {
-      supabase.from("children").select("name, selected_curriculum").eq("id", childId).single().then(({ data, error }) => {
-        if (error) toast.error("Child not found");
-        else {
-          setChildName(data?.name || "");
-          setCurriculum((data as any)?.selected_curriculum || "cambridge");
-        }
-      });
-      supabase.from("points").select("amount").eq("child_id", childId).then(({ data }) => {
-        setTotalPoints((data || []).reduce((s, p) => s + p.amount, 0));
-      });
-
-      // Calculate streak from sessions
-      supabase.from("sessions").select("started_at").eq("child_id", childId).order("started_at", { ascending: false }).then(({ data }) => {
-        if (!data || data.length === 0) { setStreak(0); return; }
-        const days = [...new Set(data.map(s => new Date(s.started_at).toDateString()))];
-        let count = 0;
-        const today = new Date();
-        for (let i = 0; i < days.length; i++) {
-          const expected = new Date(today);
-          expected.setDate(today.getDate() - i);
-          if (days[i] === expected.toDateString()) count++;
-          else break;
-        }
-        setStreak(count);
-      });
-    }
-  }, [childId]);
 
   const subjects = curriculum === "caps" || curriculum === "ieb"
     ? [...baseSubjects, ...capsExtraSubjects]

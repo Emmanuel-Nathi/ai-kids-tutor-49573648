@@ -1,73 +1,28 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useChildData } from "@/hooks/useChildData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
-import { ArrowLeft, Star, Gift, Check, Clock, X } from "lucide-react";
+import { Star, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
-interface Reward {
-  id: string;
-  name: string;
-  description: string | null;
-  point_cost: number;
-}
-
-interface Claim {
-  id: string;
-  reward_id: string;
-  status: string;
-  created_at: string;
-  reward_name?: string;
-}
-
 export default function ChildRewards() {
   const { childId } = useParams<{ childId: string }>();
-  const navigate = useNavigate();
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [claims, setClaims] = useState<Claim[]>([]);
+  const { totalPoints, rewards, claims, refetch } = useChildData(childId);
   const [showSparkle, setShowSparkle] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (childId) fetchData();
-  }, [childId]);
-
-  const fetchData = async () => {
-    // Get points
-    const { data: pts } = await supabase.from("points").select("amount").eq("child_id", childId!);
-    const total = (pts || []).reduce((s, p) => s + p.amount, 0);
-    setTotalPoints(total);
-
-    // Get child's parent_id to fetch rewards
-    const { data: child } = await supabase.from("children").select("parent_id").eq("id", childId!).single();
-    if (child) {
-      const { data: rw } = await supabase.from("rewards").select("*").eq("parent_id", child.parent_id).eq("is_active", true);
-      setRewards(rw || []);
-    }
-
-    // Get claims
-    const { data: cl } = await supabase
-      .from("reward_claims")
-      .select("id, reward_id, status, created_at")
-      .eq("child_id", childId!)
-      .order("created_at", { ascending: false });
-
-    setClaims(cl || []);
-  };
-
-  const claimReward = async (reward: Reward) => {
+  const claimReward = async (reward: { id: string; name: string; point_cost: number }) => {
     if (totalPoints < reward.point_cost) {
       toast.error(`You need ${reward.point_cost - totalPoints} more points!`);
       return;
     }
     setClaimingId(reward.id);
 
-    // Deduct XP immediately via edge function (bypasses RLS since child isn't parent-authed)
     try {
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-points`, {
         method: "POST",
@@ -88,7 +43,6 @@ export default function ChildRewards() {
       return;
     }
 
-    // Insert claim record
     const { error } = await supabase.from("reward_claims").insert({
       child_id: childId!,
       reward_id: reward.id,
@@ -98,13 +52,11 @@ export default function ChildRewards() {
       toast.error(error.message);
     } else {
       toast.success("Reward claimed! Waiting for parent approval 🎉");
-
-      // Analytics tracking
       window.posthog?.capture('reward_claimed', { child_id: childId, reward_name: reward.name, point_cost: reward.point_cost });
       window.gtag?.('event', 'reward_claim', { reward_name: reward.name, point_cost: reward.point_cost });
       setShowSparkle(true);
       setTimeout(() => setShowSparkle(false), 1500);
-      fetchData();
+      refetch();
     }
     setClaimingId(null);
   };
@@ -136,7 +88,6 @@ export default function ChildRewards() {
           className="mx-auto"
         />
 
-        {/* Available rewards */}
         {rewards.length > 0 ? (
           <div className="space-y-3">
             <h3 className="font-display font-semibold">Available Rewards</h3>
@@ -172,7 +123,6 @@ export default function ChildRewards() {
           </Card>
         )}
 
-        {/* Claims history */}
         {claims.length > 0 && (
           <div className="space-y-3">
             <h3 className="font-display font-semibold">Your Claims</h3>
