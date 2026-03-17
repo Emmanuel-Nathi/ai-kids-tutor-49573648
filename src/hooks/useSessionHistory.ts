@@ -100,12 +100,14 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
     if (enabled && childId) fetchData();
   }, [enabled, childId, fetchData]);
 
-  // Realtime subscription
+  // Realtime subscriptions for points, sessions, and homework
   useEffect(() => {
     if (!enabled || !childId) return;
     const channel = supabase
-      .channel(`points-${childId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "points", filter: `child_id=eq.${childId}` }, () => fetchData())
+      .channel(`child-activity-${childId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "points", filter: `child_id=eq.${childId}` }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "sessions", filter: `child_id=eq.${childId}` }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "homework", filter: `child_id=eq.${childId}` }, () => fetchData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [enabled, childId, fetchData]);
