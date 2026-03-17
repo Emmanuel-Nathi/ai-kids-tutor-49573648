@@ -21,6 +21,7 @@ import ChildLogin from "./pages/ChildLogin";
 import ChildProfile from "./pages/ChildProfile";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
