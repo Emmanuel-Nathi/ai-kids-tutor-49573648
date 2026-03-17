@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/child-login" element={<ChildLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/paywall" element={<Paywall />} />
             <Route path="/parent" element={<SubscriptionGuard><ParentDashboard /></SubscriptionGuard>} />
             <Route path="/parent/child/:childId" element={<SubscriptionGuard><ParentChildDetail /></SubscriptionGuard>} />

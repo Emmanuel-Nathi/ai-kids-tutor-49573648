@@ -271,6 +271,7 @@ export default function Auth() {
           >
             Get Started
           </Button>
+          )}
         </CardContent>
       </Card>
     </div>
