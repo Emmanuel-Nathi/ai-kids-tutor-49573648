@@ -103,6 +103,42 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {forgotPassword ? (
+            resetSent ? (
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  We've sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the link to set a new password.
+                </p>
+                <Button variant="outline" className="w-full font-display" onClick={() => { setForgotPassword(false); setResetSent(false); }}>
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="parent@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full font-display" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setForgotPassword(false)}
+                  className="w-full text-sm text-primary hover:underline"
+                >
+                  Back to Sign In
+                </button>
+              </form>
+            )
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
