@@ -60,10 +60,6 @@ export function ChildSetupWizard() {
     }
   };
 
-  const handlePinDigit = (d: string) => {
-    if (pin.length < 4) setPin(pin + d);
-  };
-  const handlePinDelete = () => setPin(pin.slice(0, -1));
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
