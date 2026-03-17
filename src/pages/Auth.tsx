@@ -94,10 +94,12 @@ export default function Auth() {
         <CardHeader className="text-center">
           <OwlMascot size="md" className="mx-auto mb-2" />
           <CardTitle className="font-display text-2xl">
-            {isSignUp ? "Create Parent Account" : "Welcome Back"}
+            {forgotPassword ? "Reset Password" : isSignUp ? "Create Parent Account" : "Welcome Back"}
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Sign up to manage your child's learning" : "Sign in to your parent dashboard"}
+            {forgotPassword
+              ? "Enter your email and we'll send you a reset link"
+              : isSignUp ? "Sign up to manage your child's learning" : "Sign in to your parent dashboard"}
           </CardDescription>
         </CardHeader>
         <CardContent>
