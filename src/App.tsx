@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,8 +8,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { OwlMascot } from "@/components/OwlMascot";
-import Landing from "./pages/Landing";
+import { motion } from "framer-motion";
 
+const Landing = lazy(() => import("./pages/Landing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Paywall = lazy(() => import("./pages/Paywall"));
 const ParentDashboard = lazy(() => import("./pages/ParentDashboard"));
@@ -26,12 +27,56 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const loadingMessages = [
+  "Getting your owl ready… 🦉",
+  "Sharpening pencils… ✏️",
+  "Opening textbooks… 📚",
+  "Warming up the brain… 🧠",
+  "Counting the stars… ⭐",
+];
 
 function LoadingFallback() {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex(i => (i + 1) % loadingMessages.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <OwlMascot size="lg" message="Loading..." />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="flex flex-col items-center gap-6"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse scale-125" />
+          <OwlMascot size="lg" animate variant="idle" />
+        </div>
+        <motion.p
+          key={msgIndex}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="font-display text-lg text-muted-foreground"
+        >
+          {loadingMessages[msgIndex]}
+        </motion.p>
+        <div className="flex gap-1.5">
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full bg-primary"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+            />
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }
