@@ -80,6 +80,7 @@ function LoadingFallback() {
     </div>
   );
 }
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
