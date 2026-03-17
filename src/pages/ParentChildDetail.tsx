@@ -16,6 +16,7 @@ import { ActivityLog } from "@/components/parent/ActivityLog";
 import { SessionHistory } from "@/components/parent/SessionHistory";
 import { CurriculumMastery } from "@/components/parent/CurriculumMastery";
 import { SubjectChart } from "@/components/parent/SubjectChart";
+import { AnalyticsSkeleton } from "@/components/parent/AnalyticsSkeleton";
 
 export default function ParentChildDetail() {
   const { childId } = useParams<{ childId: string }>();
