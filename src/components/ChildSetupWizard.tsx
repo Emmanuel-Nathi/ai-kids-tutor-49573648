@@ -7,16 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { ArrowLeft, ArrowRight, Check, BookOpen, Delete } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
-
-const CURRICULUMS = [
-  { value: "caps", label: "CAPS", description: "Public Schools (SA)" },
-  { value: "ieb", label: "IEB", description: "Private Schools (SA)" },
-  { value: "cambridge", label: "Cambridge", description: "International" },
-];
-
-const GRADES = ["1", "2", "3", "4", "5", "6", "7", "8"];
+import { NameStep } from "@/components/wizard/NameStep";
+import { CurriculumStep } from "@/components/wizard/CurriculumStep";
+import { GradeStep } from "@/components/wizard/GradeStep";
+import { PinStep } from "@/components/wizard/PinStep";
 
 const TOTAL_STEPS = 4;
 
