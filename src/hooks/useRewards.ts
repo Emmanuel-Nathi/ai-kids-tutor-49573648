@@ -26,17 +26,12 @@ export function useRewards(userId: string | undefined, childIds: string[]) {
     if (!userId) return;
     setLoading(true);
 
-    const promises: Promise<any>[] = [
-      supabase.from("rewards").select("*").eq("parent_id", userId).order("created_at"),
-    ];
+    const rewardsPromise = supabase.from("rewards").select("*").eq("parent_id", userId).order("created_at");
+    const claimsPromise = childIds.length > 0
+      ? supabase.from("reward_claims").select("*").in("child_id", childIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as RewardClaim[] });
 
-    if (childIds.length > 0) {
-      promises.push(
-        supabase.from("reward_claims").select("*").in("child_id", childIds).order("created_at", { ascending: false })
-      );
-    }
-
-    const results = await Promise.all(promises);
+    const [rewardsResult, claimsResult] = await Promise.all([rewardsPromise, claimsPromise]);
     setRewards(results[0].data || []);
     setClaims(results[1]?.data || []);
     setLoading(false);
