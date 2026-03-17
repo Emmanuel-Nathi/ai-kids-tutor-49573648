@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useChildData } from "@/hooks/useChildData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OwlMascot } from "@/components/OwlMascot";
@@ -15,37 +14,9 @@ const curriculumLabels: Record<string, string> = {
 
 export default function ChildProfile() {
   const { childId } = useParams<{ childId: string }>();
-  const [child, setChild] = useState<any>(null);
-  const [totalXP, setTotalXP] = useState(0);
-  const [sessionCount, setSessionCount] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const { child, totalPoints, streak, sessionCount, loading } = useChildData(childId);
 
-  useEffect(() => {
-    if (!childId) return;
-
-    supabase.from("children").select("*").eq("id", childId).single().then(({ data }) => setChild(data));
-
-    supabase.from("points").select("amount").eq("child_id", childId).then(({ data }) => {
-      setTotalXP(data?.reduce((sum, p) => sum + p.amount, 0) || 0);
-    });
-
-    supabase.from("sessions").select("id, started_at").eq("child_id", childId).order("started_at", { ascending: false }).then(({ data }) => {
-      setSessionCount(data?.length || 0);
-      if (!data || data.length === 0) { setStreak(0); return; }
-      const days = [...new Set(data.map(s => new Date(s.started_at).toDateString()))];
-      let count = 0;
-      const today = new Date();
-      for (let i = 0; i < days.length; i++) {
-        const expected = new Date(today);
-        expected.setDate(today.getDate() - i);
-        if (days[i] === expected.toDateString()) count++;
-        else break;
-      }
-      setStreak(count);
-    });
-  }, [childId]);
-
-  if (!child) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
+  if (loading || !child) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,7 +53,7 @@ export default function ChildProfile() {
           <Card>
             <CardContent className="flex flex-col items-center gap-1 py-6">
               <Star className="h-8 w-8 text-[hsl(var(--star-gold))]" />
-              <span className="font-display font-bold text-2xl">{totalXP}</span>
+              <span className="font-display font-bold text-2xl">{totalPoints}</span>
               <span className="text-xs text-muted-foreground">Total XP</span>
             </CardContent>
           </Card>
