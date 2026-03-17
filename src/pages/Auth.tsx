@@ -175,6 +175,15 @@ export default function Auth() {
                 minLength={6}
               />
             </div>
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={() => setForgotPassword(true)}
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot Password?
+              </button>
+            )}
             <Button type="submit" className="w-full font-display" disabled={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
