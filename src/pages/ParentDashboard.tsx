@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { SubscriptionManager } from "@/components/SubscriptionManager";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,66 +8,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Link, Key, UserPlus, Mail } from "lucide-react";
+import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Key, UserPlus, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-
-interface Child {
-  id: string;
-  name: string;
-  grade: string;
-  curriculum_level: string;
-  avatar_url: string | null;
-  selected_curriculum: string;
-  preferred_language: string;
-  access_pin: string | null;
-}
-
-interface ChildWithStats extends Child {
-  totalPoints: number;
-  sessionCount: number;
-}
-
-interface RewardClaim {
-  id: string;
-  child_id: string;
-  reward_id: string;
-  status: string;
-  created_at: string;
-}
-
-interface Reward {
-  id: string;
-  name: string;
-  description: string | null;
-  point_cost: number;
-  is_active: boolean;
-}
+import { useChildren, ChildWithStats } from "@/hooks/useChildren";
+import { useRewards } from "@/hooks/useRewards";
 
 export default function ParentDashboard() {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [children, setChildren] = useState<ChildWithStats[]>([]);
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [claims, setClaims] = useState<RewardClaim[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [addOpen, setAddOpen] = useState(false);
+  const { children, loading: childrenLoading, refetch: refetchChildren, childIdsRef } = useChildren(user?.id);
+  const { rewards, claims, refetch: refetchRewards } = useRewards(user?.id, childIdsRef.current);
+
   const [rewardOpen, setRewardOpen] = useState(false);
   const [pinDialogChild, setPinDialogChild] = useState<ChildWithStats | null>(null);
   const [newPin, setNewPin] = useState("");
-  const [newChild, setNewChild] = useState({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
   const [newReward, setNewReward] = useState({ name: "", description: "", point_cost: "100" });
   const [coParentEmail, setCoParentEmail] = useState("");
   const [coParentOpen, setCoParentOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
-  const [addingChild, setAddingChild] = useState(false);
   const [addingReward, setAddingReward] = useState(false);
   const [claimLoading, setClaimLoading] = useState<string | null>(null);
-  const childIdsRef = useRef<string[]>([]);
+
+  const loading = childrenLoading;
 
   // Payment success tracking
   useEffect(() => {
@@ -91,10 +57,6 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (user) fetchAll();
-  }, [user]);
 
   // Realtime subscription for XP notifications
   useEffect(() => {
@@ -126,7 +88,8 @@ export default function ParentDashboard() {
             const childName = children.find((c) => c.id === claim.child_id)?.name || "Your child";
             const rewardName = rewards.find((r) => r.id === claim.reward_id)?.name || "a reward";
             toast.info(`${childName} just claimed "${rewardName}"! 🎁`, { duration: 5000 });
-            fetchAll();
+            refetchChildren();
+            refetchRewards();
           }
         }
       )
@@ -134,57 +97,6 @@ export default function ParentDashboard() {
 
     return () => { supabase.removeChannel(channel); };
   }, [children]);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    const { data: childrenData } = await supabase.from("children").select("*").order("created_at");
-
-    const enriched: ChildWithStats[] = [];
-    for (const c of childrenData || []) {
-      const { data: pts } = await supabase.from("points").select("amount").eq("child_id", c.id);
-      const { count } = await supabase.from("sessions").select("*", { count: "exact", head: true }).eq("child_id", c.id);
-      enriched.push({
-        ...(c as any),
-        totalPoints: (pts || []).reduce((s, p) => s + p.amount, 0),
-        sessionCount: count || 0,
-      });
-    }
-    setChildren(enriched);
-    childIdsRef.current = enriched.map((c) => c.id);
-
-    if (user) {
-      const { data: rw } = await supabase.from("rewards").select("*").eq("parent_id", user.id).order("created_at");
-      setRewards(rw || []);
-    }
-
-    const childIds = (childrenData || []).map((c) => c.id);
-    if (childIds.length > 0) {
-      const { data: cl } = await supabase.from("reward_claims").select("*").in("child_id", childIds).order("created_at", { ascending: false });
-      setClaims(cl || []);
-    }
-    setLoading(false);
-  };
-
-  const addChild = async () => {
-    if (!user || !newChild.name.trim()) return;
-    setAddingChild(true);
-    const { error } = await supabase.from("children").insert({
-      parent_id: user.id,
-      name: newChild.name.trim(),
-      grade: newChild.grade,
-      curriculum_level: newChild.curriculum_level,
-      selected_curriculum: newChild.selected_curriculum,
-      preferred_language: newChild.preferred_language,
-    } as any);
-    if (error) toast.error(error.message);
-    else {
-      toast.success(`${newChild.name} added!`);
-      setNewChild({ name: "", grade: "1", curriculum_level: "primary", selected_curriculum: "cambridge", preferred_language: "english" });
-      setAddOpen(false);
-      fetchAll();
-    }
-    setAddingChild(false);
-  };
 
   const addReward = async () => {
     if (!user || !newReward.name.trim()) return;
@@ -200,7 +112,7 @@ export default function ParentDashboard() {
       toast.success("Reward created!");
       setNewReward({ name: "", description: "", point_cost: "100" });
       setRewardOpen(false);
-      fetchAll();
+      refetchRewards();
     }
     setAddingReward(false);
   };
@@ -211,7 +123,7 @@ export default function ParentDashboard() {
     if (error) toast.error(error.message);
     else {
       toast.success(status === "approved" ? "Reward approved! 🎉" : "Claim denied");
-      fetchAll();
+      refetchRewards();
     }
     setClaimLoading(null);
   };
@@ -230,7 +142,7 @@ export default function ParentDashboard() {
       toast.success(`PIN set for ${pinDialogChild.name}!`);
       setPinDialogChild(null);
       setNewPin("");
-      fetchAll();
+      refetchChildren();
     }
   };
 
@@ -385,7 +297,6 @@ export default function ParentDashboard() {
                         <span className="flex items-center gap-1"><Star className="w-4 h-4 text-star-gold" /> {child.totalPoints} pts</span>
                         <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {child.sessionCount} sessions</span>
                       </div>
-                      {/* Kid Link + PIN */}
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={(e) => { e.stopPropagation(); copyKidLink(child.id); }}>
                           <Copy className="w-3 h-3 mr-1" /> Copy Kid Link
