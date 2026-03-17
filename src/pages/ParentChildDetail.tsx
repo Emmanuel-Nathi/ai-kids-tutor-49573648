@@ -127,7 +127,7 @@ export default function ParentChildDetail() {
           badgeCount={todayLog.length}
         />
 
-        <ParentAnalytics childId={childId!} />
+        <ParentAnalytics sessions={sessions} />
 
         <SubjectChart sessions={sessions} />
 

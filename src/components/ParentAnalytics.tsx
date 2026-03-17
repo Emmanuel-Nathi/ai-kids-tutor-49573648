@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { SessionWithMessages } from "@/hooks/useSessionHistory";
 
 interface SubjectStat {
   subject: string;
@@ -17,38 +17,25 @@ const COLORS: Record<string, string> = {
   general: "hsl(45, 93%, 58%)",
 };
 
-export function ParentAnalytics({ childId }: { childId: string }) {
-  const [stats, setStats] = useState<SubjectStat[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ParentAnalytics({ sessions }: { sessions: SessionWithMessages[] }) {
+  const stats = useMemo<SubjectStat[]>(() => {
+    const grouped: Record<string, { total: number; count: number; sessions: number }> = {};
+    for (const s of sessions) {
+      const subj = s.subject || "general";
+      if (!grouped[subj]) grouped[subj] = { total: 0, count: 0, sessions: 0 };
+      grouped[subj].sessions += 1;
+      if (s.curriculum_alignment_score != null) {
+        grouped[subj].total += s.curriculum_alignment_score;
+        grouped[subj].count += 1;
+      }
+    }
+    return Object.entries(grouped).map(([subject, g]) => ({
+      subject,
+      avgScore: g.count > 0 ? Math.round(g.total / g.count) : 0,
+      sessions: g.sessions,
+    }));
+  }, [sessions]);
 
-  useEffect(() => {
-    if (!childId) return;
-    supabase
-      .from("sessions")
-      .select("subject, curriculum_alignment_score")
-      .eq("child_id", childId)
-      .then(({ data }) => {
-        const grouped: Record<string, { total: number; count: number; sessions: number }> = {};
-        for (const s of data || []) {
-          const subj = s.subject || "general";
-          if (!grouped[subj]) grouped[subj] = { total: 0, count: 0, sessions: 0 };
-          grouped[subj].sessions += 1;
-          if (s.curriculum_alignment_score != null) {
-            grouped[subj].total += s.curriculum_alignment_score;
-            grouped[subj].count += 1;
-          }
-        }
-        const result: SubjectStat[] = Object.entries(grouped).map(([subject, g]) => ({
-          subject,
-          avgScore: g.count > 0 ? Math.round(g.total / g.count) : 0,
-          sessions: g.sessions,
-        }));
-        setStats(result);
-        setLoading(false);
-      });
-  }, [childId]);
-
-  if (loading) return null;
   if (stats.length === 0) return null;
 
   const struggling = stats.filter((s) => s.avgScore > 0).sort((a, b) => a.avgScore - b.avgScore)[0];
