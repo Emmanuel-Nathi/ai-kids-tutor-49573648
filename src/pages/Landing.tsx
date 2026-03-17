@@ -51,8 +51,8 @@ export default function Landing() {
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => navigate("/")}
         >
-          <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 object-contain" loading="lazy" />
-          <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
+          <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-12 h-12 object-contain" loading="lazy" />
+          <span className="font-display font-bold text-xl text-foreground">AI Kids Tutor</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate("/child-login")}>

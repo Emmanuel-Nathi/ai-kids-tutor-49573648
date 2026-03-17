@@ -108,6 +108,7 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
       .on("postgres_changes", { event: "*", schema: "public", table: "points", filter: `child_id=eq.${childId}` }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "sessions", filter: `child_id=eq.${childId}` }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "homework", filter: `child_id=eq.${childId}` }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "reward_claims", filter: `child_id=eq.${childId}` }, () => fetchData())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [enabled, childId, fetchData]);
