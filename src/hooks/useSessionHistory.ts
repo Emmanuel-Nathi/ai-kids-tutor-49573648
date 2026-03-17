@@ -39,11 +39,27 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
 
     const { data: sessionsData } = await supabase.from("sessions").select("*").eq("child_id", childId).order("started_at", { ascending: false });
 
-    const enriched: SessionWithMessages[] = [];
-    for (const s of sessionsData || []) {
-      const { data: msgs } = await supabase.from("messages").select("role, content, created_at").eq("session_id", s.id).order("created_at");
-      enriched.push({ ...s, messages: msgs || [] });
+    const sessionIds = (sessionsData || []).map((s) => s.id);
+    let allMsgs: { role: string; content: string; created_at: string; session_id: string }[] = [];
+    if (sessionIds.length > 0) {
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("role, content, created_at, session_id")
+        .in("session_id", sessionIds)
+        .order("created_at");
+      allMsgs = msgs || [];
     }
+
+    const msgsBySession = allMsgs.reduce((acc, m) => {
+      if (!acc[m.session_id]) acc[m.session_id] = [];
+      acc[m.session_id].push({ role: m.role, content: m.content, created_at: m.created_at });
+      return acc;
+    }, {} as Record<string, { role: string; content: string; created_at: string }[]>);
+
+    const enriched: SessionWithMessages[] = (sessionsData || []).map((s) => ({
+      ...s,
+      messages: msgsBySession[s.id] || [],
+    }));
     setSessions(enriched);
 
     const { data: pts } = await supabase.from("points").select("amount, reason, created_at").eq("child_id", childId).order("created_at", { ascending: false });
