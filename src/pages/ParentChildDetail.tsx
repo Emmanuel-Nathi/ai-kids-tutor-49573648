@@ -137,7 +137,9 @@ export default function ParentChildDetail() {
           showDate
         />
 
-        <SessionHistory sessions={sessions} />
+            <SessionHistory sessions={sessions} />
+          </>
+        )}
       </main>
 
       <Dialog open={settingPin} onOpenChange={setSettingPin}>
