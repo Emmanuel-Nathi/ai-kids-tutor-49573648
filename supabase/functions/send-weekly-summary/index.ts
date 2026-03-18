@@ -25,6 +25,7 @@ interface ChildStats {
   xp: number
   activeSeconds: number
   homework: number
+  subjects: Record<string, number>
 }
 
 function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string {
@@ -51,6 +52,17 @@ function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string
           <td style="padding:6px 0;text-align:right;font-weight:600;color:#1A1F2C;font-size:14px;">${c.homework}</td>
         </tr>
       </table>
+      ${Object.keys(c.subjects).length > 0 ? `
+      <div style="margin-top:12px;">
+        <p style="color:#6B7280;font-size:13px;margin:0 0 8px;font-weight:600;">📖 Subjects Studied</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${Object.entries(c.subjects).map(([subj, count]) => `
+            <span style="display:inline-block;background:#FED7AA;color:#9A3412;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+              ${subj} × ${count}
+            </span>
+          `).join('')}
+        </div>
+      </div>` : ''}
     </div>
   `).join('')
 
@@ -108,7 +120,12 @@ function buildPlainText(parentName: string, childrenStats: ChildStats[]): string
     text += `  Sessions: ${c.sessions}\n`
     text += `  XP Earned: ${c.xp}\n`
     text += `  Learning Time: ${formatMinutes(c.activeSeconds)}\n`
-    text += `  Homework: ${c.homework}\n\n`
+    text += `  Homework: ${c.homework}\n`
+    const subjEntries = Object.entries(c.subjects)
+    if (subjEntries.length > 0) {
+      text += `  Subjects: ${subjEntries.map(([s, n]) => `${s} (${n})`).join(', ')}\n`
+    }
+    text += `\n`
   }
   text += `View full report: https://${ROOT_DOMAIN}/parent\n`
   return text
@@ -160,12 +177,19 @@ Deno.serve(async (req) => {
       // Sessions
       const { data: sessions } = await supabase
         .from('sessions')
-        .select('active_time_seconds')
+        .select('active_time_seconds, subject')
         .eq('child_id', child.id)
         .gte('started_at', oneWeekAgo)
 
       const sessionCount = sessions?.length ?? 0
       const activeSeconds = sessions?.reduce((sum, s) => sum + (s.active_time_seconds || 0), 0) ?? 0
+
+      const subjectMap: Record<string, number> = {}
+      for (const s of sessions ?? []) {
+        if (s.subject) {
+          subjectMap[s.subject] = (subjectMap[s.subject] || 0) + 1
+        }
+      }
 
       // XP
       const { data: points } = await supabase
@@ -189,6 +213,7 @@ Deno.serve(async (req) => {
         xp,
         activeSeconds,
         homework: hw?.length ?? 0,
+        subjects: subjectMap,
       })
     }
 
