@@ -264,21 +264,18 @@ export default function Auth() {
             </button>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full mt-3 font-display"
-            onClick={() => navigate("/")}
-          >
-            Get Started
-          </Button>
           </>
           )}
         </CardContent>
       </Card>
-      <Button variant="link" className="mt-3 text-muted-foreground text-xs" onClick={() => navigate("/")}>
-        ← Back to Website
-      </Button>
+      <div className="flex flex-col items-center gap-1 mt-3">
+        <Button variant="link" className="text-muted-foreground text-sm" onClick={() => navigate("/child-login")}>
+          Child Login
+        </Button>
+        <Button variant="link" className="text-muted-foreground text-xs" onClick={() => navigate("/")}>
+          ← Back to Website
+        </Button>
+      </div>
     </div>
   );
 }
