@@ -47,7 +47,7 @@ export default function ParentChildDetail() {
   const filteredActivity = useMemo(() => {
     if (!dateRange.from && !dateRange.to) return activityLog;
     return activityLog.filter((a) => {
-      const d = new Date(a.time);
+      const d = new Date(a.timestamp);
       if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
       if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
       return true;
