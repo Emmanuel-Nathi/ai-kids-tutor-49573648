@@ -68,6 +68,9 @@ export default function ChildHome() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="shrink-0">
+            <Home className="w-5 h-5" />
+          </Button>
           <span className="font-display font-bold text-lg">{childName}'s Learning Hub</span>
           <Badge variant="secondary" className="text-[10px] uppercase">
             {curriculumLabels[curriculum] || curriculum}

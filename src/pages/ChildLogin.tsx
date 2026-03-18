@@ -113,6 +113,9 @@ export default function ChildLogin() {
         <Button variant="link" className="w-full text-muted-foreground" onClick={() => navigate("/auth")}>
           Parent Login Instead
         </Button>
+        <Button variant="link" className="w-full text-muted-foreground text-xs" onClick={() => navigate("/")}>
+          ← Back to Website
+        </Button>
       </div>
     </div>
   );

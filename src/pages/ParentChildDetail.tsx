@@ -144,29 +144,31 @@ export default function ParentChildDetail() {
           <AnalyticsSkeleton />
         ) : (
           <>
-            <ChildStatsRow sessions={sessions} totalPoints={totalPoints} />
+            <DateRangeFilter dateRange={dateRange} onChange={setDateRange} />
 
-        <ActivityLog
-          items={todayLog}
-          title="Today's Activity"
-          icon={<Zap className="w-4 h-4 text-primary" />}
-          badgeCount={todayLog.length}
-        />
+            <ChildStatsRow sessions={filteredSessions} totalPoints={filteredPoints} />
 
-        <ParentAnalytics sessions={sessions} />
+            <ActivityLog
+              items={todayLog}
+              title="Today's Activity"
+              icon={<Zap className="w-4 h-4 text-primary" />}
+              badgeCount={todayLog.length}
+            />
 
-        <SubjectChart sessions={sessions} />
+            <ParentAnalytics sessions={filteredSessions} />
 
-        <CurriculumMastery sessions={sessions} />
+            <SubjectChart sessions={filteredSessions} />
 
-        <ActivityLog
-          items={activityLog}
-          title="Full Activity Log"
-          maxItems={50}
-          showDate
-        />
+            <CurriculumMastery sessions={filteredSessions} />
 
-            <SessionHistory sessions={sessions} />
+            <ActivityLog
+              items={filteredActivity}
+              title="Full Activity Log"
+              maxItems={50}
+              showDate
+            />
+
+            <SessionHistory sessions={filteredSessions} />
           </>
         )}
       </main>
