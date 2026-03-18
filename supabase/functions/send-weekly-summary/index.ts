@@ -120,7 +120,12 @@ function buildPlainText(parentName: string, childrenStats: ChildStats[]): string
     text += `  Sessions: ${c.sessions}\n`
     text += `  XP Earned: ${c.xp}\n`
     text += `  Learning Time: ${formatMinutes(c.activeSeconds)}\n`
-    text += `  Homework: ${c.homework}\n\n`
+    text += `  Homework: ${c.homework}\n`
+    const subjEntries = Object.entries(c.subjects)
+    if (subjEntries.length > 0) {
+      text += `  Subjects: ${subjEntries.map(([s, n]) => `${s} (${n})`).join(', ')}\n`
+    }
+    text += `\n`
   }
   text += `View full report: https://${ROOT_DOMAIN}/parent\n`
   return text
