@@ -25,6 +25,7 @@ interface ChildStats {
   xp: number
   activeSeconds: number
   homework: number
+  subjects: Record<string, number>
 }
 
 function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string {
