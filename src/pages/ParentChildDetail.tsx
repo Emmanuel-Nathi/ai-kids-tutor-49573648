@@ -32,6 +32,33 @@ export default function ParentChildDetail() {
   const [newPin, setNewPin] = useState("");
 
   const { childName, sessions, totalPoints, activityLog, todayLog, loading } = useSessionHistory(childId, pinVerified);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+
+  const filteredSessions = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return sessions;
+    return sessions.filter((s) => {
+      const d = new Date(s.created_at);
+      if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
+      if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
+      return true;
+    });
+  }, [sessions, dateRange]);
+
+  const filteredActivity = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return activityLog;
+    return activityLog.filter((a) => {
+      const d = new Date(a.time);
+      if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
+      if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
+      return true;
+    });
+  }, [activityLog, dateRange]);
+
+  const filteredPoints = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return totalPoints;
+    // totalPoints is aggregate; recalculate isn't possible without raw points data, so keep as-is
+    return totalPoints;
+  }, [totalPoints, dateRange]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
