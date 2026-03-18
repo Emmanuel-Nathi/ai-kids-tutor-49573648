@@ -208,6 +208,7 @@ Deno.serve(async (req) => {
         xp,
         activeSeconds,
         homework: hw?.length ?? 0,
+        subjects: subjectMap,
       })
     }
 
