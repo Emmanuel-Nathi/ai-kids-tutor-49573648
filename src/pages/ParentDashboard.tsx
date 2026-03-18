@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OwlMascot } from "@/components/OwlMascot";
-import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Key, UserPlus, Mail } from "lucide-react";
+import { Plus, LogOut, BookOpen, Star, Clock, Gift, Check, X, ChevronRight, Copy, Key, UserPlus, Mail, Home } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -192,9 +192,14 @@ export default function ParentDashboard() {
           <OwlMascot size="sm" animate={false} />
           <span className="font-display font-bold text-lg">Parent Dashboard</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
-          <LogOut className="w-4 h-4 mr-1" /> Sign Out
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+            <Home className="w-4 h-4 mr-1" /> Website
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { signOut(); navigate("/"); }}>
+            <LogOut className="w-4 h-4 mr-1" /> Sign Out
+          </Button>
+        </div>
       </header>
 
       <main className="p-4 max-w-4xl mx-auto space-y-6">

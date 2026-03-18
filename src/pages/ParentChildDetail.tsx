@@ -17,6 +17,8 @@ import { SessionHistory } from "@/components/parent/SessionHistory";
 import { CurriculumMastery } from "@/components/parent/CurriculumMastery";
 import { SubjectChart } from "@/components/parent/SubjectChart";
 import { AnalyticsSkeleton } from "@/components/parent/AnalyticsSkeleton";
+import { DateRangeFilter } from "@/components/parent/DateRangeFilter";
+import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 
 export default function ParentChildDetail() {
   const { childId } = useParams<{ childId: string }>();
@@ -30,6 +32,33 @@ export default function ParentChildDetail() {
   const [newPin, setNewPin] = useState("");
 
   const { childName, sessions, totalPoints, activityLog, todayLog, loading } = useSessionHistory(childId, pinVerified);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+
+  const filteredSessions = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return sessions;
+    return sessions.filter((s) => {
+      const d = new Date(s.started_at);
+      if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
+      if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
+      return true;
+    });
+  }, [sessions, dateRange]);
+
+  const filteredActivity = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return activityLog;
+    return activityLog.filter((a) => {
+      const d = new Date(a.timestamp);
+      if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
+      if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
+      return true;
+    });
+  }, [activityLog, dateRange]);
+
+  const filteredPoints = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return totalPoints;
+    // totalPoints is aggregate; recalculate isn't possible without raw points data, so keep as-is
+    return totalPoints;
+  }, [totalPoints, dateRange]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -115,29 +144,31 @@ export default function ParentChildDetail() {
           <AnalyticsSkeleton />
         ) : (
           <>
-            <ChildStatsRow sessions={sessions} totalPoints={totalPoints} />
+            <DateRangeFilter dateRange={dateRange} onChange={setDateRange} />
 
-        <ActivityLog
-          items={todayLog}
-          title="Today's Activity"
-          icon={<Zap className="w-4 h-4 text-primary" />}
-          badgeCount={todayLog.length}
-        />
+            <ChildStatsRow sessions={filteredSessions} totalPoints={filteredPoints} />
 
-        <ParentAnalytics sessions={sessions} />
+            <ActivityLog
+              items={todayLog}
+              title="Today's Activity"
+              icon={<Zap className="w-4 h-4 text-primary" />}
+              badgeCount={todayLog.length}
+            />
 
-        <SubjectChart sessions={sessions} />
+            <ParentAnalytics sessions={filteredSessions} />
 
-        <CurriculumMastery sessions={sessions} />
+            <SubjectChart sessions={filteredSessions} />
 
-        <ActivityLog
-          items={activityLog}
-          title="Full Activity Log"
-          maxItems={50}
-          showDate
-        />
+            <CurriculumMastery sessions={filteredSessions} />
 
-            <SessionHistory sessions={sessions} />
+            <ActivityLog
+              items={filteredActivity}
+              title="Full Activity Log"
+              maxItems={50}
+              showDate
+            />
+
+            <SessionHistory sessions={filteredSessions} />
           </>
         )}
       </main>
