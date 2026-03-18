@@ -17,6 +17,8 @@ import { SessionHistory } from "@/components/parent/SessionHistory";
 import { CurriculumMastery } from "@/components/parent/CurriculumMastery";
 import { SubjectChart } from "@/components/parent/SubjectChart";
 import { AnalyticsSkeleton } from "@/components/parent/AnalyticsSkeleton";
+import { DateRangeFilter } from "@/components/parent/DateRangeFilter";
+import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 
 export default function ParentChildDetail() {
   const { childId } = useParams<{ childId: string }>();
