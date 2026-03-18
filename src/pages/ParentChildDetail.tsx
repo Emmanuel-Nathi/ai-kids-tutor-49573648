@@ -37,7 +37,7 @@ export default function ParentChildDetail() {
   const filteredSessions = useMemo(() => {
     if (!dateRange.from && !dateRange.to) return sessions;
     return sessions.filter((s) => {
-      const d = new Date(s.created_at);
+      const d = new Date(s.started_at);
       if (dateRange.from && isBefore(d, startOfDay(dateRange.from))) return false;
       if (dateRange.to && isAfter(d, endOfDay(dateRange.to))) return false;
       return true;
