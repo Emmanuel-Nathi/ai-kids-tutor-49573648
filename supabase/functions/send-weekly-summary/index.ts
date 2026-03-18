@@ -172,12 +172,19 @@ Deno.serve(async (req) => {
       // Sessions
       const { data: sessions } = await supabase
         .from('sessions')
-        .select('active_time_seconds')
+        .select('active_time_seconds, subject')
         .eq('child_id', child.id)
         .gte('started_at', oneWeekAgo)
 
       const sessionCount = sessions?.length ?? 0
       const activeSeconds = sessions?.reduce((sum, s) => sum + (s.active_time_seconds || 0), 0) ?? 0
+
+      const subjectMap: Record<string, number> = {}
+      for (const s of sessions ?? []) {
+        if (s.subject) {
+          subjectMap[s.subject] = (subjectMap[s.subject] || 0) + 1
+        }
+      }
 
       // XP
       const { data: points } = await supabase
