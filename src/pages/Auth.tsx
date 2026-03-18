@@ -276,6 +276,9 @@ export default function Auth() {
           )}
         </CardContent>
       </Card>
+      <Button variant="link" className="mt-3 text-muted-foreground text-xs" onClick={() => navigate("/")}>
+        ← Back to Website
+      </Button>
     </div>
   );
 }
