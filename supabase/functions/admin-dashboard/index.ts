@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify user identity with their token
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -35,7 +34,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role using service role client
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: isAdmin } = await adminClient.rpc("has_role", {
       _user_id: user.id,
@@ -52,21 +50,27 @@ Deno.serve(async (req) => {
     const { action, ...params } = await req.json();
 
     if (action === "get-stats") {
-      const [profilesRes, pointsRes, activeRes] = await Promise.all([
+      const [profilesRes, pointsRes, activeRes, trialRes, cancelledRes, childrenRes, sessionsRes] = await Promise.all([
         adminClient.from("profiles").select("id", { count: "exact", head: true }),
         adminClient.from("points").select("amount"),
-        adminClient
-          .from("profiles")
-          .select("id", { count: "exact", head: true })
-          .eq("subscription_status", "active"),
+        adminClient.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_status", "active"),
+        adminClient.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_status", "trial"),
+        adminClient.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_status", "cancelled"),
+        adminClient.from("children").select("id", { count: "exact", head: true }),
+        adminClient.from("sessions").select("id", { count: "exact", head: true })
+          .gte("started_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
       ]);
 
-      const totalXP = (pointsRes.data || []).reduce((sum, p) => sum + p.amount, 0);
+      const totalXP = (pointsRes.data || []).reduce((sum: number, p: any) => sum + p.amount, 0);
 
       return new Response(
         JSON.stringify({
           totalUsers: profilesRes.count || 0,
           activeSubscriptions: activeRes.count || 0,
+          trialUsers: trialRes.count || 0,
+          cancelledUsers: cancelledRes.count || 0,
+          totalChildren: childrenRes.count || 0,
+          sessionsLast7Days: sessionsRes.count || 0,
           totalXP,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -83,6 +87,34 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       return new Response(JSON.stringify({ subscribers: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "list-recent-activity") {
+      const { data, error } = await adminClient
+        .from("sessions")
+        .select("id, child_id, subject, status, started_at, ended_at, active_time_seconds")
+        .order("started_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Get child names
+      const childIds = [...new Set((data || []).map((s: any) => s.child_id))];
+      const { data: children } = await adminClient
+        .from("children")
+        .select("id, name")
+        .in("id", childIds);
+
+      const childMap = Object.fromEntries((children || []).map((c: any) => [c.id, c.name]));
+
+      const sessions = (data || []).map((s: any) => ({
+        ...s,
+        child_name: childMap[s.child_id] || "Unknown",
+      }));
+
+      return new Response(JSON.stringify({ sessions }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -113,7 +145,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

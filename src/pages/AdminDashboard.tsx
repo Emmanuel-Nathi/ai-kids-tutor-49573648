@@ -6,27 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Users, CreditCard, Zap, MoreHorizontal, ShieldX, Loader2, KeyRound } from "lucide-react";
+import {
+  Users, CreditCard, Zap, MoreHorizontal, ShieldX, Loader2, KeyRound,
+  Baby, Activity, Clock,
+} from "lucide-react";
 import { toast } from "sonner";
-import { format, addDays } from "date-fns";
+import { format, addDays, formatDistanceToNow } from "date-fns";
 
 interface Stats {
   totalUsers: number;
   activeSubscriptions: number;
+  trialUsers: number;
+  cancelledUsers: number;
+  totalChildren: number;
+  sessionsLast7Days: number;
   totalXP: number;
 }
 
@@ -36,6 +35,16 @@ interface Subscriber {
   display_name: string | null;
   subscription_status: string;
   created_at: string;
+}
+
+interface RecentSession {
+  id: string;
+  child_name: string;
+  subject: string | null;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  active_time_seconds: number;
 }
 
 function adminCall(action: string, params: Record<string, unknown> = {}) {
@@ -49,14 +58,13 @@ export default function AdminDashboard() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Change password state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // Check admin role
   useEffect(() => {
     if (!user) return;
     supabase
@@ -64,14 +72,18 @@ export default function AdminDashboard() {
       .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
-  // Fetch data once confirmed admin
   useEffect(() => {
     if (!isAdmin) return;
     setLoadingData(true);
-    Promise.all([adminCall("get-stats"), adminCall("list-subscribers")])
-      .then(([statsRes, subsRes]) => {
+    Promise.all([
+      adminCall("get-stats"),
+      adminCall("list-subscribers"),
+      adminCall("list-recent-activity"),
+    ])
+      .then(([statsRes, subsRes, activityRes]) => {
         if (statsRes.data) setStats(statsRes.data);
         if (subsRes.data?.subscribers) setSubscribers(subsRes.data.subscribers);
+        if (activityRes.data?.sessions) setRecentSessions(activityRes.data.sessions);
       })
       .finally(() => setLoadingData(false));
   }, [isAdmin]);
@@ -137,32 +149,59 @@ export default function AdminDashboard() {
       <h1 className="font-display text-3xl font-bold text-foreground mb-8">Admin Dashboard</h1>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-            <Users className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total Users</CardTitle>
+            <Users className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display">{stats?.totalUsers ?? "—"}</p>
+            <p className="text-2xl font-bold font-display">{stats?.totalUsers ?? "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-            <CreditCard className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">Active</CardTitle>
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display">{stats?.activeSubscriptions ?? "—"}</p>
+            <p className="text-2xl font-bold font-display text-accent">{stats?.activeSubscriptions ?? "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total XP Earned</CardTitle>
-            <Zap className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">Trial</CardTitle>
+            <Clock className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold font-display">{stats?.totalXP ?? "—"}</p>
+            <p className="text-2xl font-bold font-display text-secondary">{stats?.trialUsers ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Children</CardTitle>
+            <Baby className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold font-display">{stats?.totalChildren ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Sessions (7d)</CardTitle>
+            <Activity className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold font-display">{stats?.sessionsLast7Days ?? "—"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Total XP</CardTitle>
+            <Zap className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold font-display">{stats?.totalXP ?? "—"}</p>
           </CardContent>
         </Card>
       </div>
@@ -234,45 +273,83 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Change Password Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2">
-            <KeyRound className="w-5 h-5 text-muted-foreground" />
-            <CardTitle className="font-display text-lg">Change Password</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                placeholder="Min 6 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Re-enter password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={handleChangePassword}
-              disabled={changingPassword || !newPassword}
-              className="w-full"
-            >
-              {changingPassword ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              Update Password
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-lg">Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingData ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : recentSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent sessions</p>
+              ) : (
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {recentSessions.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between text-sm border-b border-border pb-2 last:border-0">
+                      <div>
+                        <p className="font-medium">{s.child_name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{s.subject || "—"}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={s.status === "active" ? "default" : "secondary"} className="text-[10px]">
+                          {s.status}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatDistanceToNow(new Date(s.started_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Change Password Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center gap-2">
+              <KeyRound className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="font-display text-lg">Change Password</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Min 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={handleChangePassword}
+                disabled={changingPassword || !newPassword}
+                className="w-full"
+              >
+                {changingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Update Password
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
