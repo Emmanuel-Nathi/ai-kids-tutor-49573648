@@ -8,6 +8,7 @@ import { Delete, ArrowRight } from "lucide-react";
 
 export default function ChildLogin() {
   const navigate = useNavigate();
+  const { setChildSession } = useChildSession();
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
