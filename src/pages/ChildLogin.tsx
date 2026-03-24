@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
+import { useChildSession } from "@/hooks/useChildSession";
 import { toast } from "sonner";
 import { Delete, ArrowRight } from "lucide-react";
 
 export default function ChildLogin() {
   const navigate = useNavigate();
+  const { setChildSession } = useChildSession();
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +38,7 @@ export default function ChildLogin() {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Login failed");
 
+      setChildSession({ child_id: data.child_id, name: data.name });
       toast.success(`Welcome, ${data.name}! 🎉`);
       navigate(`/child/${data.child_id}`);
     } catch (err: any) {

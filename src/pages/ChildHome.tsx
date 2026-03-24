@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { useChildData } from "@/hooks/useChildData";
+import { useRequireChildSession } from "@/hooks/useChildSession";
 import { supabase } from "@/integrations/supabase/client";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
@@ -41,17 +41,13 @@ const STREAK_MESSAGES: Record<number, string> = {
 
 export default function ChildHome() {
   const { childId } = useParams<{ childId: string }>();
-  const { user, loading: authLoading } = useAuth();
+  useRequireChildSession();
   const navigate = useNavigate();
   const { child, totalPoints, streak } = useChildData(childId);
   const [streakBannerShown, setStreakBannerShown] = useState(false);
 
   const childName = child?.name || "";
   const curriculum = child?.selected_curriculum || "cambridge";
-
-  useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
-  }, [user, authLoading, navigate]);
 
   // Show streak milestone toast once
   useEffect(() => {

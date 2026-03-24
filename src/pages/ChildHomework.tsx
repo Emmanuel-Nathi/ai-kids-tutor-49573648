@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequireChildSession } from "@/hooks/useChildSession";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,7 @@ const curriculumActivities: Record<string, { title: string; emoji: string; desc:
 export default function ChildHomework() {
   const { childId } = useParams<{ childId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useRequireChildSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [uploading, setUploading] = useState(false);
@@ -79,7 +79,7 @@ export default function ChildHomework() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !childId || !user) return;
+    if (!file || !childId) return;
 
     setPreviewUrl(URL.createObjectURL(file));
     setParsedContent(null);
