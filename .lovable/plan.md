@@ -1,76 +1,77 @@
 
 
-# Daily Login Streak, Admin Enhancements, and PIN Fix
+# Fix Child Access Flow — PIN-Based (No Parent Auth Required)
 
-## Overview
-Three changes: (1) daily login streak with bonus XP, (2) enhanced admin dashboard, (3) PIN creation audit.
+## Problem
+Currently, child pages (ChildHome, ChildChat, etc.) check for a Supabase auth session and redirect to `/auth` if none exists. But children log in via PIN — they never have an auth session. Additionally, all child data queries go through RLS policies that require `auth.uid()`, which fails for unauthenticated child sessions.
 
----
-
-## 1. Daily Login Streak System
-
-### Database
-- Create a `daily_logins` table to track child logins per day:
-  - `id` (uuid, PK), `child_id` (uuid, NOT NULL), `login_date` (date, NOT NULL), `created_at` (timestamptz)
-  - Unique constraint on `(child_id, login_date)`
-- RLS: allow insert/select where child's `parent_id = auth.uid()` (same pattern as other child tables)
-
-### Backend Logic
-- On child home page load, upsert a row into `daily_logins` for today (using `ON CONFLICT DO NOTHING` via the edge function or client-side insert)
-- Since child login is PIN-based (no auth user), use the existing `child-login` edge function: after successful PIN verification, also insert today's login row using service role
-- Calculate streak from `daily_logins` instead of sessions — more accurate
-
-### Bonus XP
-- Award bonus XP on streak milestones: 3-day = +10 XP, 7-day = +25 XP, 14-day = +50 XP, 30-day = +100 XP
-- Insert into `points` table with reason `"streak_bonus_3"` etc. via the `child-login` edge function
-- Prevent duplicate awards by checking if a points row with that reason already exists for that streak period
-
-### Frontend (ChildHome.tsx)
-- Already shows streak with fire emoji — update `useChildData` to calculate streak from `daily_logins` table instead of sessions
-- Add a streak milestone banner when a bonus is earned (e.g., "🔥 7-day streak! +25 XP bonus!")
+## Solution
+Store the child's identity in localStorage after PIN login. Remove the auth redirect from child pages. Add RLS policies allowing anonymous access to child data by child ID, or better — use an edge function approach to keep data secure.
 
 ---
 
-## 2. Enhanced Admin Dashboard
+## Changes
 
-### Edge Function (`admin-dashboard/index.ts`)
-Add new actions to the existing function:
-- `get-detailed-stats`: Return total users, active/trial/cancelled counts, total children, total sessions (last 7 days), total XP
-- `list-recent-activity`: Return last 20 sessions with child name, subject, duration
+### 1. Store child session in localStorage (`src/pages/ChildLogin.tsx`)
+After successful PIN login, store `{ child_id, name }` in `localStorage` so child pages can identify the logged-in child without Supabase auth.
 
-### Frontend (`AdminDashboard.tsx`)
-- Add stat cards: Total Children, Sessions (7d), Trial Users
-- Add an "Active Users" section showing users who had sessions in the last 7 days
-- Add a "Recent Activity" table showing recent sessions
+### 2. Create a child session context (`src/hooks/useChildSession.tsx`)
+New context/hook that:
+- Reads `child_id` and `name` from localStorage
+- Validates the URL param `childId` matches the stored session
+- Redirects to `/child-login` if no valid child session exists
+- Provides a `logout` function that clears localStorage and navigates to `/child-login`
+
+### 3. Remove auth requirement from child pages
+- **`ChildHome.tsx`**: Remove `useAuth` import and the `useEffect` that redirects to `/auth`. Use `useChildSession` instead to validate access.
+- **`AppLayout.tsx`**: Check if it enforces auth — if so, make it optional for child routes.
+
+### 4. Add anonymous-friendly RLS policies for child data
+Add SELECT policies on `children`, `points`, `sessions`, `daily_logins`, `reward_claims`, `rewards`, `messages` tables that allow the `anon` role to read data by `child_id` directly. This is acceptable because child IDs are UUIDs (unguessable) and children don't have sensitive data.
+
+Migration will add policies like:
+```sql
+CREATE POLICY "Anon can view child by id" ON children
+FOR SELECT TO anon USING (true);
+-- Scoped by the query's .eq("id", childId)
+```
+
+Actually, a more secure approach: add policies scoped to anon that only allow SELECT (read-only) — children can view but not modify data via the client.
+
+For INSERT operations (sessions, messages, points, reward_claims), add anon INSERT policies so children can create sessions and earn points.
+
+### 5. Update `useChildData.ts`
+No code changes needed — it already queries by `childId`. Once RLS allows anon access, it will work.
+
+### 6. Update child page components
+- **`ChildHome.tsx`**: Replace auth check with child session check
+- **`ChildChat.tsx`**, **`ChildHomework.tsx`**, **`ChildRewards.tsx`**, **`ChildActivities.tsx`**, **`ChildProfile.tsx`**: Same — remove any auth dependency, use child session validation
+
+### 7. Landing page CTA
+Update the landing page's main CTA buttons to direct children to `/child-login` and parents to `/auth`.
 
 ---
 
-## 3. PIN Creation Fix
+## Files to Create
+- `src/hooks/useChildSession.tsx` — child session context from localStorage
 
-### Current State Audit
-The PIN step and insert logic look correct:
-- `PinStep` component properly limits to 4 digits
-- `ChildSetupWizard` inserts with `access_pin: pin`
-- `children` table has `access_pin` as nullable text column
-- The insert uses `as any` cast — this works but bypasses type safety
+## Files to Modify
+- `src/pages/ChildLogin.tsx` — save child session to localStorage on success
+- `src/pages/ChildHome.tsx` — remove auth redirect, use child session
+- `src/pages/ChildChat.tsx` — remove auth dependency
+- `src/pages/ChildHomework.tsx` — remove auth dependency  
+- `src/pages/ChildRewards.tsx` — remove auth dependency
+- `src/pages/ChildActivities.tsx` — remove auth dependency
+- `src/pages/ChildProfile.tsx` — remove auth dependency
+- `src/components/AppLayout.tsx` — ensure no auth gate for child routes
 
-### Fix
-- Remove the `as any` cast from the insert in `ChildSetupWizard.tsx` — the types already support `access_pin` in the Insert type
-- Add validation feedback: show "PIN must be exactly 4 digits" message if user tries to complete with partial PIN
-- Ensure the `child-login` edge function handles edge cases (empty name, whitespace PIN)
+## Database Migration
+- Add anon SELECT policies on: `children`, `points`, `sessions`, `daily_logins`, `reward_claims`, `rewards`, `messages`
+- Add anon INSERT policies on: `sessions`, `messages` (so children can start sessions and chat)
 
----
-
-## Technical Details
-
-### Files to Create
-- `supabase/migrations/XXXX_daily_logins.sql` — new table + RLS
-
-### Files to Modify
-- `supabase/functions/child-login/index.ts` — record daily login + award streak bonuses
-- `src/hooks/useChildData.ts` — fetch streak from `daily_logins` instead of sessions
-- `src/pages/ChildHome.tsx` — add streak milestone toast
-- `src/pages/AdminDashboard.tsx` — add detailed stats and activity sections
-- `supabase/functions/admin-dashboard/index.ts` — add new actions
-- `src/components/ChildSetupWizard.tsx` — remove `as any` cast, add PIN validation message
+## Security Notes
+- Child IDs are UUIDs — effectively unguessable
+- Anon policies are read-only for most tables, insert-only for sessions/messages
+- Parent data remains fully protected behind auth
+- No sensitive data is exposed through child access
 
