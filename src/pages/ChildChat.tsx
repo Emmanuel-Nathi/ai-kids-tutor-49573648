@@ -22,7 +22,7 @@ export default function ChildChat() {
   const sessionId = searchParams.get("session");
   const subject = searchParams.get("subject") || "general";
   const contextQuestion = searchParams.get("context");
-  const { user } = useAuth();
+  useRequireChildSession();
   const navigate = useNavigate();
 
   const [messages, setMessages] = useState<Message[]>([]);

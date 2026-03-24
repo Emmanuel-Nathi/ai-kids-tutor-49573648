@@ -38,6 +38,7 @@ export default function ChildLogin() {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Login failed");
 
+      setChildSession({ child_id: data.child_id, name: data.name });
       toast.success(`Welcome, ${data.name}! 🎉`);
       navigate(`/child/${data.child_id}`);
     } catch (err: any) {

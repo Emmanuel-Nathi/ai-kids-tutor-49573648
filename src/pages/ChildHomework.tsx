@@ -43,7 +43,7 @@ const curriculumActivities: Record<string, { title: string; emoji: string; desc:
 export default function ChildHomework() {
   const { childId } = useParams<{ childId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useRequireChildSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [uploading, setUploading] = useState(false);
