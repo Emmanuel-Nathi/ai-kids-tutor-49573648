@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequireChildSession } from "@/hooks/useChildSession";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
