@@ -83,6 +83,35 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_logins: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          login_date: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          login_date?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          login_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_logins_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
