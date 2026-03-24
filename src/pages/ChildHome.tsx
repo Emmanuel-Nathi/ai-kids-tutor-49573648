@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { useChildData } from "@/hooks/useChildData";
+import { useRequireChildSession } from "@/hooks/useChildSession";
 import { supabase } from "@/integrations/supabase/client";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
