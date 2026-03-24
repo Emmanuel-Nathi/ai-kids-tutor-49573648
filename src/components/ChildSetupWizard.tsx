@@ -37,7 +37,11 @@ export function ChildSetupWizard() {
     "Set a 4-digit PIN for them!";
 
   const handleComplete = async () => {
-    if (!user || pin.length !== 4) return;
+    if (!user) return;
+    if (pin.length !== 4) {
+      toast.error("PIN must be exactly 4 digits");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("children").insert({
       parent_id: user.id,
@@ -45,20 +49,18 @@ export function ChildSetupWizard() {
       grade,
       selected_curriculum: curriculum,
       access_pin: pin,
-    } as any);
+    });
     setSaving(false);
     if (error) {
       toast.error(error.message);
     } else {
       toast.success(`${name} has been added! 🎉`);
-      // Send child-added notification email (fire and forget)
       supabase.functions.invoke("send-child-added-email", {
         body: { child_name: name.trim(), grade, curriculum },
       }).catch(console.error);
       navigate("/parent");
     }
   };
-
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -81,7 +83,10 @@ export function ChildSetupWizard() {
           {step === 3 && <GradeStep grade={grade} setGrade={setGrade} />}
           {step === 4 && <PinStep pin={pin} setPin={setPin} />}
 
-          {/* Navigation */}
+          {step === 4 && pin.length > 0 && pin.length < 4 && (
+            <p className="text-sm text-destructive text-center">PIN must be exactly 4 digits</p>
+          )}
+
           <div className="flex gap-3">
             {step > 1 ? (
               <Button variant="outline" className="flex-1" onClick={() => setStep(step - 1)}>

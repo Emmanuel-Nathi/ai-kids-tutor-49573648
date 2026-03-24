@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useChildData } from "@/hooks/useChildData";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Flame, Gift, Home, Sparkles, Star } from "lucide-react";
 import { AIHomeworkHelper } from "@/components/AIHomeworkHelper";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 const baseSubjects = [
@@ -32,11 +32,19 @@ const curriculumLabels: Record<string, string> = {
   general: "General",
 };
 
+const STREAK_MESSAGES: Record<number, string> = {
+  3: "🔥 3-day streak! +10 XP bonus!",
+  7: "🔥 7-day streak! +25 XP bonus!",
+  14: "🔥 14-day streak! +50 XP bonus!",
+  30: "🔥 30-day streak! +100 XP bonus!",
+};
+
 export default function ChildHome() {
   const { childId } = useParams<{ childId: string }>();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { child, totalPoints, streak } = useChildData(childId);
+  const [streakBannerShown, setStreakBannerShown] = useState(false);
 
   const childName = child?.name || "";
   const curriculum = child?.selected_curriculum || "cambridge";
@@ -44,6 +52,19 @@ export default function ChildHome() {
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
+
+  // Show streak milestone toast once
+  useEffect(() => {
+    if (streakBannerShown || streak === 0) return;
+    const milestones = [30, 14, 7, 3];
+    for (const m of milestones) {
+      if (streak >= m && STREAK_MESSAGES[m]) {
+        toast.success(STREAK_MESSAGES[m], { duration: 5000 });
+        setStreakBannerShown(true);
+        break;
+      }
+    }
+  }, [streak, streakBannerShown]);
 
   const subjects = curriculum === "caps" || curriculum === "ieb"
     ? [...baseSubjects, ...capsExtraSubjects]
@@ -78,10 +99,14 @@ export default function ChildHome() {
         </div>
         <div className="flex items-center gap-2">
           {streak > 0 && (
-            <div className="flex items-center gap-1 bg-primary/10 rounded-full px-3 py-1">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 bg-primary/10 rounded-full px-3 py-1"
+            >
               <Flame className="w-4 h-4 text-primary fill-primary" />
               <span className="font-display font-bold text-sm">{streak}</span>
-            </div>
+            </motion.div>
           )}
           <div className="flex items-center gap-1 bg-star-gold/20 rounded-full px-3 py-1">
             <Star className="w-4 h-4 text-star-gold fill-star-gold" />

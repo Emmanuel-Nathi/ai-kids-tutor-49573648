@@ -16,22 +16,18 @@ export interface Claim {
   created_at: string;
 }
 
-function calculateStreak(sessions: { started_at: string }[]): number {
-  if (!sessions || sessions.length === 0) return 0;
-
-  // Get unique session days sorted newest-first
-  const uniqueDays = [
-    ...new Set(sessions.map((s) => new Date(s.started_at).toDateString())),
-  ];
+function calculateStreak(logins: { login_date: string }[]): number {
+  if (!logins || logins.length === 0) return 0;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   let count = 0;
-  for (let i = 0; i < uniqueDays.length; i++) {
+  for (let i = 0; i < logins.length; i++) {
     const expected = new Date(today);
     expected.setDate(today.getDate() - i);
-    if (uniqueDays[i] === expected.toDateString()) {
+    const loginDate = new Date(logins[i].login_date + "T00:00:00");
+    if (loginDate.getTime() === expected.getTime()) {
       count++;
     } else {
       break;
@@ -60,7 +56,7 @@ export function useChildData(childId: string | undefined) {
     setError(null);
 
     try {
-      const [childRes, pointsRes, sessionsRes, claimsRes] = await Promise.all([
+      const [childRes, pointsRes, sessionsRes, claimsRes, loginsRes] = await Promise.all([
         supabase.from("children").select("*").eq("id", childId).single(),
         supabase.from("points").select("amount").eq("child_id", childId),
         supabase
@@ -73,6 +69,12 @@ export function useChildData(childId: string | undefined) {
           .select("id, reward_id, status, created_at")
           .eq("child_id", childId)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("daily_logins")
+          .select("login_date")
+          .eq("child_id", childId)
+          .order("login_date", { ascending: false })
+          .limit(60),
       ]);
 
       if (childRes.error) throw childRes.error;
@@ -83,7 +85,7 @@ export function useChildData(childId: string | undefined) {
         (pointsRes.data || []).reduce((sum, p) => sum + p.amount, 0)
       );
       setSessionCount(sessionsRes.data?.length || 0);
-      setStreak(calculateStreak(sessionsRes.data || []));
+      setStreak(calculateStreak((loginsRes.data as any) || []));
       setClaims(claimsRes.data || []);
 
       // Fetch rewards using parent_id from child
