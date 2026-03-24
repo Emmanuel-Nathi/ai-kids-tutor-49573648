@@ -79,7 +79,7 @@ export default function ChildHomework() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !childId || !user) return;
+    if (!file || !childId) return;
 
     setPreviewUrl(URL.createObjectURL(file));
     setParsedContent(null);
