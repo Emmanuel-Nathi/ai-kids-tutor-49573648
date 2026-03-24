@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
+import { useChildSession } from "@/hooks/useChildSession";
 import { toast } from "sonner";
 import { Delete, ArrowRight } from "lucide-react";
 
