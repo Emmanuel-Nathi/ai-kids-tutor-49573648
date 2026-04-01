@@ -1,7 +1,8 @@
 import owlLogo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import TransparentLogo from "@/components/TransparentLogo";
+import { useEffect, useRef, useState } from "react";
 
 interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -9,6 +10,7 @@ interface OwlMascotProps {
   variant?: "idle" | "celebrate" | "thinking" | "blink";
   className?: string;
   message?: string;
+  trackMouse?: boolean;
 }
 
 const sizeMap = {
@@ -40,22 +42,62 @@ const variants = {
   },
 };
 
-export function OwlMascot({ size = "md", animate = true, variant = "idle", className, message }: OwlMascotProps) {
+export function OwlMascot({ size = "md", animate = true, variant = "idle", className, message, trackMouse = false }: OwlMascotProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(mouseY, [-300, 300], [8, -8]), { stiffness: 100, damping: 30 });
+  const rotateY = useSpring(useTransform(mouseX, [-300, 300], [-12, 12]), { stiffness: 100, damping: 30 });
+
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    if (!trackMouse) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      mouseX.set(e.clientX - centerX);
+      mouseY.set(e.clientY - centerY);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [trackMouse, mouseX, mouseY]);
+
+  // Periodic "glasses push" animation
+  useEffect(() => {
+    if (!trackMouse) return;
+    const interval = setInterval(() => {
+      setPulse(true);
+      setTimeout(() => setPulse(false), 600);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [trackMouse]);
+
   return (
-    <div className={cn("flex flex-col items-center gap-2", className)}>
+    <div ref={containerRef} className={cn("flex flex-col items-center gap-3", className)}>
       <motion.div
         animate={animate ? variants[variant] : undefined}
-        className={cn(sizeMap[size])}
+        style={trackMouse ? { rotateX, rotateY, perspective: 600 } : undefined}
+        className={cn(sizeMap[size], "relative")}
       >
-        <TransparentLogo
-          src={owlLogo}
-          alt="Owl Tutor mascot"
-          className="w-full h-full object-contain drop-shadow-lg"
-        />
+        <motion.div
+          animate={pulse ? { scale: [1, 1.08, 1], y: [0, -3, 0] } : {}}
+          transition={{ duration: 0.5 }}
+          className="w-full h-full"
+        >
+          <TransparentLogo
+            src={owlLogo}
+            alt="Owl Tutor mascot"
+            className="w-full h-full object-contain drop-shadow-xl"
+          />
+        </motion.div>
       </motion.div>
       {message && (
-        <div className="relative max-w-[240px] rounded-2xl bg-card px-4 py-2 text-center text-sm font-display shadow-md border border-border">
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-card" />
+        <div className="relative max-w-[260px] rounded-2xl backdrop-blur-md bg-white/30 border border-white/20 px-5 py-3 text-center text-sm font-display shadow-lg">
+          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white/30" />
           {message}
         </div>
       )}

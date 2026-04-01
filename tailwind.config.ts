@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Fredoka", "sans-serif"],
+        display: ["Lexend", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
       colors: {
@@ -75,6 +75,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
         xl: "calc(var(--radius) + 4px)",
         "2xl": "calc(var(--radius) + 8px)",
+        "3xl": "calc(var(--radius) + 16px)",
       },
       keyframes: {
         "accordion-down": {
@@ -93,12 +94,17 @@ export default {
           "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
           "50%": { transform: "translateY(-8px) rotate(2deg)" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "bounce-soft": "bounce-soft 2s ease-in-out infinite",
         float: "float 3s ease-in-out infinite",
+        shimmer: "shimmer 3s ease-in-out infinite",
       },
     },
   },
