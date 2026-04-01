@@ -139,6 +139,7 @@ export default function ChildChat() {
           curriculum_level: childCurrLevel,
           curriculum: childCurriculum,
           preferred_language: childLanguage,
+          ...(objectivesParam ? { activity_objectives: JSON.parse(decodeURIComponent(objectivesParam)) } : {}),
         }),
       });
 
