@@ -24,25 +24,29 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    let query = supabase.from("children").select("id, name, access_pin").eq("access_pin", pin.trim());
+    // Use the secure verify_child_pin RPC which compares against hashed PINs
+    const { data: matches, error: rpcError } = await supabase.rpc("verify_child_pin", {
+      p_pin: pin.trim(),
+      p_name: name && name.trim() ? name.trim() : null,
+    });
 
-    if (name && name.trim()) {
-      query = query.ilike("name", name.trim());
-    }
+    if (rpcError) throw rpcError;
 
-    const { data: child, error } = await query.single();
-
-    if (error || !child) {
+    if (!matches || matches.length === 0) {
       return new Response(
         JSON.stringify({ error: "No child found with that PIN" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const child = matches[0];
+    const childId = child.found_child_id;
+    const childName = child.found_child_name;
+
     // Record daily login (ON CONFLICT DO NOTHING)
     const today = new Date().toISOString().split("T")[0];
     await supabase.from("daily_logins").upsert(
-      { child_id: child.id, login_date: today },
+      { child_id: childId, login_date: today },
       { onConflict: "child_id,login_date", ignoreDuplicates: true }
     );
 
@@ -50,7 +54,7 @@ serve(async (req) => {
     const { data: logins } = await supabase
       .from("daily_logins")
       .select("login_date")
-      .eq("child_id", child.id)
+      .eq("child_id", childId)
       .order("login_date", { ascending: false })
       .limit(60);
 
@@ -74,34 +78,33 @@ serve(async (req) => {
     let streakBonus = 0;
     for (const milestone of STREAK_MILESTONES) {
       if (streak >= milestone.days) {
-        // Check if already awarded
         const { data: existing } = await supabase
           .from("points")
           .select("id")
-          .eq("child_id", child.id)
+          .eq("child_id", childId)
           .eq("reason", milestone.reason)
           .gte("created_at", new Date(new Date().setDate(new Date().getDate() - milestone.days)).toISOString())
           .limit(1);
 
         if (!existing || existing.length === 0) {
           await supabase.from("points").insert({
-            child_id: child.id,
+            child_id: childId,
             amount: milestone.bonus,
             reason: milestone.reason,
           });
           streakBonus = milestone.bonus;
         }
-        break; // Only award highest eligible milestone
+        break;
       }
     }
 
     return new Response(
-      JSON.stringify({ child_id: child.id, name: child.name, streak, streak_bonus: streakBonus }),
+      JSON.stringify({ child_id: childId, name: childName, streak, streak_bonus: streakBonus }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Login failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

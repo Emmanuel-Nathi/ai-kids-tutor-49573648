@@ -78,8 +78,8 @@ export default function ParentChildDetail() {
 
   const verifyPin = async () => {
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("parent_pin").eq("user_id", user.id).single();
-    if (data?.parent_pin === pinInput) {
+    const { data, error } = await supabase.rpc("verify_parent_pin", { p_pin: pinInput });
+    if (data === true) {
       setPinVerified(true);
     } else {
       toast.error("Incorrect PIN");
