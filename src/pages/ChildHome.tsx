@@ -45,6 +45,13 @@ export default function ChildHome() {
   const navigate = useNavigate();
   const { child, totalPoints, streak } = useChildData(childId);
   const [streakBannerShown, setStreakBannerShown] = useState(false);
+  const [isWaving, setIsWaving] = useState(true);
+
+  // Transition from wave to idle after welcome animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsWaving(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const childName = child?.name || "";
   const curriculum = child?.selected_curriculum || "cambridge";
@@ -113,11 +120,17 @@ export default function ChildHome() {
 
       <main className="p-4 max-w-lg mx-auto space-y-6">
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
           className="text-center pt-4"
         >
-          <OwlMascot size="lg" variant="idle" message={`Hi ${childName}! What shall we learn today? 🎉`} />
+          <OwlMascot
+            size="lg"
+            variant={isWaving ? "celebrate" : "idle"}
+            pose={isWaving ? "wave" : "default"}
+            message={isWaving ? `Hey ${childName}! 👋 Welcome back!` : `Hi ${childName}! What shall we learn today? 🎉`}
+          />
         </motion.div>
 
         <div className="space-y-3">
