@@ -1,90 +1,58 @@
 
 
-# Achievement Room: Inventory, Badges & Customization
+# Replace 2D Owl with React Three Fiber 3D Scene
 
-## Database (Migration)
+## Context
+The Achievement Room currently uses the 2D `OwlMascot` component with emoji overlays for equipped items. This plan replaces the owl display card with an interactive R3F 3D scene.
 
-Create 4 tables. Note: `child_id` references `children(id)` (not `profiles`) since children are PIN-login users without auth accounts.
+## Important Note
+There is no `owl.glb` model file available. The plan includes a placeholder geometric owl built from Drei primitives (spheres, cones) that can be swapped for a real `.glb` when one is provided. This keeps the feature functional immediately.
 
-```sql
-CREATE TABLE public.inventory_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  item_type text NOT NULL, -- 'headwear', 'eyewear', 'book'
-  xp_cost integer NOT NULL DEFAULT 100,
-  material_effect text, -- 'liquid_glass', 'matte', 'prestige_gradient'
-  icon_emoji text DEFAULT '🎩',
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+---
 
-CREATE TABLE public.child_inventory (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  child_id uuid NOT NULL,
-  item_id uuid NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
-  is_equipped boolean NOT NULL DEFAULT false,
-  purchased_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(child_id, item_id)
-);
+## 1. Install Dependencies
+- `@react-three/fiber@^8.18`
+- `@react-three/drei@^9.122.0`
+- `three@^0.160`
 
-CREATE TABLE public.badges (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text NOT NULL,
-  description text,
-  icon_emoji text DEFAULT '🏅',
-  xp_award integer NOT NULL DEFAULT 500,
-  criteria_type text, -- 'streak', 'sessions', 'missions', 'points'
-  criteria_value integer, -- e.g. 7 for "7-day streak"
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+## 2. Create `src/components/OwlScene.tsx`
+A self-contained R3F Canvas component:
 
-CREATE TABLE public.child_badges (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  child_id uuid NOT NULL,
-  badge_id uuid NOT NULL REFERENCES public.badges(id) ON DELETE CASCADE,
-  earned_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(child_id, badge_id)
-);
-```
+- **Geometric Owl**: Built from Drei `Sphere`, `Cone`, and `RoundedBox` primitives — a stylized low-poly owl body, eyes, beak, and an open book in front
+- **GLB Loader Ready**: Include a commented-out `useGLTF('/models/owl.glb')` path so swapping to a real model is trivial
+- **Page Turn Animation**: `useFrame` loop rotates a thin `RoundedBox` "page" back and forth on its left edge (hinge rotation on Z axis, sinusoidal 0→π over ~3 seconds)
+- **Pulsing Book Light**: A `PointLight` positioned above the book with intensity animated via `useFrame` using `Math.sin(clock * 2)` mapped to intensity range [1, 3], color warm gold
+- **Dynamic Accessories**:
+  - `equippedItems` prop: `Record<string, string>` (same shape as the hook output)
+  - If `headwear` is equipped → render a cone/cylinder "hat" positioned above the owl's head
+  - If `eyewear` is equipped → render two small torus shapes as glasses on the face
+  - If `book` is equipped → change the book's material color
+  - Each accessory uses `<Float>` from Drei for subtle hovering
+- **Environment**: Drei `<Environment preset="sunset" />` for ambient lighting, `<OrbitControls>` with restricted polar angle so the child can rotate but not flip upside down
+- **Props**: `equippedItems: Record<string, string>`, `message?: string`
 
-RLS: All 4 tables get anon SELECT + INSERT/UPDATE for child sessions, parent access via children join, service role full access. Same pattern as existing `child_activity_progress`.
+## 3. Update `src/pages/AchievementRoom.tsx`
+- Replace the owl display `Card` content (lines 58-87) with `<OwlScene equippedItems={equippedItems} />`
+- Remove the `AnimatePresence` emoji overlay block (no longer needed — accessories are 3D now)
+- Keep the message speech bubble below the canvas as a 2D overlay
+- Wrap in `<Suspense>` with a loading fallback
 
-## Hook: `src/hooks/useAchievementRoom.ts`
+## 4. Create `public/models/.gitkeep`
+Placeholder directory for future `.glb` model files.
 
-- Fetches `child_inventory` joined with `inventory_items` and `child_badges` joined with `badges`
-- Derives `equippedItems` map (`{ headwear: 'item-id', ... }`)
-- `toggleEquip(itemId, itemType)`: un-equips same-type items, equips selected one
-- `purchaseItem(itemId, cost)`: calls `calculate-points` to deduct XP, inserts into `child_inventory`
-- `availableItems`: fetches all active `inventory_items` not yet owned
-
-## Page: `src/pages/AchievementRoom.tsx`
-
-Bento grid layout with 4 sections:
-
-1. **Owl Display** (large, colspan-2 on desktop): Shows `OwlMascot` with equipped items indicated visually via overlay badges/tags. No Spline dependency — uses the existing pose-based image system with equipped item indicators rendered as floating badges around the owl.
-
-2. **Badges Shelf**: Frosted-glass card displaying earned badges as glassmorphic "enamel pin" tiles. Locked badges shown grayed with a lock icon.
-
-3. **Item Closet**: Grid of purchasable/owned items. Owned items show equip/unequip toggle. Unpurchased items show XP cost with "Buy" button. Uses existing Tactile Playfulness styling.
-
-4. **Stats Card**: XP total, streak count, sessions — reuses data from `useChildData`.
-
-## Route & Navigation
-
-- Add `/child/:childId/room` route in `App.tsx` wrapped in `AppLayout`
-- Add a "My Room" button (Trophy icon) to `ChildHome.tsx` quick-action grid
-- Add link from `ChildProfile.tsx` to the room
+---
 
 ## Files Created
-- `src/hooks/useAchievementRoom.ts`
-- `src/pages/AchievementRoom.tsx`
+- `src/components/OwlScene.tsx` — R3F canvas with geometric owl, animations, accessories
+- `public/models/.gitkeep` — placeholder for future 3D assets
 
 ## Files Modified
-- `src/App.tsx` — add route
-- `src/pages/ChildHome.tsx` — add "My Room" quick-action button
-- `src/pages/ChildProfile.tsx` — add link to room
+- `src/pages/AchievementRoom.tsx` — swap OwlMascot for OwlScene in the display card
+- `package.json` — add three, @react-three/fiber, @react-three/drei
 
-## Design Decision: No Spline
-Spline requires an external 3D editor account and hosted assets. Instead, the owl customization will use the existing pose-based image system with equipped items rendered as floating overlay elements (emoji/icon badges positioned around the owl). This keeps the project self-contained and avoids external dependencies.
+## Technical Notes
+- Using `@react-three/fiber@^8.18` and `@react-three/drei@^9.122.0` for React 18 compatibility
+- The geometric owl is ~80 lines of JSX primitives — easy to replace with `useGLTF` later
+- `useFrame` handles both the page-turn and light-pulse animations in a single render loop
+- No `.glb` file is generated — the plan uses built-in Three.js geometries as a stylized placeholder
 
