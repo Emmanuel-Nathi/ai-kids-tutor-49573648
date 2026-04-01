@@ -1,53 +1,175 @@
 
 
-# Fix Owl Display, Generate Mascot Poses, Add Blob Breathing
+# Activity Builder + Mission Map Implementation
 
-## Problem
-The `TransparentLogo` component processes all images through a canvas pipeline that strips dark pixels — this corrupts the AI-generated 3D owl mascot which has rich dark colors and textures. The mascot needs to render as-is.
+## Overview
+Build a database-driven "Activity Blueprints" system with a curriculum-aware prompt engine, an admin Activity Creator with AI preview, and a child-facing Mission Map with a winding level path.
 
-## Changes
+---
 
-### 1. Fix Owl Display — Bypass TransparentLogo (`OwlMascot.tsx`)
-- Stop using `TransparentLogo` for the owl mascot — use a plain `<img>` tag instead
-- The AI-generated mascot already has a transparent background; the canvas processing is stripping valid dark pixels from the owl's feathers/eyes
-- Keep `TransparentLogo` only for the header logo in `Landing.tsx` where it's needed
+## 1. Database: `activities` Table (Migration)
 
-### 2. Generate 3 New Owl Mascot Images
-Use AI image generation (`google/gemini-3-pro-image-preview`) to create:
+Create the `activities` table to store curriculum-specific learning blueprints:
 
-1. **Hero owl with graduation hat** — `src/assets/owl-mascot.png` (replace existing): 3D owl with graduation cap, frosted-glass spectacles, holding a glowing book, sage/ochre/cloud dancer palette, transparent background
-2. **Celebrating owl** — `src/assets/owl-celebrate.png`: Same owl doing a wing-up celebration pose, stars/sparkles around it, graduation cap slightly tilted, transparent background
-3. **Listening owl** — `src/assets/owl-listen.png`: Same owl leaning forward, wing cupped to ear, attentive expression, transparent background
+```sql
+CREATE TABLE public.activities (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  topic text NOT NULL,
+  grade text NOT NULL,
+  curriculum text NOT NULL DEFAULT 'cambridge',
+  subject text NOT NULL DEFAULT 'general',
+  objectives jsonb NOT NULL DEFAULT '[]',
+  difficulty integer NOT NULL DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 5),
+  xp_reward integer NOT NULL DEFAULT 30,
+  created_by uuid,
+  is_active boolean NOT NULL DEFAULT true,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-### 3. Update OwlMascot Component (`OwlMascot.tsx`)
-- Add `pose` prop: `"default" | "celebrate" | "listen"` that selects which image to display
-- Import all three mascot images
-- Use plain `<img>` tag with `drop-shadow-xl` instead of `TransparentLogo`
+ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
 
-### 4. Wire Up Poses in Existing Pages
-- `ChildChat.tsx`: Use `pose="listen"` for the empty-state mascot and thinking state
-- `ChildHomework.tsx`: Use `pose="celebrate"` for the completion celebration
-- `ChildRewards.tsx`: Use `pose="celebrate"` for rewards display (if OwlMascot is used there)
-- All other usages keep `pose="default"`
+-- Admin full access via service role
+CREATE POLICY "Service role full access" ON public.activities FOR ALL
+  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
-### 5. Add Blob Breathing Animation (`Landing.tsx`)
-Add CSS keyframe animation alongside the existing parallax:
-- Each blob gets `animate={{ scale: [1, 1.08, 1] }}` with different durations (8s, 12s, 10s) and `repeat: Infinity`
-- This stacks with the existing `useTransform` parallax via Framer Motion's `animate` prop on the same `motion.div`
+-- Authenticated parents can read active activities
+CREATE POLICY "Authenticated can read active" ON public.activities FOR SELECT
+  TO authenticated USING (is_active = true);
 
-## Files Modified
-- `src/components/OwlMascot.tsx` — add `pose` prop, use `<img>` instead of `TransparentLogo`, import new assets
-- `src/pages/Landing.tsx` — add breathing animation to blobs
-- `src/pages/ChildChat.tsx` — add `pose="listen"` to relevant OwlMascot usages
-- `src/pages/ChildHomework.tsx` — add `pose="celebrate"` to completion mascot
+-- Anon can read active (for child PIN-login sessions)
+CREATE POLICY "Anon can read active" ON public.activities FOR SELECT
+  TO anon USING (is_active = true);
+```
+
+Also create a `child_activity_progress` table to track completion:
+
+```sql
+CREATE TABLE public.child_activity_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  child_id uuid NOT NULL,
+  activity_id uuid NOT NULL REFERENCES public.activities(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'locked', -- locked, current, completed
+  completed_at timestamptz,
+  session_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(child_id, activity_id)
+);
+
+ALTER TABLE public.child_activity_progress ENABLE ROW LEVEL SECURITY;
+
+-- Parents can view/manage their children's progress
+CREATE POLICY "Parents can view" ON public.child_activity_progress FOR SELECT
+  USING (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
+
+CREATE POLICY "Parents can insert" ON public.child_activity_progress FOR INSERT
+  WITH CHECK (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
+
+CREATE POLICY "Parents can update" ON public.child_activity_progress FOR UPDATE
+  USING (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
+
+-- Anon access for child PIN sessions
+CREATE POLICY "Anon can view" ON public.child_activity_progress FOR SELECT TO anon USING (true);
+CREATE POLICY "Anon can insert" ON public.child_activity_progress FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "Anon can update" ON public.child_activity_progress FOR UPDATE TO anon USING (true);
+
+-- Service role full access
+CREATE POLICY "Service role full" ON public.child_activity_progress FOR ALL
+  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+```
+
+---
+
+## 2. Curriculum-Aware Prompt Engine (Edge Function Update)
+
+**File: `supabase/functions/ai-tutor/index.ts`**
+
+Add a `getCurriculumInstruction()` helper that injects curriculum-specific pedagogy into the system prompt when an activity's objectives are provided:
+
+- **CAPS**: "Follow the SA CAPS structure. Focus on systematic building blocks. Use local SA examples."
+- **IEB**: "Prioritize critical thinking and application. Ask high-order 'Why' and 'How' questions. Challenge assumptions."
+- **Cambridge**: "Use a spiral learning approach. Connect the current topic to foundational concepts from previous years."
+
+When the request includes `activity_objectives` (JSONB from the activities table), append them to the system prompt so Gemini focuses on those specific learning goals.
+
+---
+
+## 3. Admin Activity Creator (New Component + Edge Function)
+
+### Edge Function: `admin-dashboard/index.ts`
+Add two new actions:
+
+- **`manage-activities`**: CRUD for activities (list, create, update, delete) — admin only
+- **`preview-activity`**: Calls Gemini to generate a sample 3-turn Socratic conversation based on the activity's topic, grade, curriculum, and objectives
+
+### New Component: `src/components/admin/ActivityCreator.tsx`
+A form with:
+- Topic (text input)
+- Grade (select 1-12)
+- Curriculum (select CAPS / IEB / Cambridge)
+- Subject (select from subjects list)
+- Difficulty (1-5 slider)
+- XP Reward (number input)
+- Learning Objectives (dynamic list — add/remove objective text fields)
+- **"Generate Preview"** button — calls the edge function to show a sample 3-turn Socratic conversation in a chat-bubble preview
+- **"Save Activity"** button — stores to database
+
+### Update: `src/pages/AdminDashboard.tsx`
+Add an "Activities" tab/section with:
+- Table listing existing activities (topic, grade, curriculum, difficulty, status)
+- "Add Activity" button opening the ActivityCreator
+- Toggle active/inactive per activity
+- Reorder via sort_order
+
+---
+
+## 4. Mission Map Component (Child Dashboard)
+
+### New Component: `src/components/MissionMap.tsx`
+
+A vertical winding path of level nodes:
+- Fetches activities from the `activities` table filtered by child's `curriculum` and `grade`
+- Fetches progress from `child_activity_progress` to determine each node's state
+- Three states: **Locked** (gray, padlock icon), **Current** (pulsing sage/gold, play icon), **Completed** (gold, star icon)
+- Alternating left/right offset for the winding path effect
+- Dashed SVG connector lines between nodes that fill with color for completed levels
+- Floating owl mascot sits on the "Current" node
+- Glassmorphic "Tactile Playfulness" aesthetic with soft shadows and gradients
+- Clicking a "Current" node starts a session with the activity's objectives injected into the AI tutor context
+
+### Route & Integration
+- Add route `/child/:childId/missions` in `App.tsx`
+- Add a "Missions" button (map icon) to `ChildHome.tsx` in the quick-action grid
+- When a mission session completes, update `child_activity_progress` to mark it as completed and unlock the next activity
+
+---
+
+## 5. Auto-Progression Logic
+
+When a child completes a mission (session ends with "completed" status):
+1. Mark the current activity as `completed` in `child_activity_progress`
+2. Find the next activity by `sort_order` for the same curriculum/grade
+3. Insert or update it as `current` in `child_activity_progress`
+4. Award the activity's XP via the existing points system
+
+This logic will live in a new hook: `src/hooks/useMissionProgress.ts`
+
+---
 
 ## Files Created
-- `src/assets/owl-mascot.png` — regenerated with graduation hat
-- `src/assets/owl-celebrate.png` — celebrating pose
-- `src/assets/owl-listen.png` — listening pose
+- `src/components/MissionMap.tsx` — winding path level map
+- `src/components/admin/ActivityCreator.tsx` — activity form + preview
+- `src/pages/ChildMissions.tsx` — missions page wrapper
+- `src/hooks/useMissionProgress.ts` — progress tracking hook
 
-## Technical Notes
-- The `TransparentLogo` component remains untouched — it's still used for the header logo
-- The breathing animation uses Framer Motion `animate` which composes cleanly with the `style={{ y: blobY }}` parallax transform
-- All three owl images will be generated with transparent backgrounds so no processing is needed
+## Files Modified
+- `supabase/functions/admin-dashboard/index.ts` — add `manage-activities` and `preview-activity` actions
+- `supabase/functions/ai-tutor/index.ts` — accept `activity_objectives` param, add curriculum instruction helper
+- `src/pages/AdminDashboard.tsx` — add Activities management section
+- `src/pages/ChildHome.tsx` — add Missions quick-action button
+- `src/App.tsx` — add `/child/:childId/missions` route
+
+## Database Changes
+- Create `activities` table with RLS
+- Create `child_activity_progress` table with RLS
 
