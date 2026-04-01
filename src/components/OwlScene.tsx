@@ -12,6 +12,16 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
   const { scene } = useGLTF("/models/owl.glb");
   const pageRef = useRef<THREE.Mesh>(null!);
   const lightRef = useRef<THREE.PointLight>(null!);
+  const headRef = useRef<THREE.Object3D | null>(null);
+
+  useEffect(() => {
+    const head = scene.getObjectByName('Head');
+    if (head) {
+      headRef.current = head;
+    } else {
+      console.warn("Could not find 'Head' node in owl.glb for mouse tracking.");
+    }
+  }, [scene]);
 
   // Auto-center and scale the model
   const { center, scale, headY, eyeY } = useMemo(() => {
