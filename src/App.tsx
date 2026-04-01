@@ -111,6 +111,7 @@ const App = () => (
                 <Route path="/child/:childId/activities" element={<AppLayout><ChildActivities /></AppLayout>} />
                 <Route path="/child/:childId/profile" element={<AppLayout><ChildProfile /></AppLayout>} />
                 <Route path="/child/:childId/missions" element={<AppLayout><ChildMissions /></AppLayout>} />
+                <Route path="/child/:childId/room" element={<AppLayout><AchievementRoom /></AppLayout>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

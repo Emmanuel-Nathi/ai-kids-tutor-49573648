@@ -74,6 +74,15 @@ export default function ChildProfile() {
             </CardContent>
           </Card>
         </div>
+
+        <Button
+          variant="outline"
+          className="w-full flex items-center gap-2"
+          onClick={() => navigate(`/child/${childId}/room`)}
+        >
+          <Trophy className="w-5 h-5 text-secondary" />
+          <span className="font-display">Visit My Room</span>
+        </Button>
       </main>
     </div>
   );
