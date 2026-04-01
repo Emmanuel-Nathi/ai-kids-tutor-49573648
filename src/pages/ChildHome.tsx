@@ -157,7 +157,11 @@ export default function ChildHome() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
+          <Button variant="outline" className="flex flex-col h-auto py-4 gap-1" onClick={() => navigate(`/child/${childId}/missions`)}>
+            <Map className="w-6 h-6 text-primary" />
+            <span className="text-xs font-display">Missions</span>
+          </Button>
           <Button variant="outline" className="flex flex-col h-auto py-4 gap-1" onClick={() => navigate(`/child/${childId}/homework`)}>
             <Camera className="w-6 h-6 text-secondary" />
             <span className="text-xs font-display">Homework</span>
