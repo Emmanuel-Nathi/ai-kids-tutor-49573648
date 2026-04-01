@@ -10,7 +10,7 @@ interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
   animate?: boolean;
   variant?: "idle" | "celebrate" | "thinking" | "blink";
-  pose?: "default" | "celebrate" | "listen";
+  pose?: "default" | "celebrate" | "listen" | "wave";
   className?: string;
   message?: string;
   trackMouse?: boolean;
