@@ -290,6 +290,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "daily_logins_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       email_send_log: {
@@ -418,6 +425,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "homework_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       inventory_items: {
@@ -515,6 +529,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "points_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -584,6 +605,13 @@ export type Database = {
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_claims_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
             referencedColumns: ["id"]
           },
           {
@@ -673,6 +701,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sessions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       suppressed_emails: {
@@ -719,7 +754,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      children_safe: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          curriculum_level: string | null
+          grade: string | null
+          id: string | null
+          name: string | null
+          parent_id: string | null
+          preferred_language: string | null
+          selected_curriculum: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          curriculum_level?: string | null
+          grade?: string | null
+          id?: string | null
+          name?: string | null
+          parent_id?: string | null
+          preferred_language?: string | null
+          selected_curriculum?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          curriculum_level?: string | null
+          grade?: string | null
+          id?: string | null
+          name?: string | null
+          parent_id?: string | null
+          preferred_language?: string | null
+          selected_curriculum?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
