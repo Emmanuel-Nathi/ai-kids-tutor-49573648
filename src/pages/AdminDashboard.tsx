@@ -92,7 +92,24 @@ export default function AdminDashboard() {
         if (activityRes.data?.sessions) setRecentSessions(activityRes.data.sessions);
       })
       .finally(() => setLoadingData(false));
+    fetchActivities();
   }, [isAdmin]);
+
+  const fetchActivities = async () => {
+    const { data } = await adminCall("manage-activities", { operation: "list" });
+    if (data?.activities) setActivities(data.activities);
+  };
+
+  const toggleActivity = async (id: string, isActive: boolean) => {
+    await adminCall("manage-activities", { operation: "update", activityId: id, updates: { is_active: !isActive } });
+    fetchActivities();
+  };
+
+  const deleteActivity = async (id: string) => {
+    await adminCall("manage-activities", { operation: "delete", activityId: id });
+    toast.success("Activity deleted");
+    fetchActivities();
+  };
 
   const updateSubscription = async (profileId: string, status: string) => {
     const { error } = await adminCall("update-subscription", { profileId, status });
