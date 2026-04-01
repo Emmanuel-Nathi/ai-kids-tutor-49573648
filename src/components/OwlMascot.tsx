@@ -27,6 +27,7 @@ const poseImages = {
   default: owlDefault,
   celebrate: owlCelebrate,
   listen: owlListen,
+  wave: owlWave,
 };
 
 const variants = {
