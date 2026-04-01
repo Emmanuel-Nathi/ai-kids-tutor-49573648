@@ -22,6 +22,8 @@ export default function ChildChat() {
   const sessionId = searchParams.get("session");
   const subject = searchParams.get("subject") || "general";
   const contextQuestion = searchParams.get("context");
+  const missionId = searchParams.get("mission");
+  const objectivesParam = searchParams.get("objectives");
   useRequireChildSession();
   const navigate = useNavigate();
 
