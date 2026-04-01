@@ -22,6 +22,8 @@ export default function ChildChat() {
   const sessionId = searchParams.get("session");
   const subject = searchParams.get("subject") || "general";
   const contextQuestion = searchParams.get("context");
+  const missionId = searchParams.get("mission");
+  const objectivesParam = searchParams.get("objectives");
   useRequireChildSession();
   const navigate = useNavigate();
 
@@ -137,6 +139,7 @@ export default function ChildChat() {
           curriculum_level: childCurrLevel,
           curriculum: childCurriculum,
           preferred_language: childLanguage,
+          ...(objectivesParam ? { activity_objectives: JSON.parse(decodeURIComponent(objectivesParam)) } : {}),
         }),
       });
 

@@ -6,6 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const getCurriculumInstruction = (curriculum: string) => {
+  switch (curriculum?.toLowerCase()) {
+    case 'caps':
+      return "Follow the SA CAPS structure. Focus on systematic building blocks. Use local South African examples (e.g., rand currency, SA geography, local culture). Be very clear and methodical.";
+    case 'ieb':
+      return "Prioritize critical thinking and application. Ask high-order 'Why' and 'How' questions. Challenge assumptions. Use complex 'What if?' scenarios to push deeper reasoning.";
+    case 'cambridge':
+      return "Use a spiral learning approach. Connect the current topic to foundational concepts from previous years. Say things like 'Remember when you learned about…' to build confidence and continuity.";
+    default:
+      return "Standard Socratic guidance.";
+  }
+};
+
 const SYSTEM_PROMPT = `You are "Owl", a patient, encouraging, and witty AI tutor for children (Grades 1-12). You specialize in Cambridge, CAPS, and IEB curricula.
 
 ### CORE MISSION
@@ -50,7 +63,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, subject, grade, curriculum_level, curriculum, preferred_language } = await req.json();
+    const { messages, subject, grade, curriculum_level, curriculum, preferred_language, activity_objectives } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -59,6 +72,17 @@ serve(async (req) => {
     const curriculumContext = grade 
       ? getCurriculumContext(grade, subject || "general", curriculum || "cambridge", preferred_language || "english") 
       : "";
+
+    // Curriculum-specific pedagogy instruction
+    const curriculumInstruction = curriculum 
+      ? `\n\n### CURRICULUM PEDAGOGY\n${getCurriculumInstruction(curriculum)}`
+      : "";
+
+    // Activity objectives injection
+    let objectivesContext = "";
+    if (activity_objectives && Array.isArray(activity_objectives) && activity_objectives.length > 0) {
+      objectivesContext = `\n\n### MISSION OBJECTIVES\nThe child is working on a structured mission. Guide them through these specific learning objectives:\n${activity_objectives.map((obj: string, i: number) => `${i + 1}. ${obj}`).join("\n")}\n\nEnsure the child demonstrates understanding of EACH objective before considering the mission complete. Check them off one by one in your guidance.`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -69,7 +93,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + subjectContext + (curriculumContext ? "\n\n" + curriculumContext : "") },
+          { role: "system", content: SYSTEM_PROMPT + subjectContext + curriculumInstruction + objectivesContext + (curriculumContext ? "\n\n" + curriculumContext : "") },
           ...messages.map((m: { role: string; content: string }) => ({
             role: m.role,
             content: m.content,
