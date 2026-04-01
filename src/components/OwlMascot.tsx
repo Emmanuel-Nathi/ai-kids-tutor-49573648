@@ -1,4 +1,4 @@
-import owlLogo from "@/assets/logo.png";
+import owlLogo from "@/assets/owl-mascot.png";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import TransparentLogo from "@/components/TransparentLogo";
