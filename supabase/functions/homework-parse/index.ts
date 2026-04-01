@@ -10,8 +10,68 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { image_base64, child_id, subject, curriculum, grade, homework_id } = await req.json();
-    
+    const { image_base64, child_id, subject, curriculum, grade, homework_id, action } = await req.json();
+
+    // Input validation
+    if (!image_base64 || typeof image_base64 !== "string") {
+      return new Response(JSON.stringify({ error: "image_base64 is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (image_base64.length > 10_000_000) {
+      return new Response(JSON.stringify({ error: "Image too large (max ~7.5MB)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    let activeHomeworkId = homework_id;
+
+    // Handle upload action: store file and create homework record
+    if (action === "upload" && child_id) {
+      if (!child_id || typeof child_id !== "string") {
+        return new Response(JSON.stringify({ error: "child_id is required for upload" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify child exists
+      const { data: childExists } = await supabaseAdmin
+        .from("children")
+        .select("id")
+        .eq("id", child_id)
+        .single();
+      if (!childExists) {
+        return new Response(JSON.stringify({ error: "Invalid child_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Decode and upload to storage
+      const binaryData = Uint8Array.from(atob(image_base64), c => c.charCodeAt(0));
+      const fileName = `${child_id}/${Date.now()}_homework.jpg`;
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("homework-uploads")
+        .upload(fileName, binaryData, { contentType: "image/jpeg" });
+      if (uploadError) throw uploadError;
+
+      // Create homework record
+      const { data: hw, error: hwError } = await supabaseAdmin.from("homework").insert({
+        child_id,
+        image_url: fileName,
+        status: "uploaded",
+        subject: subject || null,
+      }).select("id").single();
+      if (hwError) throw hwError;
+
+      activeHomeworkId = hw.id;
+    }
+
+    // Parse the image with AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -65,18 +125,18 @@ Be accurate with OCR. If handwriting is unclear, note it. Focus on ${subject || 
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later.", homework_id: activeHomeworkId }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
+        return new Response(JSON.stringify({ error: "AI credits exhausted.", homework_id: activeHomeworkId }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("Vision API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Failed to analyze image" }), {
+      return new Response(JSON.stringify({ error: "Failed to analyze image", homework_id: activeHomeworkId }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -84,7 +144,6 @@ Be accurate with OCR. If handwriting is unclear, note it. Focus on ${subject || 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from the response
     let parsed;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -93,25 +152,21 @@ Be accurate with OCR. If handwriting is unclear, note it. Focus on ${subject || 
       parsed = { summary: content, problems: [] };
     }
 
-    // Update homework record if homework_id provided
-    if (homework_id) {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
+    // Update homework record
+    if (activeHomeworkId) {
       await supabaseAdmin.from("homework").update({
         parsed_content: parsed,
         subject: parsed.detected_subject || subject,
         status: "parsed",
-      }).eq("id", homework_id);
+      }).eq("id", activeHomeworkId);
     }
 
-    return new Response(JSON.stringify({ success: true, parsed_content: parsed }), {
+    return new Response(JSON.stringify({ success: true, parsed_content: parsed, homework_id: activeHomeworkId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("homework-parse error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Processing failed" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

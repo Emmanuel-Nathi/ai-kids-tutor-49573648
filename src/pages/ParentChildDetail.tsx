@@ -66,8 +66,8 @@ export default function ParentChildDetail() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("parent_pin").eq("user_id", user.id).single().then(({ data }) => {
-      if (data?.parent_pin) {
+    supabase.rpc("has_parent_pin").then(({ data }) => {
+      if (data === true) {
         setHasPin(true);
       } else {
         setHasPin(false);

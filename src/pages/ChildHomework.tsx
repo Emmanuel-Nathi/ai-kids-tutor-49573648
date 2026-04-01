@@ -87,37 +87,11 @@ export default function ChildHomework() {
     setUploading(true);
 
     try {
-      const fileName = `${childId}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("homework-uploads").upload(fileName, file);
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("homework-uploads").getPublicUrl(fileName);
-
-      const { data: hw, error: hwError } = await supabase.from("homework").insert({
-        child_id: childId,
-        image_url: urlData.publicUrl || fileName,
-        status: "uploaded",
-      }).select("id").single();
-
-      if (hwError) throw hwError;
-      setHomeworkId(hw.id);
-
-      // Award 10 XP for uploading
-      await awardPoints(10, "📸 Homework uploaded");
-      setEarnedPoints(10);
-      toast.success("Homework uploaded! +10 XP 📸");
-
-      // Analytics tracking
-      window.posthog?.capture('homework_uploaded', { child_id: childId, subject: childData?.selected_curriculum });
-      window.gtag?.('event', 'homework_upload', { child_id: childId });
-
-      setUploading(false);
-      setParsing(true);
-
       const reader = new FileReader();
       reader.onload = async () => {
         const base64 = (reader.result as string).split(",")[1];
         try {
+          // Upload + parse in one server-side call
           const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/homework-parse`, {
             method: "POST",
             headers: {
@@ -130,21 +104,36 @@ export default function ChildHomework() {
               subject: null,
               curriculum: childData?.selected_curriculum || "cambridge",
               grade: childData?.grade || "1",
-              homework_id: hw.id,
+              action: "upload",
             }),
           });
 
+          setUploading(false);
+          setParsing(true);
+
           if (!resp.ok) {
             const err = await resp.json();
-            throw new Error(err.error || "Failed to parse");
+            throw new Error(err.error || "Failed to process homework");
           }
 
           const result = await resp.json();
+          setHomeworkId(result.homework_id);
+
+          // Award 10 XP for uploading
+          await awardPoints(10, "📸 Homework uploaded");
+          setEarnedPoints(10);
+          toast.success("Homework uploaded! +10 XP 📸");
+
+          // Analytics tracking
+          window.posthog?.capture('homework_uploaded', { child_id: childId, subject: childData?.selected_curriculum });
+          window.gtag?.('event', 'homework_upload', { child_id: childId });
+
           setParsedContent(result.parsed_content);
           toast.success("Homework scanned! 📸");
         } catch (err: any) {
           toast.error(err.message || "Failed to analyze homework");
         } finally {
+          setUploading(false);
           setParsing(false);
         }
       };
