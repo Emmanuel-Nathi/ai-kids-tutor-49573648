@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, RoundedBox, useGLTF, Html } from "@react-three/drei";
+import { Environment, OrbitControls, useGLTF, Html } from "@react-three/drei";
 import { useRef, useMemo, useEffect, Suspense, useState, useCallback } from "react";
 import * as THREE from "three";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,6 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
     if (node) return node;
   }
 
-  // Compute total model height for relative sizing
   const totalBox = new THREE.Box3().setFromObject(scene);
   const totalHeight = totalBox.getSize(new THREE.Vector3()).y;
   if (totalHeight === 0) return null;
@@ -31,7 +30,6 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
       const box = new THREE.Box3().setFromObject(child);
       const center = box.getCenter(new THREE.Vector3());
       const nodeHeight = box.getSize(new THREE.Vector3()).y;
-      // Only consider nodes smaller than 40% of total height (head-sized)
       if (nodeHeight < totalHeight * 0.4 && center.y > bestY) {
         bestY = center.y;
         bestNode = child;
@@ -44,10 +42,13 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
 
 function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, string>; onLoaded: () => void }) {
   const { scene } = useGLTF("/models/owl.glb");
-  const pageRef = useRef<THREE.Mesh>(null!);
-  const lightRef = useRef<THREE.PointLight>(null!);
   const headRef = useRef<THREE.Object3D | null>(null);
   const sceneGroupRef = useRef<THREE.Group>(null!);
+  const eyeMeshesRef = useRef<THREE.Mesh[]>([]);
+  const blinkTimerRef = useRef({ nextBlink: 2 + Math.random() * 4, blinking: false, blinkStart: 0 });
+  const leftEyelidRef = useRef<THREE.Mesh>(null!);
+  const rightEyelidRef = useRef<THREE.Mesh>(null!);
+  const [hasModelEyes, setHasModelEyes] = useState(false);
 
   useEffect(() => {
     const head = findHeadNode(scene);
@@ -56,6 +57,15 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
     } else {
       console.warn("[OwlScene] No head node found — will rotate entire model slightly as fallback.");
     }
+
+    const eyes: THREE.Mesh[] = [];
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh && /eye/i.test(child.name)) {
+        eyes.push(child as THREE.Mesh);
+      }
+    });
+    eyeMeshesRef.current = eyes;
+    setHasModelEyes(eyes.length > 0);
 
     onLoaded();
   }, [scene, onLoaded]);
@@ -72,13 +82,9 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    if (pageRef.current) {
-      pageRef.current.rotation.z = Math.sin(t * 0.8) * Math.PI * 0.35;
-    }
-    if (lightRef.current) {
-      lightRef.current.intensity = 1.5 + Math.sin(t * 2) * 1.5;
-    }
+    const delta = state.clock.getDelta() || 1 / 60;
 
+    // Mouse tracking
     const mouse = state.mouse;
     const targetY = mouse.x * (Math.PI / 6);
     const targetX = -mouse.y * (Math.PI / 20);
@@ -87,16 +93,47 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
     } else if (sceneGroupRef.current) {
-      const dampenedY = targetY * 0.3;
-      const dampenedX = targetX * 0.3;
-      sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, dampenedY, 0.05);
-      sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, dampenedX, 0.05);
+      sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, targetY * 0.3, 0.05);
+      sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, targetX * 0.3, 0.05);
     }
+
+    // Blink logic
+    const blink = blinkTimerRef.current;
+    if (!blink.blinking) {
+      blink.nextBlink -= delta;
+      if (blink.nextBlink <= 0) {
+        blink.blinking = true;
+        blink.blinkStart = t;
+      }
+    }
+
+    let scaleYVal = 1;
+    if (blink.blinking) {
+      const elapsed = t - blink.blinkStart;
+      if (elapsed < 0.08) {
+        scaleYVal = 1 - elapsed / 0.08;
+      } else if (elapsed < 0.15) {
+        scaleYVal = (elapsed - 0.08) / 0.07;
+      } else {
+        blink.blinking = false;
+        blink.nextBlink = 2 + Math.random() * 4;
+        scaleYVal = 1;
+      }
+      scaleYVal = Math.max(0.05, scaleYVal);
+    }
+
+    // Apply to model eyes
+    eyeMeshesRef.current.forEach((mesh) => {
+      mesh.scale.y = scaleYVal;
+    });
+
+    // Apply to fallback eyelids (inverse: grow to cover when blinking)
+    if (leftEyelidRef.current) leftEyelidRef.current.scale.y = 1 - scaleYVal + 0.05;
+    if (rightEyelidRef.current) rightEyelidRef.current.scale.y = 1 - scaleYVal + 0.05;
   });
 
   const hasHeadwear = !!equippedItems["headwear"];
   const hasEyewear = !!equippedItems["eyewear"];
-  const hasBook = !!equippedItems["book"];
 
   return (
     <group ref={sceneGroupRef}>
@@ -106,22 +143,21 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
         position={[-center.x * scale, -center.y * scale, -center.z * scale]}
       />
 
-      {/* Book */}
-      <group position={[0, -0.6, 1.0]}>
-        <RoundedBox args={[0.8, 0.06, 0.6]} radius={0.02}>
-          <meshStandardMaterial color={hasBook ? "#4A90D9" : "#8B4513"} />
-        </RoundedBox>
-        <group position={[-0.2, 0.04, 0]}>
-          <mesh ref={pageRef} position={[0.2, 0, 0]}>
-            <RoundedBox args={[0.35, 0.01, 0.55]} radius={0.005}>
-              <meshStandardMaterial color="#FFF8DC" side={THREE.DoubleSide} />
-            </RoundedBox>
+      {/* Fallback eyelids if no eye meshes found in model */}
+      {!hasModelEyes && (
+        <>
+          <mesh ref={leftEyelidRef} position={[-0.18, eyeY, 0.55]}>
+            <sphereGeometry args={[0.08, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial color="#2a1a0a" />
           </mesh>
-        </group>
-        <pointLight ref={lightRef} position={[0, 0.3, 0]} color="#FFD700" intensity={1.5} distance={3} decay={2} />
-      </group>
+          <mesh ref={rightEyelidRef} position={[0.18, eyeY, 0.55]}>
+            <sphereGeometry args={[0.08, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshStandardMaterial color="#2a1a0a" />
+          </mesh>
+        </>
+      )}
 
-      {/* HEADWEAR — no Float, static position */}
+      {/* HEADWEAR */}
       {hasHeadwear && (
         <group position={[0, headY + 0.15, 0]}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
@@ -139,7 +175,7 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
         </group>
       )}
 
-      {/* EYEWEAR — no Float, static position */}
+      {/* EYEWEAR */}
       {hasEyewear && (
         <group position={[0, eyeY, 0.55]}>
           <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
