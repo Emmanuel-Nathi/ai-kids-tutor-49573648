@@ -45,6 +45,13 @@ export default function ChildHome() {
   const navigate = useNavigate();
   const { child, totalPoints, streak } = useChildData(childId);
   const [streakBannerShown, setStreakBannerShown] = useState(false);
+  const [isWaving, setIsWaving] = useState(true);
+
+  // Transition from wave to idle after welcome animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsWaving(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const childName = child?.name || "";
   const curriculum = child?.selected_curriculum || "cambridge";
