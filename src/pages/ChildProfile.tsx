@@ -1,9 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useChildData } from "@/hooks/useChildData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
-import { User, Star, BookOpen, Flame } from "lucide-react";
+import { User, Star, BookOpen, Flame, Trophy } from "lucide-react";
 
 const curriculumLabels: Record<string, string> = {
   cambridge: "Cambridge",
