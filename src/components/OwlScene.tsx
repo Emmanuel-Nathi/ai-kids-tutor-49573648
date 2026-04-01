@@ -42,6 +42,14 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
     if (lightRef.current) {
       lightRef.current.intensity = 1.5 + Math.sin(t * 2) * 1.5;
     }
+    // Head tracking
+    if (headRef.current) {
+      const mouse = state.mouse;
+      const targetY = mouse.x * (Math.PI / 6);
+      const targetX = -mouse.y * (Math.PI / 10);
+      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
+      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
+    }
   });
 
   const hasHeadwear = !!equippedItems["headwear"];
