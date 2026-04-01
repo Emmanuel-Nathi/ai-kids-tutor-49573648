@@ -38,11 +38,6 @@ export default function AchievementRoom() {
   const earnedBadgeIds = new Set(earnedBadges.map((eb) => eb.badge_id));
   const ownedItemIds = new Set(ownedItems.map((o) => o.item_id));
 
-  // Get equipped emoji overlays
-  const equippedEmojis = Object.entries(equippedItems).map(([type, itemId]) => {
-    const item = ownedItems.find((o) => o.item_id === itemId);
-    return { type, emoji: item?.inventory_items.icon_emoji || "✨" };
-  });
 
   return (
     <div className="min-h-screen bg-background">
