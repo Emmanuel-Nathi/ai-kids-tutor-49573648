@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,92 +6,97 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 222 47% 11%;
+    --background: 42 30% 97%;
+    --foreground: 160 20% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 160 20% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 160 20% 12%;
 
-    --primary: 24 95% 53%;
+    --primary: 145 30% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 91% 60%;
+    --secondary: 38 65% 55%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 40 20% 94%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 160 10% 45%;
 
-    --accent: 142 71% 45%;
+    --accent: 38 65% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 24 95% 53%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 145 30% 42%;
 
     --radius: 1rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 24 95% 53%;
+    --sidebar-background: 42 30% 97%;
+    --sidebar-foreground: 160 20% 12%;
+    --sidebar-primary: 145 30% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 40 20% 94%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-accent-foreground: 160 20% 12%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 145 30% 42%;
 
     /* Custom tokens */
-    --child-bg: 40 33% 98%;
-    --child-card: 45 100% 96%;
-    --parent-bg: 220 14% 96%;
+    --child-bg: 42 30% 97%;
+    --child-card: 45 40% 96%;
+    --parent-bg: 42 20% 96%;
     --parent-card: 0 0% 100%;
-    --owl-navy: 222 47% 11%;
-    --star-gold: 45 93% 58%;
-    --success: 142 71% 45%;
+    --owl-navy: 160 20% 12%;
+    --star-gold: 38 65% 55%;
+    --success: 145 30% 42%;
+
+    /* Glassmorphism tokens */
+    --glass-bg: 0 0% 100% / 0.25;
+    --glass-border: 0 0% 100% / 0.2;
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 35, 0.08);
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 40 33% 98%;
+    --background: 160 20% 6%;
+    --foreground: 42 30% 95%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 40 33% 98%;
+    --card: 160 18% 10%;
+    --card-foreground: 42 30% 95%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 40 33% 98%;
+    --popover: 160 18% 10%;
+    --popover-foreground: 42 30% 95%;
 
-    --primary: 24 95% 53%;
+    --primary: 145 30% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 91% 60%;
+    --secondary: 38 65% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 160 15% 16%;
+    --muted-foreground: 42 15% 60%;
 
-    --accent: 142 71% 45%;
+    --accent: 38 65% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 24 95% 53%;
+    --border: 160 15% 16%;
+    --input: 160 15% 16%;
+    --ring: 145 30% 50%;
 
-    --sidebar-background: 222 47% 7%;
-    --sidebar-foreground: 40 33% 98%;
-    --sidebar-primary: 24 95% 53%;
+    --sidebar-background: 160 20% 6%;
+    --sidebar-foreground: 42 30% 95%;
+    --sidebar-primary: 145 30% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 30% 18%;
-    --sidebar-accent-foreground: 40 33% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-accent: 160 15% 16%;
+    --sidebar-accent-foreground: 42 30% 95%;
+    --sidebar-border: 160 15% 16%;
+    --sidebar-ring: 145 30% 50%;
   }
 }
 
@@ -102,5 +107,27 @@
 
   body {
     @apply bg-background text-foreground font-body;
+  }
+}
+
+/* Glassmorphism utilities */
+@layer components {
+  .glass {
+    @apply backdrop-blur-xl border shadow-lg;
+    background: hsla(var(--glass-bg));
+    border-color: hsla(var(--glass-border));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-subtle {
+    @apply backdrop-blur-md border;
+    background: hsla(0, 0%, 100%, 0.15);
+    border-color: hsla(0, 0%, 100%, 0.1);
+  }
+
+  .glass-card {
+    @apply backdrop-blur-sm border rounded-2xl;
+    background: hsla(0, 0%, 100%, 0.4);
+    border-color: hsla(0, 0%, 100%, 0.2);
   }
 }
