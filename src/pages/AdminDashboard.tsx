@@ -12,12 +12,15 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Users, CreditCard, Zap, MoreHorizontal, ShieldX, Loader2, KeyRound,
-  Baby, Activity, Clock,
+  Baby, Activity, Clock, BookOpen, Plus, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays, formatDistanceToNow } from "date-fns";
+import { ActivityCreator } from "@/components/admin/ActivityCreator";
 
 interface Stats {
   totalUsers: number;
