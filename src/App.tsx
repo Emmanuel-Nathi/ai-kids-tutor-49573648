@@ -24,6 +24,7 @@ const ChildActivities = lazy(() => import("./pages/ChildActivities"));
 const ChildLogin = lazy(() => import("./pages/ChildLogin"));
 const ChildProfile = lazy(() => import("./pages/ChildProfile"));
 const ChildMissions = lazy(() => import("./pages/ChildMissions"));
+const AchievementRoom = lazy(() => import("./pages/AchievementRoom"));
 const ChildSetupWizard = lazy(() => import("./components/ChildSetupWizard").then(m => ({ default: m.ChildSetupWizard })));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
