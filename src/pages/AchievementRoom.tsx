@@ -56,34 +56,11 @@ export default function AchievementRoom() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Owl Display — spans 2 cols on desktop */}
           <Card className="md:col-span-2 overflow-hidden relative">
-            <CardContent className="flex flex-col items-center justify-center py-8 relative">
-              <div className="relative">
-                <OwlMascot
-                  size="lg"
-                  variant="celebrate"
-                  message={equippedEmojis.length > 0 ? "Looking stylish! 😎" : "Visit the closet to dress me up!"}
-                />
-                {/* Equipped item overlays */}
-                <AnimatePresence>
-                  {equippedEmojis.map(({ type, emoji }) => (
-                    <motion.div
-                      key={type}
-                      initial={{ scale: 0, rotate: -30 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0 }}
-                      className={`absolute text-3xl ${
-                        type === "headwear"
-                          ? "-top-4 left-1/2 -translate-x-1/2"
-                          : type === "eyewear"
-                          ? "top-1/3 left-1/2 -translate-x-1/2"
-                          : "bottom-0 right-0"
-                      }`}
-                    >
-                      {emoji}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+            <CardContent className="p-0">
+              <OwlScene
+                equippedItems={equippedItems}
+                message={Object.keys(equippedItems).length > 0 ? "Looking stylish! 😎" : "Visit the closet to dress me up!"}
+              />
             </CardContent>
           </Card>
 
