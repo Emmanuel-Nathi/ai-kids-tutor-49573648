@@ -149,8 +149,7 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
             enablePan={false}
             minPolarAngle={Math.PI / 4}
             maxPolarAngle={Math.PI / 2}
-            autoRotate
-            autoRotateSpeed={0.5}
+            autoRotate={false}
           />
         </Suspense>
       </Canvas>
