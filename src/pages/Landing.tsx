@@ -153,7 +153,9 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center"
         >
-          <OwlMascot size="xl" message="Let's make homework fun! 🦉" trackMouse />
+          <Suspense fallback={<OwlMascot size="xl" message="Let's make homework fun! 🦉" trackMouse />}>
+            <OwlScene equippedItems={{}} message="Let's make homework fun! 🦉" />
+          </Suspense>
 
           {/* Trust badges right after mascot */}
           <div className="mt-6 flex flex-wrap justify-center gap-2">
