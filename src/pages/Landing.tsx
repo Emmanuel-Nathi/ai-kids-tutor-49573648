@@ -92,9 +92,24 @@ export default function Landing() {
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
       {/* Organic background blobs with parallax */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <motion.div style={{ y: blob1Y }} className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl" />
-        <motion.div style={{ y: blob2Y }} className="absolute top-1/3 -left-48 w-[400px] h-[400px] rounded-full bg-secondary/8 blur-3xl" />
-        <motion.div style={{ y: blob3Y }} className="absolute bottom-0 right-1/4 w-[350px] h-[350px] rounded-full bg-primary/5 blur-3xl" />
+        <motion.div
+          style={{ y: blob1Y }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.8, 0.6] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl"
+        />
+        <motion.div
+          style={{ y: blob2Y }}
+          animate={{ scale: [1, 1.06, 1], opacity: [0.5, 0.7, 0.5] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/3 -left-48 w-[400px] h-[400px] rounded-full bg-secondary/8 blur-3xl"
+        />
+        <motion.div
+          style={{ y: blob3Y }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.65, 0.4] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-0 right-1/4 w-[350px] h-[350px] rounded-full bg-primary/5 blur-3xl"
+        />
       </div>
 
       {/* Glassmorphic Header */}

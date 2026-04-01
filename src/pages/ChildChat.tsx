@@ -250,7 +250,7 @@ export default function ChildChat() {
 
         {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2">
-            <OwlMascot size="sm" variant="thinking" />
+            <OwlMascot size="sm" variant="thinking" pose="listen" />
             <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
               <span className="animate-pulse text-muted-foreground">Thinking...</span>
             </div>
