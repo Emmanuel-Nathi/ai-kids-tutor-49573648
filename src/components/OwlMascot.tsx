@@ -1,6 +1,7 @@
 import owlDefault from "@/assets/owl-mascot.png";
 import owlCelebrate from "@/assets/owl-celebrate.png";
 import owlListen from "@/assets/owl-listen.png";
+import owlWave from "@/assets/owl-wave.png";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
