@@ -1,41 +1,53 @@
 
 
-# Generate 3D Owl Mascot + Add Parallax Scrolling
+# Fix Owl Display, Generate Mascot Poses, Add Blob Breathing
 
-## Part 1: Generate 3D Owl Mascot Image
+## Problem
+The `TransparentLogo` component processes all images through a canvas pipeline that strips dark pixels — this corrupts the AI-generated 3D owl mascot which has rich dark colors and textures. The mascot needs to render as-is.
 
-Use the AI image generation skill to create a "Tactile Playfulness" style 3D owl mascot, then save it to the project assets.
+## Changes
 
-### Steps
-1. **Generate the image** using `google/gemini-3-pro-image-preview` with a detailed prompt for a 3D owl in the Tactile Playfulness aesthetic — matte fuzzy feathers, Liquid Glass eyes, Sage Green/Ochre/Cloud Dancer palette, frosted-glass spectacles, holding a glowing book, transparent background, premium studio lighting
-2. **Save to project** as `src/assets/owl-mascot.png`
-3. **Update imports** in `OwlMascot.tsx` and `Landing.tsx` to use the new mascot image instead of `logo.png` (keep `logo.png` for the header nav logo)
+### 1. Fix Owl Display — Bypass TransparentLogo (`OwlMascot.tsx`)
+- Stop using `TransparentLogo` for the owl mascot — use a plain `<img>` tag instead
+- The AI-generated mascot already has a transparent background; the canvas processing is stripping valid dark pixels from the owl's feathers/eyes
+- Keep `TransparentLogo` only for the header logo in `Landing.tsx` where it's needed
 
-### Files Modified
-- `src/components/OwlMascot.tsx` — update import to `owl-mascot.png`
-- `src/pages/Landing.tsx` — header keeps `logo.png`, mascot uses new image
+### 2. Generate 3 New Owl Mascot Images
+Use AI image generation (`google/gemini-3-pro-image-preview`) to create:
 
----
+1. **Hero owl with graduation hat** — `src/assets/owl-mascot.png` (replace existing): 3D owl with graduation cap, frosted-glass spectacles, holding a glowing book, sage/ochre/cloud dancer palette, transparent background
+2. **Celebrating owl** — `src/assets/owl-celebrate.png`: Same owl doing a wing-up celebration pose, stars/sparkles around it, graduation cap slightly tilted, transparent background
+3. **Listening owl** — `src/assets/owl-listen.png`: Same owl leaning forward, wing cupped to ear, attentive expression, transparent background
 
-## Part 2: Parallax Scrolling Effects
+### 3. Update OwlMascot Component (`OwlMascot.tsx`)
+- Add `pose` prop: `"default" | "celebrate" | "listen"` that selects which image to display
+- Import all three mascot images
+- Use plain `<img>` tag with `drop-shadow-xl` instead of `TransparentLogo`
 
-Add scroll-driven parallax to the background blobs and section transitions using Framer Motion's `useScroll` and `useTransform`.
+### 4. Wire Up Poses in Existing Pages
+- `ChildChat.tsx`: Use `pose="listen"` for the empty-state mascot and thinking state
+- `ChildHomework.tsx`: Use `pose="celebrate"` for the completion celebration
+- `ChildRewards.tsx`: Use `pose="celebrate"` for rewards display (if OwlMascot is used there)
+- All other usages keep `pose="default"`
 
-### Steps
-1. **Background blobs parallax** (`Landing.tsx`): Wrap each blob in a `motion.div` that translates Y at different rates based on scroll progress (e.g., blob 1 moves at 0.3x scroll speed, blob 2 at 0.5x, blob 3 at 0.7x) creating depth layers
-2. **Section transitions**: Add `whileInView` animations with slight Y-offset transforms that create a "sliding into place" feel — already partially there, enhance with scale and subtle blur-to-clear transitions
-3. Use `useScroll({ target: ref })` for scoped parallax on the hero section
+### 5. Add Blob Breathing Animation (`Landing.tsx`)
+Add CSS keyframe animation alongside the existing parallax:
+- Each blob gets `animate={{ scale: [1, 1.08, 1] }}` with different durations (8s, 12s, 10s) and `repeat: Infinity`
+- This stacks with the existing `useTransform` parallax via Framer Motion's `animate` prop on the same `motion.div`
 
-### Technical Detail
-```typescript
-const { scrollY } = useScroll();
-const blob1Y = useTransform(scrollY, [0, 1000], [0, -150]);
-const blob2Y = useTransform(scrollY, [0, 1000], [0, -80]);
-const blob3Y = useTransform(scrollY, [0, 1000], [0, -200]);
-```
+## Files Modified
+- `src/components/OwlMascot.tsx` — add `pose` prop, use `<img>` instead of `TransparentLogo`, import new assets
+- `src/pages/Landing.tsx` — add breathing animation to blobs
+- `src/pages/ChildChat.tsx` — add `pose="listen"` to relevant OwlMascot usages
+- `src/pages/ChildHomework.tsx` — add `pose="celebrate"` to completion mascot
 
-Each blob becomes a `motion.div` with `style={{ y: blob1Y }}`.
+## Files Created
+- `src/assets/owl-mascot.png` — regenerated with graduation hat
+- `src/assets/owl-celebrate.png` — celebrating pose
+- `src/assets/owl-listen.png` — listening pose
 
-### Files Modified
-- `src/pages/Landing.tsx` — add `useScroll`/`useTransform` for parallax blobs + enhanced section animations
+## Technical Notes
+- The `TransparentLogo` component remains untouched — it's still used for the header logo
+- The breathing animation uses Framer Motion `animate` which composes cleanly with the `style={{ y: blobY }}` parallax transform
+- All three owl images will be generated with transparent backgrounds so no processing is needed
 
