@@ -63,6 +63,9 @@ export default function AdminDashboard() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [showActivityCreator, setShowActivityCreator] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<any>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
