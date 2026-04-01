@@ -1,13 +1,15 @@
-import owlLogo from "@/assets/owl-mascot.png";
+import owlDefault from "@/assets/owl-mascot.png";
+import owlCelebrate from "@/assets/owl-celebrate.png";
+import owlListen from "@/assets/owl-listen.png";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import TransparentLogo from "@/components/TransparentLogo";
 import { useEffect, useRef, useState } from "react";
 
 interface OwlMascotProps {
   size?: "sm" | "md" | "lg" | "xl";
   animate?: boolean;
   variant?: "idle" | "celebrate" | "thinking" | "blink";
+  pose?: "default" | "celebrate" | "listen";
   className?: string;
   message?: string;
   trackMouse?: boolean;
@@ -18,6 +20,12 @@ const sizeMap = {
   md: "w-20 h-20",
   lg: "w-32 h-32",
   xl: "w-48 h-48",
+};
+
+const poseImages = {
+  default: owlDefault,
+  celebrate: owlCelebrate,
+  listen: owlListen,
 };
 
 const variants = {
@@ -42,7 +50,7 @@ const variants = {
   },
 };
 
-export function OwlMascot({ size = "md", animate = true, variant = "idle", className, message, trackMouse = false }: OwlMascotProps) {
+export function OwlMascot({ size = "md", animate = true, variant = "idle", pose = "default", className, message, trackMouse = false }: OwlMascotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -66,7 +74,6 @@ export function OwlMascot({ size = "md", animate = true, variant = "idle", class
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [trackMouse, mouseX, mouseY]);
 
-  // Periodic "glasses push" animation
   useEffect(() => {
     if (!trackMouse) return;
     const interval = setInterval(() => {
@@ -75,6 +82,8 @@ export function OwlMascot({ size = "md", animate = true, variant = "idle", class
     }, 10000);
     return () => clearInterval(interval);
   }, [trackMouse]);
+
+  const imgSrc = poseImages[pose] || owlDefault;
 
   return (
     <div ref={containerRef} className={cn("flex flex-col items-center gap-3", className)}>
@@ -88,10 +97,11 @@ export function OwlMascot({ size = "md", animate = true, variant = "idle", class
           transition={{ duration: 0.5 }}
           className="w-full h-full"
         >
-          <TransparentLogo
-            src={owlLogo}
+          <img
+            src={imgSrc}
             alt="Owl Tutor mascot"
             className="w-full h-full object-contain drop-shadow-xl"
+            loading="lazy"
           />
         </motion.div>
       </motion.div>

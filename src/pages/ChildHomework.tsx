@@ -292,7 +292,7 @@ export default function ChildHomework() {
               className="space-y-6 text-center"
             >
               <div className="relative inline-block">
-                <OwlMascot size="lg" variant="celebrate" message="High five! ✋ Homework is done!" className="mx-auto" />
+                <OwlMascot size="lg" variant="celebrate" pose="celebrate" message="High five! ✋ Homework is done!" className="mx-auto" />
                 <Sparkle active={showCelebration} count={5} />
               </div>
 

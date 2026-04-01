@@ -219,7 +219,7 @@ export default function ChildChat() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <OwlMascot size="lg" variant="idle" message={`Ask me anything about ${subject.replace(/_/g, " ")}! I'll help you think through it 🤔`} />
+            <OwlMascot size="lg" variant="idle" pose="listen" message={`Ask me anything about ${subject.replace(/_/g, " ")}! I'll help you think through it 🤔`} />
           </div>
         )}
 
@@ -250,7 +250,7 @@ export default function ChildChat() {
 
         {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex gap-2">
-            <OwlMascot size="sm" variant="thinking" />
+            <OwlMascot size="sm" variant="thinking" pose="listen" />
             <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
               <span className="animate-pulse text-muted-foreground">Thinking...</span>
             </div>
