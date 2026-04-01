@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Float, RoundedBox } from "@react-three/drei";
-import { useRef, Suspense } from "react";
+import { Environment, OrbitControls, Float, RoundedBox, useGLTF } from "@react-three/drei";
+import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 
 interface OwlSceneProps {
@@ -8,17 +8,27 @@ interface OwlSceneProps {
   message?: string;
 }
 
-function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string> }) {
+function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) {
+  const { scene } = useGLTF("/models/owl.glb");
   const pageRef = useRef<THREE.Mesh>(null!);
   const lightRef = useRef<THREE.PointLight>(null!);
 
+  // Auto-center and scale the model
+  const { center, scale, headY, eyeY } = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = box.getSize(new THREE.Vector3());
+    const c = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const s = 2.0 / maxDim; // fit in ~2 units
+    const topY = (box.max.y - c.y) * s;
+    return { center: c, scale: s, headY: topY, eyeY: topY * 0.75 };
+  }, [scene]);
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    // Page turn animation
     if (pageRef.current) {
       pageRef.current.rotation.z = Math.sin(t * 0.8) * Math.PI * 0.35;
     }
-    // Pulsing book light
     if (lightRef.current) {
       lightRef.current.intensity = 1.5 + Math.sin(t * 2) * 1.5;
     }
@@ -29,115 +39,19 @@ function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string>
   const hasBook = !!equippedItems["book"];
 
   return (
-    <group position={[0, -0.3, 0]}>
-      {/* Body */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.8, 32, 32]} />
-        <meshStandardMaterial color="#8B6914" roughness={0.6} />
-      </mesh>
+    <group>
+      {/* Owl model — centered and scaled */}
+      <primitive
+        object={scene}
+        scale={scale}
+        position={[-center.x * scale, -center.y * scale, -center.z * scale]}
+      />
 
-      {/* Head */}
-      <mesh position={[0, 1.0, 0]}>
-        <sphereGeometry args={[0.55, 32, 32]} />
-        <meshStandardMaterial color="#A0782C" roughness={0.5} />
-      </mesh>
-
-      {/* Left ear tuft */}
-      <mesh position={[-0.35, 1.55, 0]} rotation={[0, 0, 0.3]}>
-        <coneGeometry args={[0.12, 0.35, 8]} />
-        <meshStandardMaterial color="#6B4E0A" />
-      </mesh>
-
-      {/* Right ear tuft */}
-      <mesh position={[0.35, 1.55, 0]} rotation={[0, 0, -0.3]}>
-        <coneGeometry args={[0.12, 0.35, 8]} />
-        <meshStandardMaterial color="#6B4E0A" />
-      </mesh>
-
-      {/* Left eye (white) */}
-      <mesh position={[-0.2, 1.1, 0.45]}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshPhysicalMaterial
-          color="#ffffff"
-          roughness={0.1}
-          transmission={0.3}
-          thickness={0.5}
-        />
-      </mesh>
-
-      {/* Left pupil */}
-      <mesh position={[-0.2, 1.1, 0.58]}>
-        <sphereGeometry args={[0.07, 16, 16]} />
-        <meshStandardMaterial color="#1a1a1a" />
-      </mesh>
-
-      {/* Right eye (white) */}
-      <mesh position={[0.2, 1.1, 0.45]}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshPhysicalMaterial
-          color="#ffffff"
-          roughness={0.1}
-          transmission={0.3}
-          thickness={0.5}
-        />
-      </mesh>
-
-      {/* Right pupil */}
-      <mesh position={[0.2, 1.1, 0.58]}>
-        <sphereGeometry args={[0.07, 16, 16]} />
-        <meshStandardMaterial color="#1a1a1a" />
-      </mesh>
-
-      {/* Beak */}
-      <mesh position={[0, 0.9, 0.55]} rotation={[0.3, 0, 0]}>
-        <coneGeometry args={[0.08, 0.18, 8]} />
-        <meshStandardMaterial color="#E8A317" />
-      </mesh>
-
-      {/* Belly patch */}
-      <mesh position={[0, -0.1, 0.55]}>
-        <sphereGeometry args={[0.45, 16, 16]} />
-        <meshStandardMaterial color="#D4B876" roughness={0.7} />
-      </mesh>
-
-      {/* Left wing */}
-      <mesh position={[-0.85, 0.1, 0]} rotation={[0, 0, 0.4]}>
-        <sphereGeometry args={[0.3, 16, 16]} />
-        <meshStandardMaterial color="#7A5C10" />
-        <mesh scale={[1, 1.8, 0.5]}>
-          <sphereGeometry args={[0.3, 16, 16]} />
-          <meshStandardMaterial color="#7A5C10" />
-        </mesh>
-      </mesh>
-
-      {/* Right wing */}
-      <mesh position={[0.85, 0.1, 0]} rotation={[0, 0, -0.4]}>
-        <sphereGeometry args={[0.3, 16, 16]} />
-        <meshStandardMaterial color="#7A5C10" />
-        <mesh scale={[1, 1.8, 0.5]}>
-          <sphereGeometry args={[0.3, 16, 16]} />
-          <meshStandardMaterial color="#7A5C10" />
-        </mesh>
-      </mesh>
-
-      {/* Feet */}
-      <mesh position={[-0.25, -0.85, 0.3]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#E8A317" />
-      </mesh>
-      <mesh position={[0.25, -0.85, 0.3]}>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#E8A317" />
-      </mesh>
-
-      {/* Book */}
-      <group position={[0, -0.6, 0.8]}>
-        {/* Book base */}
+      {/* Book in front of the owl */}
+      <group position={[0, -0.6, 1.0]}>
         <RoundedBox args={[0.8, 0.06, 0.6]} radius={0.02}>
           <meshStandardMaterial color={hasBook ? "#4A90D9" : "#8B4513"} />
         </RoundedBox>
-
-        {/* Animated page */}
         <group position={[-0.2, 0.04, 0]}>
           <mesh ref={pageRef} position={[0.2, 0, 0]}>
             <RoundedBox args={[0.35, 0.01, 0.55]} radius={0.005}>
@@ -145,8 +59,6 @@ function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string>
             </RoundedBox>
           </mesh>
         </group>
-
-        {/* Pulsing light from book */}
         <pointLight
           ref={lightRef}
           position={[0, 0.3, 0]}
@@ -160,25 +72,18 @@ function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string>
       {/* HEADWEAR — wizard hat */}
       {hasHeadwear && (
         <Float speed={2} floatIntensity={0.3}>
-          <group position={[0, 1.65, 0]}>
-            {/* Hat brim */}
+          <group position={[0, headY + 0.15, 0]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[0.35, 0.05, 8, 24]} />
               <meshStandardMaterial color="#4B0082" />
             </mesh>
-            {/* Hat cone */}
             <mesh position={[0, 0.35, 0]}>
               <coneGeometry args={[0.3, 0.7, 16]} />
               <meshStandardMaterial color="#6A0DAD" />
             </mesh>
-            {/* Hat star */}
             <mesh position={[0.15, 0.25, 0.25]}>
               <sphereGeometry args={[0.05, 8, 8]} />
-              <meshStandardMaterial
-                color="#FFD700"
-                emissive="#FFD700"
-                emissiveIntensity={0.5}
-              />
+              <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} />
             </mesh>
           </group>
         </Float>
@@ -187,26 +92,15 @@ function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string>
       {/* EYEWEAR — glasses */}
       {hasEyewear && (
         <Float speed={1.5} floatIntensity={0.15}>
-          <group position={[0, 1.1, 0.55]}>
-            {/* Left lens */}
+          <group position={[0, eyeY, 0.55]}>
             <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[0.12, 0.02, 8, 24]} />
-              <meshPhysicalMaterial
-                color="#C0C0C0"
-                metalness={0.8}
-                roughness={0.2}
-              />
+              <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
             </mesh>
-            {/* Right lens */}
             <mesh position={[0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[0.12, 0.02, 8, 24]} />
-              <meshPhysicalMaterial
-                color="#C0C0C0"
-                metalness={0.8}
-                roughness={0.2}
-              />
+              <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
             </mesh>
-            {/* Bridge */}
             <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
               <cylinderGeometry args={[0.015, 0.015, 0.16, 8]} />
               <meshStandardMaterial color="#C0C0C0" metalness={0.8} />
@@ -218,6 +112,8 @@ function GeometricOwl({ equippedItems }: { equippedItems: Record<string, string>
   );
 }
 
+useGLTF.preload("/models/owl.glb");
+
 export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
   return (
     <div className="relative w-full" style={{ height: "320px" }}>
@@ -228,7 +124,7 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
         <Suspense fallback={null}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[5, 5, 5]} intensity={0.6} />
-          <GeometricOwl equippedItems={equippedItems} />
+          <OwlModel equippedItems={equippedItems} />
           <Environment preset="sunset" />
           <OrbitControls
             enableZoom={false}
@@ -249,11 +145,3 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
     </div>
   );
 }
-
-/* To swap to a real .glb model:
-import { useGLTF } from "@react-three/drei";
-function OwlModel() {
-  const { scene } = useGLTF("/models/owl.glb");
-  return <primitive object={scene} />;
-}
-*/
