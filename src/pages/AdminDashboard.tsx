@@ -229,151 +229,192 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Subscribers Table */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="font-display">Subscribers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingData ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
+      <Tabs defaultValue="subscribers" className="mt-2">
+        <TabsList>
+          <TabsTrigger value="subscribers">Subscribers</TabsTrigger>
+          <TabsTrigger value="activities">
+            <BookOpen className="w-4 h-4 mr-1" /> Activities
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="subscribers">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-display">Subscribers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingData ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Trial Ends</TableHead>
+                        <TableHead className="w-[80px]">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subscribers.map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell className="font-medium">{sub.display_name || "Unknown"}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusColor(sub.subscription_status)}>{sub.subscription_status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {format(addDays(new Date(sub.created_at), 30), "dd MMM yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => updateSubscription(sub.id, "active")}>Activate</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateSubscription(sub.id, "cancelled")}>Cancel</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {subscribers.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No subscribers yet</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-display text-lg">Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingData ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : recentSessions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No recent sessions</p>
+                  ) : (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                      {recentSessions.map((s) => (
+                        <div key={s.id} className="flex items-center justify-between text-sm border-b border-border pb-2 last:border-0">
+                          <div>
+                            <p className="font-medium">{s.child_name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{s.subject || "—"}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={s.status === "active" ? "default" : "secondary"} className="text-[10px]">{s.status}</Badge>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDistanceToNow(new Date(s.started_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-muted-foreground" />
+                  <CardTitle className="font-display text-lg">Change Password</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input id="new-password" type="password" placeholder="Min 6 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input id="confirm-password" type="password" placeholder="Re-enter password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  </div>
+                  <Button onClick={handleChangePassword} disabled={changingPassword || !newPassword} className="w-full">
+                    {changingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Update Password
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="font-display">Activity Blueprints</CardTitle>
+              <Button onClick={() => { setEditingActivity(null); setShowActivityCreator(true); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Activity
+              </Button>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Trial Ends</TableHead>
-                    <TableHead className="w-[80px]">Action</TableHead>
+                    <TableHead>Topic</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Curriculum</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Difficulty</TableHead>
+                    <TableHead>XP</TableHead>
+                    <TableHead>Active</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subscribers.map((sub) => (
-                    <TableRow key={sub.id}>
-                      <TableCell className="font-medium">
-                        {sub.display_name || "Unknown"}
+                  {activities.map((act: any) => (
+                    <TableRow key={act.id}>
+                      <TableCell className="font-medium">{act.topic}</TableCell>
+                      <TableCell>{act.grade}</TableCell>
+                      <TableCell><Badge variant="outline">{act.curriculum.toUpperCase()}</Badge></TableCell>
+                      <TableCell className="capitalize">{act.subject}</TableCell>
+                      <TableCell>{act.difficulty}/5</TableCell>
+                      <TableCell>{act.xp_reward}</TableCell>
+                      <TableCell>
+                        <Switch checked={act.is_active} onCheckedChange={() => toggleActivity(act.id, act.is_active)} />
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusColor(sub.subscription_status)}>
-                          {sub.subscription_status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(addDays(new Date(sub.created_at), 30), "dd MMM yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => updateSubscription(sub.id, "active")}>
-                              Activate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateSubscription(sub.id, "cancelled")}>
-                              Cancel
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditingActivity(act); setShowActivityCreator(true); }}>
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => deleteActivity(act.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {subscribers.length === 0 && (
+                  {activities.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No subscribers yet
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        No activities yet. Click "Add Activity" to create your first blueprint.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Right column */}
-        <div className="space-y-6">
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-lg">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingData ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : recentSessions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent sessions</p>
-              ) : (
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {recentSessions.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between text-sm border-b border-border pb-2 last:border-0">
-                      <div>
-                        <p className="font-medium">{s.child_name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{s.subject || "—"}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant={s.status === "active" ? "default" : "secondary"} className="text-[10px]">
-                          {s.status}
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(s.started_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          {/* Change Password Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center gap-2">
-              <KeyRound className="w-5 h-5 text-muted-foreground" />
-              <CardTitle className="font-display text-lg">Change Password</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Min 6 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Re-enter password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-              <Button
-                onClick={handleChangePassword}
-                disabled={changingPassword || !newPassword}
-                className="w-full"
-              >
-                {changingPassword ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                Update Password
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          <ActivityCreator
+            open={showActivityCreator}
+            onClose={() => { setShowActivityCreator(false); setEditingActivity(null); }}
+            onSaved={fetchActivities}
+            editActivity={editingActivity}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
