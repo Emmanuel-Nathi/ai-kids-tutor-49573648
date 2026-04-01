@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Float, RoundedBox, useGLTF, Html } from "@react-three/drei";
-import { useRef, useMemo, useEffect, Suspense, useState } from "react";
+import { Environment, OrbitControls, RoundedBox, useGLTF, Html } from "@react-three/drei";
+import { useRef, useMemo, useEffect, Suspense, useState, useCallback } from "react";
 import * as THREE from "three";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -9,17 +9,19 @@ interface OwlSceneProps {
   message?: string;
 }
 
-// Names to try when searching for the head node
 const HEAD_NODE_NAMES = ["Head", "head", "Head_1", "Head_Mesh", "Neck", "neck"];
 
 function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
-  // Try known names first
   for (const name of HEAD_NODE_NAMES) {
     const node = scene.getObjectByName(name);
     if (node) return node;
   }
 
-  // Heuristic: find the topmost child mesh (highest Y center) that isn't root
+  // Compute total model height for relative sizing
+  const totalBox = new THREE.Box3().setFromObject(scene);
+  const totalHeight = totalBox.getSize(new THREE.Vector3()).y;
+  if (totalHeight === 0) return null;
+
   let bestNode: THREE.Object3D | null = null;
   let bestY = -Infinity;
 
@@ -28,7 +30,9 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
     if ((child as THREE.Mesh).isMesh || child.children.length > 0) {
       const box = new THREE.Box3().setFromObject(child);
       const center = box.getCenter(new THREE.Vector3());
-      if (center.y > bestY && box.getSize(new THREE.Vector3()).y < box.getSize(new THREE.Vector3()).y * 2) {
+      const nodeHeight = box.getSize(new THREE.Vector3()).y;
+      // Only consider nodes smaller than 40% of total height (head-sized)
+      if (nodeHeight < totalHeight * 0.4 && center.y > bestY) {
         bestY = center.y;
         bestNode = child;
       }
@@ -46,16 +50,9 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
   const sceneGroupRef = useRef<THREE.Group>(null!);
 
   useEffect(() => {
-    // Log hierarchy for debugging
-    console.log("[OwlScene] Model hierarchy:");
-    scene.traverse((child) => {
-      console.log(`  ${"  ".repeat(child.parent ? 1 : 0)}${child.name || "(unnamed)"} [${child.type}]`);
-    });
-
     const head = findHeadNode(scene);
     if (head) {
       headRef.current = head;
-      console.log(`[OwlScene] Head tracking attached to node: "${head.name || "(unnamed)"}"`);
     } else {
       console.warn("[OwlScene] No head node found — will rotate entire model slightly as fallback.");
     }
@@ -63,7 +60,6 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
     onLoaded();
   }, [scene, onLoaded]);
 
-  // Auto-center and scale the model
   const { center, scale, headY, eyeY } = useMemo(() => {
     const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
@@ -85,13 +81,12 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
 
     const mouse = state.mouse;
     const targetY = mouse.x * (Math.PI / 6);
-    const targetX = -mouse.y * (Math.PI / 10);
+    const targetX = -mouse.y * (Math.PI / 20);
 
     if (headRef.current) {
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
     } else if (sceneGroupRef.current) {
-      // Fallback: rotate entire model slightly (dampened)
       const dampenedY = targetY * 0.3;
       const dampenedX = targetX * 0.3;
       sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, dampenedY, 0.05);
@@ -126,44 +121,40 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
         <pointLight ref={lightRef} position={[0, 0.3, 0]} color="#FFD700" intensity={1.5} distance={3} decay={2} />
       </group>
 
-      {/* HEADWEAR */}
+      {/* HEADWEAR — no Float, static position */}
       {hasHeadwear && (
-        <Float speed={2} floatIntensity={0.3}>
-          <group position={[0, headY + 0.15, 0]}>
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.35, 0.05, 8, 24]} />
-              <meshStandardMaterial color="#4B0082" />
-            </mesh>
-            <mesh position={[0, 0.35, 0]}>
-              <coneGeometry args={[0.3, 0.7, 16]} />
-              <meshStandardMaterial color="#6A0DAD" />
-            </mesh>
-            <mesh position={[0.15, 0.25, 0.25]}>
-              <sphereGeometry args={[0.05, 8, 8]} />
-              <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} />
-            </mesh>
-          </group>
-        </Float>
+        <group position={[0, headY + 0.15, 0]}>
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.35, 0.05, 8, 24]} />
+            <meshStandardMaterial color="#4B0082" />
+          </mesh>
+          <mesh position={[0, 0.35, 0]}>
+            <coneGeometry args={[0.3, 0.7, 16]} />
+            <meshStandardMaterial color="#6A0DAD" />
+          </mesh>
+          <mesh position={[0.15, 0.25, 0.25]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} />
+          </mesh>
+        </group>
       )}
 
-      {/* EYEWEAR */}
+      {/* EYEWEAR — no Float, static position */}
       {hasEyewear && (
-        <Float speed={1.5} floatIntensity={0.15}>
-          <group position={[0, eyeY, 0.55]}>
-            <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.12, 0.02, 8, 24]} />
-              <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
-            </mesh>
-            <mesh position={[0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.12, 0.02, 8, 24]} />
-              <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
-            </mesh>
-            <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.16, 8]} />
-              <meshStandardMaterial color="#C0C0C0" metalness={0.8} />
-            </mesh>
-          </group>
-        </Float>
+        <group position={[0, eyeY, 0.55]}>
+          <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.12, 0.02, 8, 24]} />
+            <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
+          </mesh>
+          <mesh position={[0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.12, 0.02, 8, 24]} />
+            <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
+          </mesh>
+          <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.015, 0.015, 0.16, 8]} />
+            <meshStandardMaterial color="#C0C0C0" metalness={0.8} />
+          </mesh>
+        </group>
       )}
     </group>
   );
@@ -185,10 +176,10 @@ function OwlLoadingFallback() {
 
 export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
   const [loaded, setLoaded] = useState(false);
+  const handleLoaded = useCallback(() => setLoaded(true), []);
 
   return (
     <div className="relative w-full" style={{ height: "320px" }}>
-      {/* Overlay skeleton that fades out once loaded */}
       {!loaded && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
           <Skeleton className="h-32 w-32 rounded-full" />
@@ -204,7 +195,7 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
         <Suspense fallback={<OwlLoadingFallback />}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[5, 5, 5]} intensity={0.6} />
-          <OwlModel equippedItems={equippedItems} onLoaded={() => setLoaded(true)} />
+          <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} />
           <Environment preset="sunset" />
           <OrbitControls
             enableZoom={false}
