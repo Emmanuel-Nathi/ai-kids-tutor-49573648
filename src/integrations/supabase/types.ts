@@ -59,6 +59,42 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          created_at: string
+          criteria_type: string | null
+          criteria_value: number | null
+          description: string | null
+          icon_emoji: string | null
+          id: string
+          is_active: boolean
+          title: string
+          xp_award: number
+        }
+        Insert: {
+          created_at?: string
+          criteria_type?: string | null
+          criteria_value?: number | null
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+          xp_award?: number
+        }
+        Update: {
+          created_at?: string
+          criteria_type?: string | null
+          criteria_value?: number | null
+          description?: string | null
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+          xp_award?: number
+        }
+        Relationships: []
+      }
       child_activity_progress: {
         Row: {
           activity_id: string
@@ -93,6 +129,67 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: false
             referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_badges: {
+        Row: {
+          badge_id: string
+          child_id: string
+          earned_at: string
+          id: string
+        }
+        Insert: {
+          badge_id: string
+          child_id: string
+          earned_at?: string
+          id?: string
+        }
+        Update: {
+          badge_id?: string
+          child_id?: string
+          earned_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_inventory: {
+        Row: {
+          child_id: string
+          id: string
+          is_equipped: boolean
+          item_id: string
+          purchased_at: string
+        }
+        Insert: {
+          child_id: string
+          id?: string
+          is_equipped?: boolean
+          item_id: string
+          purchased_at?: string
+        }
+        Update: {
+          child_id?: string
+          id?: string
+          is_equipped?: boolean
+          item_id?: string
+          purchased_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]
@@ -322,6 +419,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      inventory_items: {
+        Row: {
+          created_at: string
+          icon_emoji: string | null
+          id: string
+          is_active: boolean
+          item_type: string
+          material_effect: string | null
+          name: string
+          xp_cost: number
+        }
+        Insert: {
+          created_at?: string
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          item_type: string
+          material_effect?: string | null
+          name: string
+          xp_cost?: number
+        }
+        Update: {
+          created_at?: string
+          icon_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          item_type?: string
+          material_effect?: string | null
+          name?: string
+          xp_cost?: number
+        }
+        Relationships: []
       }
       messages: {
         Row: {

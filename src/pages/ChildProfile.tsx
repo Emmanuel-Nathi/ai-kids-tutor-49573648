@@ -1,9 +1,10 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useChildData } from "@/hooks/useChildData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { OwlMascot } from "@/components/OwlMascot";
-import { User, Star, BookOpen, Flame } from "lucide-react";
+import { User, Star, BookOpen, Flame, Trophy } from "lucide-react";
 
 const curriculumLabels: Record<string, string> = {
   cambridge: "Cambridge",
@@ -14,6 +15,7 @@ const curriculumLabels: Record<string, string> = {
 
 export default function ChildProfile() {
   const { childId } = useParams<{ childId: string }>();
+  const navigate = useNavigate();
   const { child, totalPoints, streak, sessionCount, loading } = useChildData(childId);
 
   if (loading || !child) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
@@ -72,6 +74,15 @@ export default function ChildProfile() {
             </CardContent>
           </Card>
         </div>
+
+        <Button
+          variant="outline"
+          className="w-full flex items-center gap-2"
+          onClick={() => navigate(`/child/${childId}/room`)}
+        >
+          <Trophy className="w-5 h-5 text-secondary" />
+          <span className="font-display">Visit My Room</span>
+        </Button>
       </main>
     </div>
   );
