@@ -12,9 +12,11 @@ export default function Paywall() {
   const handlePayfastCheckout = () => {
     setIsRedirecting(true);
 
-    const merchantId = "10000100";
-    const merchantKey = "46f0cd694581a";
-    const payfastUrl = "https://sandbox.payfast.co.za/eng/process";
+    // TODO: PRODUCTION — Replace sandbox credentials with live values before go-live.
+    // Move to an edge function to avoid exposing merchant keys client-side.
+    const merchantId = "10000100"; // Sandbox — swap for production merchant_id
+    const merchantKey = "46f0cd694581a"; // Sandbox — swap for production merchant_key
+    const payfastUrl = "https://sandbox.payfast.co.za/eng/process"; // Swap to https://www.payfast.co.za/eng/process
 
     const paymentData: Record<string, string> = {
       merchant_id: merchantId,

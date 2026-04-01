@@ -1,27 +1,67 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Float, RoundedBox, useGLTF } from "@react-three/drei";
-import { useRef, useMemo, useEffect, Suspense } from "react";
+import { Environment, OrbitControls, Float, RoundedBox, useGLTF, Html } from "@react-three/drei";
+import { useRef, useMemo, useEffect, Suspense, useState } from "react";
 import * as THREE from "three";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OwlSceneProps {
   equippedItems: Record<string, string>;
   message?: string;
 }
 
-function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) {
+// Names to try when searching for the head node
+const HEAD_NODE_NAMES = ["Head", "head", "Head_1", "Head_Mesh", "Neck", "neck"];
+
+function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
+  // Try known names first
+  for (const name of HEAD_NODE_NAMES) {
+    const node = scene.getObjectByName(name);
+    if (node) return node;
+  }
+
+  // Heuristic: find the topmost child mesh (highest Y center) that isn't root
+  let bestNode: THREE.Object3D | null = null;
+  let bestY = -Infinity;
+
+  scene.traverse((child) => {
+    if (child === scene) return;
+    if ((child as THREE.Mesh).isMesh || child.children.length > 0) {
+      const box = new THREE.Box3().setFromObject(child);
+      const center = box.getCenter(new THREE.Vector3());
+      if (center.y > bestY && box.getSize(new THREE.Vector3()).y < box.getSize(new THREE.Vector3()).y * 2) {
+        bestY = center.y;
+        bestNode = child;
+      }
+    }
+  });
+
+  return bestNode;
+}
+
+function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, string>; onLoaded: () => void }) {
   const { scene } = useGLTF("/models/owl.glb");
   const pageRef = useRef<THREE.Mesh>(null!);
   const lightRef = useRef<THREE.PointLight>(null!);
   const headRef = useRef<THREE.Object3D | null>(null);
+  const sceneGroupRef = useRef<THREE.Group>(null!);
 
   useEffect(() => {
-    const head = scene.getObjectByName('Head');
+    // Log hierarchy for debugging
+    console.log("[OwlScene] Model hierarchy:");
+    scene.traverse((child) => {
+      console.log(`  ${"  ".repeat(child.parent ? 1 : 0)}${child.name || "(unnamed)"} [${child.type}]`);
+    });
+
+    const head = findHeadNode(scene);
     if (head) {
       headRef.current = head;
+      console.log(`[OwlScene] Head tracking attached to node: "${head.name || "(unnamed)"}"`);
     } else {
-      console.warn("Could not find 'Head' node in owl.glb for mouse tracking.");
+      console.warn("[OwlScene] No head node found — will rotate entire model slightly as fallback.");
     }
-  }, [scene]);
+
+    onLoaded();
+  }, [scene, onLoaded]);
 
   // Auto-center and scale the model
   const { center, scale, headY, eyeY } = useMemo(() => {
@@ -29,7 +69,7 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
     const size = box.getSize(new THREE.Vector3());
     const c = box.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const s = 2.0 / maxDim; // fit in ~2 units
+    const s = 2.0 / maxDim;
     const topY = (box.max.y - c.y) * s;
     return { center: c, scale: s, headY: topY, eyeY: topY * 0.75 };
   }, [scene]);
@@ -42,13 +82,20 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
     if (lightRef.current) {
       lightRef.current.intensity = 1.5 + Math.sin(t * 2) * 1.5;
     }
-    // Head tracking
+
+    const mouse = state.mouse;
+    const targetY = mouse.x * (Math.PI / 6);
+    const targetX = -mouse.y * (Math.PI / 10);
+
     if (headRef.current) {
-      const mouse = state.mouse;
-      const targetY = mouse.x * (Math.PI / 6);
-      const targetX = -mouse.y * (Math.PI / 10);
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
+    } else if (sceneGroupRef.current) {
+      // Fallback: rotate entire model slightly (dampened)
+      const dampenedY = targetY * 0.3;
+      const dampenedX = targetX * 0.3;
+      sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, dampenedY, 0.05);
+      sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, dampenedX, 0.05);
     }
   });
 
@@ -57,15 +104,14 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
   const hasBook = !!equippedItems["book"];
 
   return (
-    <group>
-      {/* Owl model — centered and scaled */}
+    <group ref={sceneGroupRef}>
       <primitive
         object={scene}
         scale={scale}
         position={[-center.x * scale, -center.y * scale, -center.z * scale]}
       />
 
-      {/* Book in front of the owl */}
+      {/* Book */}
       <group position={[0, -0.6, 1.0]}>
         <RoundedBox args={[0.8, 0.06, 0.6]} radius={0.02}>
           <meshStandardMaterial color={hasBook ? "#4A90D9" : "#8B4513"} />
@@ -77,17 +123,10 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
             </RoundedBox>
           </mesh>
         </group>
-        <pointLight
-          ref={lightRef}
-          position={[0, 0.3, 0]}
-          color="#FFD700"
-          intensity={1.5}
-          distance={3}
-          decay={2}
-        />
+        <pointLight ref={lightRef} position={[0, 0.3, 0]} color="#FFD700" intensity={1.5} distance={3} decay={2} />
       </group>
 
-      {/* HEADWEAR — wizard hat */}
+      {/* HEADWEAR */}
       {hasHeadwear && (
         <Float speed={2} floatIntensity={0.3}>
           <group position={[0, headY + 0.15, 0]}>
@@ -107,7 +146,7 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
         </Float>
       )}
 
-      {/* EYEWEAR — glasses */}
+      {/* EYEWEAR */}
       {hasEyewear && (
         <Float speed={1.5} floatIntensity={0.15}>
           <group position={[0, eyeY, 0.55]}>
@@ -132,17 +171,40 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
 
 useGLTF.preload("/models/owl.glb");
 
+function OwlLoadingFallback() {
+  return (
+    <Html center>
+      <div className="flex flex-col items-center gap-3">
+        <Skeleton className="h-32 w-32 rounded-full" />
+        <Skeleton className="h-4 w-24 rounded-md" />
+        <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
+      </div>
+    </Html>
+  );
+}
+
 export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <div className="relative w-full" style={{ height: "320px" }}>
+      {/* Overlay skeleton that fades out once loaded */}
+      {!loaded && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
+          <Skeleton className="h-32 w-32 rounded-full" />
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
+        </div>
+      )}
+
       <Canvas
         camera={{ position: [0, 0.5, 4], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <Suspense fallback={null}>
+        <Suspense fallback={<OwlLoadingFallback />}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[5, 5, 5]} intensity={0.6} />
-          <OwlModel equippedItems={equippedItems} />
+          <OwlModel equippedItems={equippedItems} onLoaded={() => setLoaded(true)} />
           <Environment preset="sunset" />
           <OrbitControls
             enableZoom={false}

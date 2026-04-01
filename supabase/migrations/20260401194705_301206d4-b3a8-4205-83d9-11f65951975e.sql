@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anon can view profiles" ON public.profiles;
