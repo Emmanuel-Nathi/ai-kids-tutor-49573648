@@ -1,175 +1,90 @@
 
 
-# Activity Builder + Mission Map Implementation
+# Achievement Room: Inventory, Badges & Customization
 
-## Overview
-Build a database-driven "Activity Blueprints" system with a curriculum-aware prompt engine, an admin Activity Creator with AI preview, and a child-facing Mission Map with a winding level path.
+## Database (Migration)
 
----
-
-## 1. Database: `activities` Table (Migration)
-
-Create the `activities` table to store curriculum-specific learning blueprints:
+Create 4 tables. Note: `child_id` references `children(id)` (not `profiles`) since children are PIN-login users without auth accounts.
 
 ```sql
-CREATE TABLE public.activities (
+CREATE TABLE public.inventory_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  topic text NOT NULL,
-  grade text NOT NULL,
-  curriculum text NOT NULL DEFAULT 'cambridge',
-  subject text NOT NULL DEFAULT 'general',
-  objectives jsonb NOT NULL DEFAULT '[]',
-  difficulty integer NOT NULL DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 5),
-  xp_reward integer NOT NULL DEFAULT 30,
-  created_by uuid,
+  name text NOT NULL,
+  item_type text NOT NULL, -- 'headwear', 'eyewear', 'book'
+  xp_cost integer NOT NULL DEFAULT 100,
+  material_effect text, -- 'liquid_glass', 'matte', 'prestige_gradient'
+  icon_emoji text DEFAULT '🎩',
   is_active boolean NOT NULL DEFAULT true,
-  sort_order integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
-
--- Admin full access via service role
-CREATE POLICY "Service role full access" ON public.activities FOR ALL
-  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
-
--- Authenticated parents can read active activities
-CREATE POLICY "Authenticated can read active" ON public.activities FOR SELECT
-  TO authenticated USING (is_active = true);
-
--- Anon can read active (for child PIN-login sessions)
-CREATE POLICY "Anon can read active" ON public.activities FOR SELECT
-  TO anon USING (is_active = true);
-```
-
-Also create a `child_activity_progress` table to track completion:
-
-```sql
-CREATE TABLE public.child_activity_progress (
+CREATE TABLE public.child_inventory (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   child_id uuid NOT NULL,
-  activity_id uuid NOT NULL REFERENCES public.activities(id) ON DELETE CASCADE,
-  status text NOT NULL DEFAULT 'locked', -- locked, current, completed
-  completed_at timestamptz,
-  session_id uuid,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(child_id, activity_id)
+  item_id uuid NOT NULL REFERENCES public.inventory_items(id) ON DELETE CASCADE,
+  is_equipped boolean NOT NULL DEFAULT false,
+  purchased_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(child_id, item_id)
 );
 
-ALTER TABLE public.child_activity_progress ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  icon_emoji text DEFAULT '🏅',
+  xp_award integer NOT NULL DEFAULT 500,
+  criteria_type text, -- 'streak', 'sessions', 'missions', 'points'
+  criteria_value integer, -- e.g. 7 for "7-day streak"
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
--- Parents can view/manage their children's progress
-CREATE POLICY "Parents can view" ON public.child_activity_progress FOR SELECT
-  USING (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
-
-CREATE POLICY "Parents can insert" ON public.child_activity_progress FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
-
-CREATE POLICY "Parents can update" ON public.child_activity_progress FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM children WHERE children.id = child_activity_progress.child_id AND children.parent_id = auth.uid()));
-
--- Anon access for child PIN sessions
-CREATE POLICY "Anon can view" ON public.child_activity_progress FOR SELECT TO anon USING (true);
-CREATE POLICY "Anon can insert" ON public.child_activity_progress FOR INSERT TO anon WITH CHECK (true);
-CREATE POLICY "Anon can update" ON public.child_activity_progress FOR UPDATE TO anon USING (true);
-
--- Service role full access
-CREATE POLICY "Service role full" ON public.child_activity_progress FOR ALL
-  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
+CREATE TABLE public.child_badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  child_id uuid NOT NULL,
+  badge_id uuid NOT NULL REFERENCES public.badges(id) ON DELETE CASCADE,
+  earned_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(child_id, badge_id)
+);
 ```
 
----
+RLS: All 4 tables get anon SELECT + INSERT/UPDATE for child sessions, parent access via children join, service role full access. Same pattern as existing `child_activity_progress`.
 
-## 2. Curriculum-Aware Prompt Engine (Edge Function Update)
+## Hook: `src/hooks/useAchievementRoom.ts`
 
-**File: `supabase/functions/ai-tutor/index.ts`**
+- Fetches `child_inventory` joined with `inventory_items` and `child_badges` joined with `badges`
+- Derives `equippedItems` map (`{ headwear: 'item-id', ... }`)
+- `toggleEquip(itemId, itemType)`: un-equips same-type items, equips selected one
+- `purchaseItem(itemId, cost)`: calls `calculate-points` to deduct XP, inserts into `child_inventory`
+- `availableItems`: fetches all active `inventory_items` not yet owned
 
-Add a `getCurriculumInstruction()` helper that injects curriculum-specific pedagogy into the system prompt when an activity's objectives are provided:
+## Page: `src/pages/AchievementRoom.tsx`
 
-- **CAPS**: "Follow the SA CAPS structure. Focus on systematic building blocks. Use local SA examples."
-- **IEB**: "Prioritize critical thinking and application. Ask high-order 'Why' and 'How' questions. Challenge assumptions."
-- **Cambridge**: "Use a spiral learning approach. Connect the current topic to foundational concepts from previous years."
+Bento grid layout with 4 sections:
 
-When the request includes `activity_objectives` (JSONB from the activities table), append them to the system prompt so Gemini focuses on those specific learning goals.
+1. **Owl Display** (large, colspan-2 on desktop): Shows `OwlMascot` with equipped items indicated visually via overlay badges/tags. No Spline dependency — uses the existing pose-based image system with equipped item indicators rendered as floating badges around the owl.
 
----
+2. **Badges Shelf**: Frosted-glass card displaying earned badges as glassmorphic "enamel pin" tiles. Locked badges shown grayed with a lock icon.
 
-## 3. Admin Activity Creator (New Component + Edge Function)
+3. **Item Closet**: Grid of purchasable/owned items. Owned items show equip/unequip toggle. Unpurchased items show XP cost with "Buy" button. Uses existing Tactile Playfulness styling.
 
-### Edge Function: `admin-dashboard/index.ts`
-Add two new actions:
+4. **Stats Card**: XP total, streak count, sessions — reuses data from `useChildData`.
 
-- **`manage-activities`**: CRUD for activities (list, create, update, delete) — admin only
-- **`preview-activity`**: Calls Gemini to generate a sample 3-turn Socratic conversation based on the activity's topic, grade, curriculum, and objectives
+## Route & Navigation
 
-### New Component: `src/components/admin/ActivityCreator.tsx`
-A form with:
-- Topic (text input)
-- Grade (select 1-12)
-- Curriculum (select CAPS / IEB / Cambridge)
-- Subject (select from subjects list)
-- Difficulty (1-5 slider)
-- XP Reward (number input)
-- Learning Objectives (dynamic list — add/remove objective text fields)
-- **"Generate Preview"** button — calls the edge function to show a sample 3-turn Socratic conversation in a chat-bubble preview
-- **"Save Activity"** button — stores to database
-
-### Update: `src/pages/AdminDashboard.tsx`
-Add an "Activities" tab/section with:
-- Table listing existing activities (topic, grade, curriculum, difficulty, status)
-- "Add Activity" button opening the ActivityCreator
-- Toggle active/inactive per activity
-- Reorder via sort_order
-
----
-
-## 4. Mission Map Component (Child Dashboard)
-
-### New Component: `src/components/MissionMap.tsx`
-
-A vertical winding path of level nodes:
-- Fetches activities from the `activities` table filtered by child's `curriculum` and `grade`
-- Fetches progress from `child_activity_progress` to determine each node's state
-- Three states: **Locked** (gray, padlock icon), **Current** (pulsing sage/gold, play icon), **Completed** (gold, star icon)
-- Alternating left/right offset for the winding path effect
-- Dashed SVG connector lines between nodes that fill with color for completed levels
-- Floating owl mascot sits on the "Current" node
-- Glassmorphic "Tactile Playfulness" aesthetic with soft shadows and gradients
-- Clicking a "Current" node starts a session with the activity's objectives injected into the AI tutor context
-
-### Route & Integration
-- Add route `/child/:childId/missions` in `App.tsx`
-- Add a "Missions" button (map icon) to `ChildHome.tsx` in the quick-action grid
-- When a mission session completes, update `child_activity_progress` to mark it as completed and unlock the next activity
-
----
-
-## 5. Auto-Progression Logic
-
-When a child completes a mission (session ends with "completed" status):
-1. Mark the current activity as `completed` in `child_activity_progress`
-2. Find the next activity by `sort_order` for the same curriculum/grade
-3. Insert or update it as `current` in `child_activity_progress`
-4. Award the activity's XP via the existing points system
-
-This logic will live in a new hook: `src/hooks/useMissionProgress.ts`
-
----
+- Add `/child/:childId/room` route in `App.tsx` wrapped in `AppLayout`
+- Add a "My Room" button (Trophy icon) to `ChildHome.tsx` quick-action grid
+- Add link from `ChildProfile.tsx` to the room
 
 ## Files Created
-- `src/components/MissionMap.tsx` — winding path level map
-- `src/components/admin/ActivityCreator.tsx` — activity form + preview
-- `src/pages/ChildMissions.tsx` — missions page wrapper
-- `src/hooks/useMissionProgress.ts` — progress tracking hook
+- `src/hooks/useAchievementRoom.ts`
+- `src/pages/AchievementRoom.tsx`
 
 ## Files Modified
-- `supabase/functions/admin-dashboard/index.ts` — add `manage-activities` and `preview-activity` actions
-- `supabase/functions/ai-tutor/index.ts` — accept `activity_objectives` param, add curriculum instruction helper
-- `src/pages/AdminDashboard.tsx` — add Activities management section
-- `src/pages/ChildHome.tsx` — add Missions quick-action button
-- `src/App.tsx` — add `/child/:childId/missions` route
+- `src/App.tsx` — add route
+- `src/pages/ChildHome.tsx` — add "My Room" quick-action button
+- `src/pages/ChildProfile.tsx` — add link to room
 
-## Database Changes
-- Create `activities` table with RLS
-- Create `child_activity_progress` table with RLS
+## Design Decision: No Spline
+Spline requires an external 3D editor account and hosted assets. Instead, the owl customization will use the existing pose-based image system with equipped items rendered as floating overlay elements (emoji/icon badges positioned around the owl). This keeps the project self-contained and avoids external dependencies.
 
