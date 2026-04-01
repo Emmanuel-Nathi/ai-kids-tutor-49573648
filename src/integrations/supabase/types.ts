@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curriculum: string
+          difficulty: number
+          grade: string
+          id: string
+          is_active: boolean
+          objectives: Json
+          sort_order: number
+          subject: string
+          topic: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curriculum?: string
+          difficulty?: number
+          grade: string
+          id?: string
+          is_active?: boolean
+          objectives?: Json
+          sort_order?: number
+          subject?: string
+          topic: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curriculum?: string
+          difficulty?: number
+          grade?: string
+          id?: string
+          is_active?: boolean
+          objectives?: Json
+          sort_order?: number
+          subject?: string
+          topic?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      child_activity_progress: {
+        Row: {
+          activity_id: string
+          child_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          session_id: string | null
+          status: string
+        }
+        Insert: {
+          activity_id: string
+          child_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          status?: string
+        }
+        Update: {
+          activity_id?: string
+          child_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_activity_progress_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           access_pin: string | null
