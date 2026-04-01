@@ -5,7 +5,7 @@ import { MiniChatPreview } from "@/components/MiniChatPreview";
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -83,13 +83,18 @@ export default function Landing() {
     navigate("/auth");
   };
 
+  const { scrollY } = useScroll();
+  const blob1Y = useTransform(scrollY, [0, 1000], [0, -150]);
+  const blob2Y = useTransform(scrollY, [0, 1000], [0, -80]);
+  const blob3Y = useTransform(scrollY, [0, 1000], [0, -200]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
-      {/* Organic background blobs */}
+      {/* Organic background blobs with parallax */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl" />
-        <div className="absolute top-1/3 -left-48 w-[400px] h-[400px] rounded-full bg-secondary/8 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[350px] h-[350px] rounded-full bg-primary/5 blur-3xl" />
+        <motion.div style={{ y: blob1Y }} className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl" />
+        <motion.div style={{ y: blob2Y }} className="absolute top-1/3 -left-48 w-[400px] h-[400px] rounded-full bg-secondary/8 blur-3xl" />
+        <motion.div style={{ y: blob3Y }} className="absolute bottom-0 right-1/4 w-[350px] h-[350px] rounded-full bg-primary/5 blur-3xl" />
       </div>
 
       {/* Glassmorphic Header */}
