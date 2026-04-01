@@ -1,7 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { lazy, Suspense } from "react";
 import { OwlMascot } from "@/components/OwlMascot";
 import { MiniChatPreview } from "@/components/MiniChatPreview";
+
+const OwlScene = lazy(() => import("@/components/OwlScene"));
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
@@ -150,7 +153,9 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center"
         >
-          <OwlMascot size="xl" message="Let's make homework fun! 🦉" trackMouse />
+          <Suspense fallback={<OwlMascot size="xl" message="Let's make homework fun! 🦉" trackMouse />}>
+            <OwlScene equippedItems={{}} message="Let's make homework fun! 🦉" />
+          </Suspense>
 
           {/* Trust badges right after mascot */}
           <div className="mt-6 flex flex-wrap justify-center gap-2">
