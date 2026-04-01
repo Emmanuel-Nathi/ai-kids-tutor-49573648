@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls, Float, RoundedBox, useGLTF } from "@react-three/drei";
-import { useRef, useMemo, Suspense } from "react";
+import { useRef, useMemo, useEffect, Suspense } from "react";
 import * as THREE from "three";
 
 interface OwlSceneProps {
@@ -12,6 +12,16 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
   const { scene } = useGLTF("/models/owl.glb");
   const pageRef = useRef<THREE.Mesh>(null!);
   const lightRef = useRef<THREE.PointLight>(null!);
+  const headRef = useRef<THREE.Object3D | null>(null);
+
+  useEffect(() => {
+    const head = scene.getObjectByName('Head');
+    if (head) {
+      headRef.current = head;
+    } else {
+      console.warn("Could not find 'Head' node in owl.glb for mouse tracking.");
+    }
+  }, [scene]);
 
   // Auto-center and scale the model
   const { center, scale, headY, eyeY } = useMemo(() => {
@@ -31,6 +41,14 @@ function OwlModel({ equippedItems }: { equippedItems: Record<string, string> }) 
     }
     if (lightRef.current) {
       lightRef.current.intensity = 1.5 + Math.sin(t * 2) * 1.5;
+    }
+    // Head tracking
+    if (headRef.current) {
+      const mouse = state.mouse;
+      const targetY = mouse.x * (Math.PI / 6);
+      const targetX = -mouse.y * (Math.PI / 10);
+      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
+      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
     }
   });
 
@@ -131,8 +149,7 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
             enablePan={false}
             minPolarAngle={Math.PI / 4}
             maxPolarAngle={Math.PI / 2}
-            autoRotate
-            autoRotateSpeed={0.5}
+            autoRotate={false}
           />
         </Suspense>
       </Canvas>
