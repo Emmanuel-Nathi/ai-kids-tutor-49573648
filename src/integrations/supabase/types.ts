@@ -761,6 +761,7 @@ export type Database = {
           found_child_name: string
         }[]
       }
+      verify_parent_pin: { Args: { p_pin: string }; Returns: boolean }
     }
     Enums: {
       app_role: "parent" | "child" | "admin"
