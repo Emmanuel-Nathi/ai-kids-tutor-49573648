@@ -15,6 +15,7 @@ const curriculumLabels: Record<string, string> = {
 
 export default function ChildProfile() {
   const { childId } = useParams<{ childId: string }>();
+  const navigate = useNavigate();
   const { child, totalPoints, streak, sessionCount, loading } = useChildData(childId);
 
   if (loading || !child) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
