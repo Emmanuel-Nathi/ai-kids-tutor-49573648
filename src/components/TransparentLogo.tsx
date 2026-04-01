@@ -14,7 +14,10 @@ const makeTransparent = async (src: string) => {
 
   const work = new Promise<string>((resolve) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
+    // Only set crossOrigin for external URLs to avoid CORS issues with local assets
+    if (src.startsWith("http")) {
+      image.crossOrigin = "anonymous";
+    }
 
     image.onload = () => {
       const canvas = document.createElement("canvas");
