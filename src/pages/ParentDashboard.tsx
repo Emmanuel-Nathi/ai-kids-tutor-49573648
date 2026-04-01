@@ -310,7 +310,7 @@ export default function ParentDashboard() {
                           variant="outline"
                           size="sm"
                           className="text-xs"
-                          onClick={(e) => { e.stopPropagation(); setPinDialogChild(child); setNewPin(child.access_pin || ""); }}
+                          onClick={(e) => { e.stopPropagation(); setPinDialogChild(child); setNewPin(""); }}
                         >
                           <Key className="w-3 h-3 mr-1" /> {child.access_pin ? "Change PIN" : "Set PIN"}
                         </Button>
