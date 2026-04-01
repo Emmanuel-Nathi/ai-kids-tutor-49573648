@@ -100,7 +100,6 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      // Get child names
       const childIds = [...new Set((data || []).map((s: any) => s.child_id))];
       const { data: children } = await adminClient
         .from("children")
@@ -136,6 +135,126 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── Activity Management ───
+    if (action === "manage-activities") {
+      const { operation } = params;
+
+      if (operation === "list") {
+        const { data, error } = await adminClient
+          .from("activities")
+          .select("*")
+          .order("curriculum")
+          .order("grade")
+          .order("sort_order");
+        if (error) throw error;
+        return new Response(JSON.stringify({ activities: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (operation === "create") {
+        const { topic, grade, curriculum, subject, objectives, difficulty, xp_reward, sort_order } = params;
+        if (!topic || !grade) {
+          return new Response(JSON.stringify({ error: "Topic and grade are required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data, error } = await adminClient.from("activities").insert({
+          topic, grade, curriculum: curriculum || "cambridge", subject: subject || "general",
+          objectives: objectives || [], difficulty: difficulty || 1,
+          xp_reward: xp_reward || 30, sort_order: sort_order || 0, created_by: user.id,
+        }).select().single();
+        if (error) throw error;
+        return new Response(JSON.stringify({ activity: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (operation === "update") {
+        const { activityId, updates } = params;
+        if (!activityId) {
+          return new Response(JSON.stringify({ error: "activityId required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { data, error } = await adminClient.from("activities")
+          .update(updates).eq("id", activityId).select().single();
+        if (error) throw error;
+        return new Response(JSON.stringify({ activity: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (operation === "delete") {
+        const { activityId } = params;
+        const { error } = await adminClient.from("activities").delete().eq("id", activityId);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "Unknown operation" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "preview-activity") {
+      const { topic, grade, curriculum, objectives } = params;
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+      const curriculumStyle: Record<string, string> = {
+        caps: "Follow the SA CAPS structure. Be systematic. Use South African examples.",
+        ieb: "Prioritize critical thinking. Ask 'Why' and 'How' questions. Challenge assumptions.",
+        cambridge: "Use a spiral learning approach. Reference prior foundational concepts.",
+      };
+
+      const objectivesList = (objectives || []).map((o: string, i: number) => `${i + 1}. ${o}`).join("\n");
+
+      const previewPrompt = `Generate a sample 3-turn Socratic tutoring conversation between "Owl" (AI tutor) and a Grade ${grade} student about "${topic}".
+
+Curriculum: ${(curriculum || "cambridge").toUpperCase()}
+Style: ${curriculumStyle[curriculum?.toLowerCase()] || "Standard Socratic guidance."}
+${objectivesList ? `Learning Objectives:\n${objectivesList}` : ""}
+
+Format as:
+🦉 Owl: [opening message]
+👦 Student: [typical student response]
+🦉 Owl: [Socratic follow-up guiding toward understanding]
+👦 Student: [student attempting the answer]
+🦉 Owl: [encouraging conclusion with celebration]
+
+Keep it age-appropriate for Grade ${grade}. Be encouraging and use emojis.`;
+
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [{ role: "user", content: previewPrompt }],
+        }),
+      });
+
+      if (!resp.ok) {
+        const t = await resp.text();
+        console.error("Preview generation error:", resp.status, t);
+        return new Response(JSON.stringify({ error: "Failed to generate preview" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const result = await resp.json();
+      const preview = result.choices?.[0]?.message?.content || "Preview generation failed.";
+
+      return new Response(JSON.stringify({ preview }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
