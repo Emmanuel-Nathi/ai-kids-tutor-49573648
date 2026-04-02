@@ -91,6 +91,7 @@ export default function ParentDashboard() {
   const [searchParams] = useSearchParams();
   const { children, loading: childrenLoading, refetch: refetchChildren, childIdsRef } = useChildren(user?.id);
   const { rewards, claims, refetch: refetchRewards } = useRewards(user?.id, childIdsRef.current);
+  const { fireConfetti } = useConfetti();
 
   const [rewardOpen, setRewardOpen] = useState(false);
   const [pinDialogChild, setPinDialogChild] = useState<ChildWithStats | null>(null);
