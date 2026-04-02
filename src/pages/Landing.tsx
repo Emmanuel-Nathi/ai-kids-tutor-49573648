@@ -223,23 +223,23 @@ export default function Landing() {
       </section>
 
       {/* Bento Grid Features */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               How it works
             </h2>
-            <p className="mt-2 text-muted-foreground text-lg">
+            <p className="mt-2 text-muted-foreground text-sm sm:text-lg">
               Three pillars that make learning stick
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {bentoFeatures.map((item, i) => (
               <motion.div
                 key={item.title}
@@ -247,15 +247,15 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`glass-card p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ${item.span}`}
+                className={`glass-card p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ${item.span}`}
               >
-                <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-16 h-16" : "w-12 h-12"}`}>
-                  <item.icon className={`text-primary ${item.large ? "w-8 h-8" : "w-6 h-6"}`} />
+                <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-14 h-14 sm:w-16 sm:h-16" : "w-10 h-10 sm:w-12 sm:h-12"}`}>
+                  <item.icon className={`text-primary ${item.large ? "w-7 h-7 sm:w-8 sm:h-8" : "w-5 h-5 sm:w-6 sm:h-6"}`} />
                 </div>
-                <h3 className={`font-display font-bold text-foreground ${item.large ? "text-xl" : "text-lg"}`}>
+                <h3 className={`font-display font-bold text-foreground ${item.large ? "text-lg sm:text-xl" : "text-base sm:text-lg"}`}>
                   {item.title}
                 </h3>
-                <p className={`text-muted-foreground leading-relaxed ${item.large ? "text-base" : "text-sm"}`}>
+                <p className={`text-muted-foreground leading-relaxed ${item.large ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}>
                   {item.desc}
                 </p>
               </motion.div>
