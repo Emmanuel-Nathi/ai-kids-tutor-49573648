@@ -107,6 +107,12 @@
 
   body {
     @apply bg-background text-foreground font-body;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+    line-height: 1.3;
   }
 }
 
