@@ -109,9 +109,9 @@ export function ChildSetupWizard() {
                 Next <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button className="flex-1" disabled={!canNext || saving} onClick={handleComplete}>
+              <LoadingButton className="flex-1" disabled={!canNext} isLoading={saving} onClick={handleComplete}>
                 {saving ? "Saving..." : "Complete Setup"} <Check className="w-4 h-4 ml-1" />
-              </Button>
+              </LoadingButton>
             )}
           </div>
         </CardContent>
