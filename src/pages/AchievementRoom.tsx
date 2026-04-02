@@ -60,7 +60,7 @@ export default function AchievementRoom() {
           </Card>
 
           {/* Stats Card */}
-          <Card className="bg-card/80 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-md border border-white/20">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-display">Stats</CardTitle>
             </CardHeader>
