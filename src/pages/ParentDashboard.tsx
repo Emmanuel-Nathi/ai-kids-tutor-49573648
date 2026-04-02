@@ -16,6 +16,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useChildren, ChildWithStats } from "@/hooks/useChildren";
 import { useRewards } from "@/hooks/useRewards";
 import { useEffect as useEffect2, useState as useState2 } from "react";
+import { useConfetti } from "@/hooks/useConfetti";
 
 function ReferralCard({ userId }: { userId?: string }) {
   const [referralCode, setReferralCode] = useState2("");
