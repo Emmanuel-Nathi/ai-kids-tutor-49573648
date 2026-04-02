@@ -265,17 +265,17 @@ export default function Landing() {
       </section>
 
       {/* Trust Points */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground text-center">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground text-center">
               Built for South African families
             </h2>
-            <div className="mt-8 grid sm:grid-cols-2 gap-4">
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {trustPoints.map((point, i) => (
                 <motion.div
                   key={i}
@@ -283,12 +283,12 @@ export default function Landing() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="glass-card p-4 flex items-start gap-3"
+                  className="glass-card p-3 sm:p-4 flex items-start gap-3"
                 >
                   <div className="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center shrink-0">
                     <point.icon className="w-4 h-4 text-secondary" />
                   </div>
-                  <span className="text-foreground font-medium text-sm">{point.text}</span>
+                  <span className="text-foreground font-medium text-xs sm:text-sm">{point.text}</span>
                 </motion.div>
               ))}
             </div>
@@ -297,48 +297,48 @@ export default function Landing() {
       </section>
 
       {/* Pricing */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-lg mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               Simple pricing
             </h2>
-            <div className="mt-8 glass rounded-3xl p-8 border-primary/20 shadow-xl">
+            <div className="mt-6 sm:mt-8 glass rounded-2xl sm:rounded-3xl p-6 sm:p-8 border-primary/20 shadow-xl">
               <p className="text-sm font-display font-semibold text-primary uppercase tracking-wide">
                 Full Access
               </p>
               <div className="mt-4 flex items-baseline justify-center gap-1">
-                <span className="font-display text-5xl font-extrabold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                <span className="font-display text-4xl sm:text-5xl font-extrabold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                   R199.99
                 </span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-muted-foreground text-sm sm:text-base">/month</span>
               </div>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground text-sm">
                 Free for 30 days — no credit card needed
               </p>
               <Button
                 onClick={handleCTA}
                 size="lg"
-                className="mt-6 w-full font-display text-lg rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                className="mt-6 w-full font-display text-base sm:text-lg rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
                 Yes! Give me my free trial
               </Button>
-              <ul className="mt-6 space-y-2 text-sm text-muted-foreground text-left">
+              <ul className="mt-6 space-y-2 text-xs sm:text-sm text-muted-foreground text-left">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Unlimited AI tutoring sessions
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Unlimited AI tutoring sessions
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> All curricula included
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> All curricula included
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Parent dashboard & analytics
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Parent dashboard & analytics
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Homework photo scanning
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Homework photo scanning
                 </li>
               </ul>
             </div>
@@ -347,7 +347,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border flex items-center justify-center gap-4">
+      <footer className="text-center py-4 sm:py-6 pb-16 sm:pb-6 text-xs text-muted-foreground border-t border-border flex items-center justify-center gap-4">
         <span>© 2026 AI Kids Tutor. Safe learning for every child.</span>
         <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate("/admin")}>Admin</span>
       </footer>
