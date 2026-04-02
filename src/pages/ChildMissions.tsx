@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfetti } from "@/hooks/useConfetti";
 
 export default function ChildMissions() {
   const { childId } = useParams<{ childId: string }>();
