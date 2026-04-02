@@ -116,28 +116,29 @@ export default function Landing() {
       </div>
 
       {/* Glassmorphic Header */}
-      <header className="sticky top-0 z-50 px-4 pt-3 pb-0">
-        <div className="glass rounded-2xl px-6 py-3 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
+        <div className="glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto">
           <div
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/")}
           >
-            <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-10 h-10 object-contain" loading="lazy" />
-            <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
+            <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" loading="lazy" />
+            <span className="font-display font-bold text-sm sm:text-lg text-foreground">AI Kids Tutor</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full font-display"
+              className="rounded-full font-display text-xs sm:text-sm px-2 sm:px-3"
               onClick={() => navigate("/child-login")}
             >
-              I'm a Kid 🎒
+              <span className="hidden sm:inline">I'm a Kid 🎒</span>
+              <span className="sm:hidden">Kid 🎒</span>
             </Button>
             <Button
               onClick={handleCTA}
               size="sm"
-              className="rounded-full font-display bg-gradient-to-r from-primary to-primary/80 shadow-md hover:shadow-lg transition-shadow"
+              className="rounded-full font-display text-xs sm:text-sm px-3 sm:px-4 bg-gradient-to-r from-primary to-primary/80 shadow-md hover:shadow-lg transition-shadow"
             >
               Get Started
             </Button>
