@@ -60,6 +60,24 @@ export default function Auth() {
         toast.success("Account created! Check your email to confirm.");
         window.posthog?.capture('user_signed_up', { email });
         window.gtag?.('event', 'sign_up', { method: 'email' });
+
+        // Store referral after signup
+        const storedRef = localStorage.getItem("referral_code");
+        if (storedRef) {
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          if (newUser) {
+            const { data: referrer } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("referral_code", storedRef)
+              .maybeSingle();
+            if (referrer) {
+              await supabase.from("profiles").update({ referred_by: referrer.user_id } as any).eq("user_id", newUser.id);
+            }
+          }
+          localStorage.removeItem("referral_code");
+        }
+        window.gtag?.('event', 'sign_up', { method: 'email' });
       } else {
         await signIn(email, password);
         // PostHog identify after sign-in
