@@ -200,7 +200,7 @@ function OwlLoadingFallback() {
   );
 }
 
-export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
+export default function OwlScene({ equippedItems, message, containerHeight = 320, modelYOffset = 0 }: OwlSceneProps) {
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
   const globalMouseRef = useRef({ x: 0, y: 0 });
