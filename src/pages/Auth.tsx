@@ -152,9 +152,9 @@ export default function Auth() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full font-display" disabled={loading}>
+                <LoadingButton type="submit" className="w-full font-display" isLoading={loading}>
                   {loading ? "Sending..." : "Send Reset Link"}
-                </Button>
+                </LoadingButton>
                 <button
                   type="button"
                   onClick={() => setForgotPassword(false)}
