@@ -117,6 +117,7 @@ export function useMissionProgress(childId: string | undefined, curriculum: stri
       reason: `🏆 Completed mission: ${level.activity.topic}`,
     });
     toast.success(`+${xp} XP! Mission complete! 🎉`);
+    confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ["#4a8c5c", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6"] });
 
     // Unlock next activity
     const currentIdx = levels.findIndex(l => l.activity.id === activityId);
