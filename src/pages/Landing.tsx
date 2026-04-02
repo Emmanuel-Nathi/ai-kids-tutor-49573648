@@ -154,13 +154,13 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[200px] sm:max-w-xs mx-auto" style={{ height: "200px" }}>
+          <div className="w-full max-w-[200px] sm:max-w-xs mx-auto -mb-4" style={{ height: "200px" }}>
             <Suspense fallback={<OwlMascot size="xl" trackMouse />}>
               <OwlScene equippedItems={{}} />
             </Suspense>
           </div>
 
-          <p className="mt-1 text-base sm:text-lg md:text-xl font-display font-semibold text-foreground/80">
+          <p className="text-base sm:text-lg md:text-xl font-display font-semibold text-foreground/80">
             Let's make homework fun! 🦉
           </p>
 

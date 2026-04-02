@@ -84,6 +84,12 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
     const t = state.clock.getElapsedTime();
     const delta = state.clock.getDelta() || 1 / 60;
 
+    // Breathing animation - gentle scale pulse
+    if (sceneGroupRef.current) {
+      const breathe = 1 + Math.sin(t * 1.5) * 0.015;
+      sceneGroupRef.current.scale.set(breathe, breathe, breathe);
+    }
+
     // Use global mouse position instead of canvas-only state.mouse
     const mouse = globalMouse.current ?? { x: 0, y: 0 };
     const targetY = mouse.x * (Math.PI / 6);
