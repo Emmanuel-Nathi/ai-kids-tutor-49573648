@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface OwlSceneProps {
   equippedItems: Record<string, string>;
   message?: string;
+  containerHeight?: number;
+  modelYOffset?: number;
 }
 
 const HEAD_NODE_NAMES = ["Head", "head", "Head_1", "Head_Mesh", "Neck", "neck"];
