@@ -211,9 +211,9 @@ export default function Auth() {
                 Forgot Password?
               </button>
             )}
-            <Button type="submit" className="w-full font-display" disabled={loading}>
+            <LoadingButton type="submit" className="w-full font-display" isLoading={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
-            </Button>
+            </LoadingButton>
           </form>
 
           <div className="relative my-4">
