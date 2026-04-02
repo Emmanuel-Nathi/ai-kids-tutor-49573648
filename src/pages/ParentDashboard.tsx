@@ -146,6 +146,7 @@ export default function ParentDashboard() {
               toast.info(`${childName} spent ${Math.abs(newPoint.amount)} XP — ${newPoint.reason} 🎁`);
             } else {
               toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+              fireConfetti();
             }
           }
         }
