@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Bot, ChevronDown, ChevronUp, Mic, Send } from "lucide-react";
+import { Bot, Camera, ChevronDown, ChevronUp, Mic, Send, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 interface SpeechRecognitionInstance {
   lang: string;
@@ -37,6 +37,28 @@ interface AIHomeworkHelperProps {
   childId: string;
 }
 
+function compressImage(file: File, maxWidth = 800, quality = 0.7): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ratio = Math.min(maxWidth / img.width, 1);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -46,8 +68,20 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   const [childGrade, setChildGrade] = useState("");
   const [childCurriculum, setChildCurriculum] = useState("cambridge");
   const [childLanguage, setChildLanguage] = useState("english");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mobile keyboard fix: listen to visualViewport resize
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handleResize = () => setViewportHeight(vv.height);
+    vv.addEventListener("resize", handleResize);
+    return () => vv.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleListening = () => {
     if (isListening) {
@@ -55,15 +89,12 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
       setIsListening(false);
       return;
     }
-
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) return;
-
     const recognition = new SpeechRecognitionAPI();
     recognition.lang = "en-ZA";
     recognition.continuous = true;
     recognition.interimResults = true;
-
     recognition.onresult = (event) => {
       let transcript = "";
       for (let i = 0; i < event.results.length; i++) {
@@ -71,15 +102,13 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
       }
       setInput(transcript);
     };
-
     recognition.onerror = (event: any) => {
       setIsListening(false);
-      if (event.error === 'not-allowed') {
+      if (event.error === "not-allowed") {
         toast.error("Microphone access denied. Please allow microphone in your browser settings.");
       }
     };
     recognition.onend = () => setIsListening(false);
-
     recognition.start();
     recognitionRef.current = recognition;
     setIsListening(true);
@@ -108,13 +137,27 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
     }
   }, [messages]);
 
+  const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImage(file);
+      setImagePreview(compressed);
+    } catch {
+      toast.error("Failed to process image");
+    }
+    e.target.value = "";
+  }, []);
+
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if ((!text && !imagePreview) || isStreaming) return;
 
-    const userMsg: Message = { role: "user", content: text };
+    const userMsg: Message = { role: "user", content: text || "📷 [Photo uploaded]" };
     setMessages((prev) => [...prev, userMsg]);
+    const currentImage = imagePreview;
     setInput("");
+    setImagePreview(null);
     setIsStreaming(true);
 
     let assistantSoFar = "";
@@ -134,6 +177,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
             grade: childGrade,
             curriculum: childCurriculum,
             preferred_language: childLanguage,
+            ...(currentImage ? { image_base64: currentImage } : {}),
           }),
         }
       );
@@ -151,9 +195,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") {
-            return prev.map((m, i) =>
-              i === prev.length - 1 ? { ...m, content: assistantSoFar } : m
-            );
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
           }
           return [...prev, { role: "assistant", content: assistantSoFar }];
         });
@@ -186,16 +228,19 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
     }
   };
 
+  // Dynamic chat container height based on viewport (keyboard-aware)
+  const chatHeight = viewportHeight ? Math.min(360, viewportHeight - 200) : 360;
+
   return (
     <div className="space-y-3">
-      <Button
+      <LoadingButton
         variant="default"
         className="w-full rounded-2xl text-base py-6 font-display gap-2"
         onClick={() => setIsOpen((v) => !v)}
       >
         💬 Need help? Chat with your AI Study Buddy!
         {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-      </Button>
+      </LoadingButton>
 
       <AnimatePresence>
         {isOpen && (
@@ -213,7 +258,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                   Ask Owl for Help 🦉
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 flex flex-col" style={{ height: 360 }}>
+              <CardContent className="p-0 flex flex-col" style={{ height: chatHeight }}>
                 <ScrollArea className="flex-1 px-3 py-2" ref={scrollRef as any}>
                   {messages.length === 0 && (
                     <p className="text-center text-muted-foreground text-sm py-8 font-display">
@@ -222,33 +267,21 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                   )}
                   <div className="space-y-3">
                     {messages.map((m, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "flex",
-                          m.role === "user" ? "justify-end" : "justify-start"
-                        )}
-                      >
+                      <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                         {m.role === "assistant" && (
                           <div className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center mr-2 mt-1 shrink-0">
                             <Bot className="w-4 h-4 text-secondary" />
                           </div>
                         )}
-                        <div
-                          className={cn(
-                            "rounded-2xl px-4 py-2.5 max-w-[80%] text-base",
-                            m.role === "user"
-                              ? "bg-accent/10 text-foreground"
-                              : "bg-secondary/10 text-foreground"
-                          )}
-                        >
+                        <div className={cn(
+                          "rounded-2xl px-4 py-2.5 max-w-[80%] text-base",
+                          m.role === "user" ? "bg-accent/10 text-foreground" : "bg-secondary/10 text-foreground"
+                        )}>
                           {m.role === "assistant" ? (
                             <div className="prose prose-sm max-w-none [&>p]:m-0">
                               <ReactMarkdown>{m.content}</ReactMarkdown>
                             </div>
-                          ) : (
-                            m.content
-                          )}
+                          ) : m.content}
                         </div>
                       </div>
                     ))}
@@ -270,7 +303,34 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                   </div>
                 </ScrollArea>
 
+                {/* Image preview */}
+                {imagePreview && (
+                  <div className="px-3 py-2 border-t border-border flex items-center gap-2">
+                    <img src={imagePreview} alt="Upload preview" className="w-12 h-12 rounded-lg object-cover border border-border" />
+                    <span className="text-xs text-muted-foreground flex-1">Photo ready to send</span>
+                    <button onClick={() => setImagePreview(null)} className="text-muted-foreground hover:text-foreground">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="border-t border-border p-3 flex gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+                  <LoadingButton
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isStreaming}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </LoadingButton>
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -279,25 +339,23 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
                     className="rounded-full text-base"
                     disabled={isStreaming}
                   />
-                  <Button
+                  <LoadingButton
                     size="icon"
-                    className={cn(
-                      "rounded-full shrink-0",
-                      isListening && "bg-destructive hover:bg-destructive/90 animate-pulse"
-                    )}
+                    className={cn("rounded-full shrink-0", isListening && "bg-destructive hover:bg-destructive/90 animate-pulse")}
                     onClick={toggleListening}
                     disabled={isStreaming}
                   >
                     <Mic className="w-4 h-4" />
-                  </Button>
-                  <Button
+                  </LoadingButton>
+                  <LoadingButton
                     size="icon"
                     className="rounded-full shrink-0"
                     onClick={sendMessage}
-                    disabled={isStreaming || !input.trim()}
+                    disabled={isStreaming || (!input.trim() && !imagePreview)}
+                    isLoading={isStreaming}
                   >
                     <Send className="w-4 h-4" />
-                  </Button>
+                  </LoadingButton>
                 </div>
               </CardContent>
             </Card>

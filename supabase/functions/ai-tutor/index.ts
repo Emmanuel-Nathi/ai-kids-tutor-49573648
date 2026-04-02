@@ -59,11 +59,27 @@ When the student successfully explains the concept or arrives at the answer them
 - HISTORY (CAPS/IEB): Connect to South African heritage and global perspectives
 - GENERAL: Link to learner attributes (inquirers, thinkers, communicators)`;
 
+/**
+ * Trim messages to stay within token limits.
+ * If more than 10 messages, keep first 2 (context) and last 8,
+ * and prepend a summary instruction.
+ */
+function trimMessages(messages: Array<{ role: string; content: any }>) {
+  if (messages.length <= 10) return messages;
+  const first2 = messages.slice(0, 2);
+  const last8 = messages.slice(-8);
+  const summaryMsg = {
+    role: "system",
+    content: "Note: Earlier messages in this conversation have been trimmed. The student has been working through this topic. Continue from the recent context below."
+  };
+  return [...first2, summaryMsg, ...last8];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, subject, grade, curriculum_level, curriculum, preferred_language, activity_objectives } = await req.json();
+    const { messages, subject, grade, curriculum_level, curriculum, preferred_language, activity_objectives, image_base64 } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -73,16 +89,38 @@ serve(async (req) => {
       ? getCurriculumContext(grade, subject || "general", curriculum || "cambridge", preferred_language || "english") 
       : "";
 
-    // Curriculum-specific pedagogy instruction
     const curriculumInstruction = curriculum 
       ? `\n\n### CURRICULUM PEDAGOGY\n${getCurriculumInstruction(curriculum)}`
       : "";
 
-    // Activity objectives injection
     let objectivesContext = "";
     if (activity_objectives && Array.isArray(activity_objectives) && activity_objectives.length > 0) {
       objectivesContext = `\n\n### MISSION OBJECTIVES\nThe child is working on a structured mission. Guide them through these specific learning objectives:\n${activity_objectives.map((obj: string, i: number) => `${i + 1}. ${obj}`).join("\n")}\n\nEnsure the child demonstrates understanding of EACH objective before considering the mission complete. Check them off one by one in your guidance.`;
     }
+
+    const systemContent = SYSTEM_PROMPT + subjectContext + curriculumInstruction + objectivesContext + (curriculumContext ? "\n\n" + curriculumContext : "");
+
+    // Build message array
+    let processedMessages = messages.map((m: { role: string; content: string }) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // If an image is provided, construct multimodal last user message
+    if (image_base64) {
+      const lastUserIdx = processedMessages.length - 1;
+      const lastMsg = processedMessages[lastUserIdx];
+      processedMessages[lastUserIdx] = {
+        role: lastMsg.role,
+        content: [
+          { type: "text", text: (lastMsg.content || "Please look at this worksheet and help me.") + "\n\n[INSTRUCTION: Read the provided worksheet image. Do not solve the problems. Ask the first guiding Socratic question based on the first unsolved problem in the image.]" },
+          { type: "image_url", image_url: { url: image_base64 } },
+        ],
+      };
+    }
+
+    // Trim for token efficiency
+    processedMessages = trimMessages(processedMessages);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -93,11 +131,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + subjectContext + curriculumInstruction + objectivesContext + (curriculumContext ? "\n\n" + curriculumContext : "") },
-          ...messages.map((m: { role: string; content: string }) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          { role: "system", content: systemContent },
+          ...processedMessages,
         ],
         stream: true,
       }),
