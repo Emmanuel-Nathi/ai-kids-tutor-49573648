@@ -218,7 +218,7 @@ export default function OwlScene({ equippedItems, message, containerHeight = 320
   }, []);
 
   return (
-    <div className="relative w-full" style={{ height: "320px" }}>
+    <div className="relative w-full" style={{ height: `${containerHeight}px` }}>
       {!loaded && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
           <Skeleton className="h-32 w-32 rounded-full" />
@@ -228,7 +228,7 @@ export default function OwlScene({ equippedItems, message, containerHeight = 320
       )}
 
       <Canvas
-        camera={{ position: [0, 0.5, 4], fov: 45 }}
+        camera={{ position: [0, 0.5 + modelYOffset, 4], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
       >
         <Suspense fallback={<OwlLoadingFallback />}>
