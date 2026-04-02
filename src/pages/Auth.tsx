@@ -22,6 +22,13 @@ export default function Auth() {
   const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) localStorage.setItem("referral_code", ref);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && user) navigate("/parent");
