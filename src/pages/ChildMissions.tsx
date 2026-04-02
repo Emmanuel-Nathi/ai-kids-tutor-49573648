@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfetti } from "@/hooks/useConfetti";
 
 export default function ChildMissions() {
   const { childId } = useParams<{ childId: string }>();
@@ -17,7 +18,8 @@ export default function ChildMissions() {
   const curriculum = child?.selected_curriculum || "cambridge";
   const grade = child?.grade || "";
 
-  const { levels, loading } = useMissionProgress(childId, curriculum, grade);
+  const { levels, loading, completeActivity } = useMissionProgress(childId, curriculum, grade);
+  const { fireConfetti } = useConfetti();
 
   const handleStartMission = async (activityId: string) => {
     if (!childId) return;

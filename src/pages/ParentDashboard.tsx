@@ -16,6 +16,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useChildren, ChildWithStats } from "@/hooks/useChildren";
 import { useRewards } from "@/hooks/useRewards";
 import { useEffect as useEffect2, useState as useState2 } from "react";
+import { useConfetti } from "@/hooks/useConfetti";
 
 function ReferralCard({ userId }: { userId?: string }) {
   const [referralCode, setReferralCode] = useState2("");
@@ -90,6 +91,7 @@ export default function ParentDashboard() {
   const [searchParams] = useSearchParams();
   const { children, loading: childrenLoading, refetch: refetchChildren, childIdsRef } = useChildren(user?.id);
   const { rewards, claims, refetch: refetchRewards } = useRewards(user?.id, childIdsRef.current);
+  const { fireConfetti } = useConfetti();
 
   const [rewardOpen, setRewardOpen] = useState(false);
   const [pinDialogChild, setPinDialogChild] = useState<ChildWithStats | null>(null);
@@ -144,6 +146,7 @@ export default function ParentDashboard() {
               toast.info(`${childName} spent ${Math.abs(newPoint.amount)} XP — ${newPoint.reason} 🎁`);
             } else {
               toast.info(`${childName} earned ${newPoint.amount} XP for ${newPoint.reason}! ⭐`);
+              fireConfetti();
             }
           }
         }

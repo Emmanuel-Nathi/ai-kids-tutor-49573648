@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, Star, Play } from "lucide-react";
+import { Lock, Star, Play, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { OwlMascot } from "@/components/OwlMascot";
 import { cn } from "@/lib/utils";
@@ -128,6 +128,52 @@ export function MissionMap({ levels, onStartMission }: MissionMapProps) {
             </motion.div>
           );
         })}
+
+        {/* Coming Soon placeholder */}
+        {levels.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: levels.length * 0.1 }}
+            className="relative flex flex-col items-center"
+            style={{ transform: `translateX(${levels.length % 2 === 0 ? 40 : -40}px)` }}
+          >
+            {/* Connector line */}
+            <svg
+              width="80"
+              height="40"
+              className="absolute -top-10"
+              style={{
+                left: "50%",
+                transform: `translateX(${levels.length % 2 === 0 ? -60 : 20}px)`,
+              }}
+            >
+              <line
+                x1={levels.length % 2 === 0 ? 60 : 20}
+                y1="0"
+                x2={levels.length % 2 === 0 ? 20 : 60}
+                y2="40"
+                stroke="hsl(var(--muted-foreground) / 0.2)"
+                strokeWidth="3"
+                strokeDasharray="6 4"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <div className="relative w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed border-muted-foreground/30 bg-muted/50 opacity-60">
+              <Sparkles className="w-5 h-5 text-muted-foreground" />
+            </div>
+
+            <div className="mt-2 mb-6 text-center max-w-[140px] backdrop-blur-md bg-white/10 border border-dashed border-white/20 rounded-xl px-3 py-2">
+              <p className="font-display text-xs font-semibold leading-tight text-muted-foreground">
+                More adventures coming soon!
+              </p>
+              <Badge variant="outline" className="text-[9px] mt-1 border-muted-foreground/30 text-muted-foreground">
+                COMING SOON
+              </Badge>
+            </div>
+          </motion.div>
+        )}
 
         {levels.length === 0 && (
           <div className="text-center py-12">
