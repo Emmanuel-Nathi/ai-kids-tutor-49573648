@@ -116,28 +116,29 @@ export default function Landing() {
       </div>
 
       {/* Glassmorphic Header */}
-      <header className="sticky top-0 z-50 px-4 pt-3 pb-0">
-        <div className="glass rounded-2xl px-6 py-3 flex items-center justify-between max-w-6xl mx-auto">
+      <header className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
+        <div className="glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto">
           <div
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/")}
           >
-            <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-10 h-10 object-contain" loading="lazy" />
-            <span className="font-display font-bold text-lg text-foreground">AI Kids Tutor</span>
+            <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" loading="lazy" />
+            <span className="font-display font-bold text-sm sm:text-lg text-foreground">AI Kids Tutor</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full font-display"
+              className="rounded-full font-display text-xs sm:text-sm px-2 sm:px-3"
               onClick={() => navigate("/child-login")}
             >
-              I'm a Kid 🎒
+              <span className="hidden sm:inline">I'm a Kid 🎒</span>
+              <span className="sm:hidden">Kid 🎒</span>
             </Button>
             <Button
               onClick={handleCTA}
               size="sm"
-              className="rounded-full font-display bg-gradient-to-r from-primary to-primary/80 shadow-md hover:shadow-lg transition-shadow"
+              className="rounded-full font-display text-xs sm:text-sm px-3 sm:px-4 bg-gradient-to-r from-primary to-primary/80 shadow-md hover:shadow-lg transition-shadow"
             >
               Get Started
             </Button>
@@ -146,51 +147,51 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-6 py-16 md:py-24">
+      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-10 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="max-w-5xl mx-auto flex flex-col items-center"
+          className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div style={{ height: "260px" }} className="w-full max-w-xs mx-auto">
+          <div className="w-full max-w-[200px] sm:max-w-xs mx-auto" style={{ height: "200px" }}>
             <Suspense fallback={<OwlMascot size="xl" trackMouse />}>
               <OwlScene equippedItems={{}} />
             </Suspense>
           </div>
 
-          <p className="mt-2 text-lg md:text-xl font-display font-semibold text-foreground/80">
+          <p className="mt-1 text-base sm:text-lg md:text-xl font-display font-semibold text-foreground/80">
             Let's make homework fun! 🦉
           </p>
 
           {/* Trust badges right after mascot */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {trustBadges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-display font-semibold bg-secondary/15 text-secondary border border-secondary/20"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-display font-semibold bg-secondary/15 text-secondary border border-secondary/20"
               >
-                <Shield className="w-3 h-3" />
+                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {badge}
               </span>
             ))}
           </div>
 
           {/* Liquid Glass hero card */}
-          <div className="mt-8 glass rounded-3xl px-8 py-10 md:px-12 md:py-14 text-center max-w-3xl">
-            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
+          <div className="mt-6 sm:mt-8 glass rounded-2xl sm:rounded-3xl px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-14 text-center max-w-3xl w-full">
+            <h1 className="font-display text-2xl sm:text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
               Stop fighting over{" "}
               <span className="text-primary">homework.</span>
             </h1>
-            <p className="mt-4 text-muted-foreground text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
+            <p className="mt-3 sm:mt-4 text-muted-foreground text-sm sm:text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
               An AI tutor that uses the Socratic method to help your child actually
               <em> understand</em> their schoolwork — aligned to CAPS, IEB & Cambridge.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={handleCTA}
                 size="lg"
-                className="font-display text-lg px-8 py-6 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                className="font-display text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
                 Start my 30-day free trial
                 <ArrowRight className="w-5 h-5 ml-1" />
@@ -198,13 +199,13 @@ export default function Landing() {
               <Button
                 variant="outline"
                 size="lg"
-                className="font-display text-lg px-8 py-6 rounded-full border-primary/20 hover:bg-primary/5"
+                className="font-display text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-full border-primary/20 hover:bg-primary/5"
                 onClick={() => navigate("/child-login")}
               >
                 I'm a Kid 🎒
               </Button>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-3 text-xs sm:text-sm text-muted-foreground">
               No credit card required · Cancel anytime
             </p>
           </div>
@@ -222,23 +223,23 @@ export default function Landing() {
       </section>
 
       {/* Bento Grid Features */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               How it works
             </h2>
-            <p className="mt-2 text-muted-foreground text-lg">
+            <p className="mt-2 text-muted-foreground text-sm sm:text-lg">
               Three pillars that make learning stick
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {bentoFeatures.map((item, i) => (
               <motion.div
                 key={item.title}
@@ -246,15 +247,15 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`glass-card p-6 flex flex-col gap-4 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ${item.span}`}
+                className={`glass-card p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ${item.span}`}
               >
-                <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-16 h-16" : "w-12 h-12"}`}>
-                  <item.icon className={`text-primary ${item.large ? "w-8 h-8" : "w-6 h-6"}`} />
+                <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-14 h-14 sm:w-16 sm:h-16" : "w-10 h-10 sm:w-12 sm:h-12"}`}>
+                  <item.icon className={`text-primary ${item.large ? "w-7 h-7 sm:w-8 sm:h-8" : "w-5 h-5 sm:w-6 sm:h-6"}`} />
                 </div>
-                <h3 className={`font-display font-bold text-foreground ${item.large ? "text-xl" : "text-lg"}`}>
+                <h3 className={`font-display font-bold text-foreground ${item.large ? "text-lg sm:text-xl" : "text-base sm:text-lg"}`}>
                   {item.title}
                 </h3>
-                <p className={`text-muted-foreground leading-relaxed ${item.large ? "text-base" : "text-sm"}`}>
+                <p className={`text-muted-foreground leading-relaxed ${item.large ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}>
                   {item.desc}
                 </p>
               </motion.div>
@@ -264,17 +265,17 @@ export default function Landing() {
       </section>
 
       {/* Trust Points */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground text-center">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground text-center">
               Built for South African families
             </h2>
-            <div className="mt-8 grid sm:grid-cols-2 gap-4">
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {trustPoints.map((point, i) => (
                 <motion.div
                   key={i}
@@ -282,12 +283,12 @@ export default function Landing() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="glass-card p-4 flex items-start gap-3"
+                  className="glass-card p-3 sm:p-4 flex items-start gap-3"
                 >
                   <div className="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center shrink-0">
                     <point.icon className="w-4 h-4 text-secondary" />
                   </div>
-                  <span className="text-foreground font-medium text-sm">{point.text}</span>
+                  <span className="text-foreground font-medium text-xs sm:text-sm">{point.text}</span>
                 </motion.div>
               ))}
             </div>
@@ -296,48 +297,48 @@ export default function Landing() {
       </section>
 
       {/* Pricing */}
-      <section className="px-6 py-16">
+      <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-lg mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               Simple pricing
             </h2>
-            <div className="mt-8 glass rounded-3xl p-8 border-primary/20 shadow-xl">
+            <div className="mt-6 sm:mt-8 glass rounded-2xl sm:rounded-3xl p-6 sm:p-8 border-primary/20 shadow-xl">
               <p className="text-sm font-display font-semibold text-primary uppercase tracking-wide">
                 Full Access
               </p>
               <div className="mt-4 flex items-baseline justify-center gap-1">
-                <span className="font-display text-5xl font-extrabold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                <span className="font-display text-4xl sm:text-5xl font-extrabold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                   R199.99
                 </span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-muted-foreground text-sm sm:text-base">/month</span>
               </div>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground text-sm">
                 Free for 30 days — no credit card needed
               </p>
               <Button
                 onClick={handleCTA}
                 size="lg"
-                className="mt-6 w-full font-display text-lg rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                className="mt-6 w-full font-display text-base sm:text-lg rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
                 Yes! Give me my free trial
               </Button>
-              <ul className="mt-6 space-y-2 text-sm text-muted-foreground text-left">
+              <ul className="mt-6 space-y-2 text-xs sm:text-sm text-muted-foreground text-left">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Unlimited AI tutoring sessions
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Unlimited AI tutoring sessions
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> All curricula included
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> All curricula included
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Parent dashboard & analytics
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Parent dashboard & analytics
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Homework photo scanning
+                  <CheckCircle className="w-4 h-4 text-primary shrink-0" /> Homework photo scanning
                 </li>
               </ul>
             </div>
@@ -346,7 +347,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border flex items-center justify-center gap-4">
+      <footer className="text-center py-4 sm:py-6 pb-16 sm:pb-6 text-xs text-muted-foreground border-t border-border flex items-center justify-center gap-4">
         <span>© 2026 AI Kids Tutor. Safe learning for every child.</span>
         <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate("/admin")}>Admin</span>
       </footer>
