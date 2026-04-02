@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, Star, Play } from "lucide-react";
+import { Lock, Star, Play, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { OwlMascot } from "@/components/OwlMascot";
 import { cn } from "@/lib/utils";
