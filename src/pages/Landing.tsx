@@ -146,51 +146,51 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-6 py-16 md:py-24">
+      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-10 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
-          className="max-w-5xl mx-auto flex flex-col items-center"
+          className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div style={{ height: "260px" }} className="w-full max-w-xs mx-auto">
+          <div className="w-full max-w-[200px] sm:max-w-xs mx-auto" style={{ height: "200px" }}>
             <Suspense fallback={<OwlMascot size="xl" trackMouse />}>
               <OwlScene equippedItems={{}} />
             </Suspense>
           </div>
 
-          <p className="mt-2 text-lg md:text-xl font-display font-semibold text-foreground/80">
+          <p className="mt-1 text-base sm:text-lg md:text-xl font-display font-semibold text-foreground/80">
             Let's make homework fun! 🦉
           </p>
 
           {/* Trust badges right after mascot */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {trustBadges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-display font-semibold bg-secondary/15 text-secondary border border-secondary/20"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-display font-semibold bg-secondary/15 text-secondary border border-secondary/20"
               >
-                <Shield className="w-3 h-3" />
+                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {badge}
               </span>
             ))}
           </div>
 
           {/* Liquid Glass hero card */}
-          <div className="mt-8 glass rounded-3xl px-8 py-10 md:px-12 md:py-14 text-center max-w-3xl">
-            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
+          <div className="mt-6 sm:mt-8 glass rounded-2xl sm:rounded-3xl px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-14 text-center max-w-3xl w-full">
+            <h1 className="font-display text-2xl sm:text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
               Stop fighting over{" "}
               <span className="text-primary">homework.</span>
             </h1>
-            <p className="mt-4 text-muted-foreground text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
+            <p className="mt-3 sm:mt-4 text-muted-foreground text-sm sm:text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
               An AI tutor that uses the Socratic method to help your child actually
               <em> understand</em> their schoolwork — aligned to CAPS, IEB & Cambridge.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={handleCTA}
                 size="lg"
-                className="font-display text-lg px-8 py-6 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                className="font-display text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
               >
                 Start my 30-day free trial
                 <ArrowRight className="w-5 h-5 ml-1" />
@@ -198,13 +198,13 @@ export default function Landing() {
               <Button
                 variant="outline"
                 size="lg"
-                className="font-display text-lg px-8 py-6 rounded-full border-primary/20 hover:bg-primary/5"
+                className="font-display text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 rounded-full border-primary/20 hover:bg-primary/5"
                 onClick={() => navigate("/child-login")}
               >
                 I'm a Kid 🎒
               </Button>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-3 text-xs sm:text-sm text-muted-foreground">
               No credit card required · Cancel anytime
             </p>
           </div>
