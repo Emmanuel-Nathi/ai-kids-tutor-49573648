@@ -40,22 +40,23 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
   return bestNode;
 }
 
-function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, string>; onLoaded: () => void }) {
+interface OwlModelProps {
+  equippedItems: Record<string, string>;
+  onLoaded: () => void;
+  globalMouse: React.RefObject<{ x: number; y: number }>;
+}
+
+function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
   const { scene } = useGLTF("/models/owl.glb");
   const headRef = useRef<THREE.Object3D | null>(null);
   const sceneGroupRef = useRef<THREE.Group>(null!);
   const eyeMeshesRef = useRef<THREE.Mesh[]>([]);
   const blinkTimerRef = useRef({ nextBlink: 2 + Math.random() * 4, blinking: false, blinkStart: 0 });
-  const leftEyelidRef = useRef<THREE.Mesh>(null!);
-  const rightEyelidRef = useRef<THREE.Mesh>(null!);
-  const [hasModelEyes, setHasModelEyes] = useState(false);
 
   useEffect(() => {
     const head = findHeadNode(scene);
     if (head) {
       headRef.current = head;
-    } else {
-      console.warn("[OwlScene] No head node found — will rotate entire model slightly as fallback.");
     }
 
     const eyes: THREE.Mesh[] = [];
@@ -65,7 +66,6 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
       }
     });
     eyeMeshesRef.current = eyes;
-    setHasModelEyes(eyes.length > 0);
 
     onLoaded();
   }, [scene, onLoaded]);
@@ -84,8 +84,8 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
     const t = state.clock.getElapsedTime();
     const delta = state.clock.getDelta() || 1 / 60;
 
-    // Mouse tracking
-    const mouse = state.mouse;
+    // Use global mouse position instead of canvas-only state.mouse
+    const mouse = globalMouse.current ?? { x: 0, y: 0 };
     const targetY = mouse.x * (Math.PI / 6);
     const targetX = -mouse.y * (Math.PI / 20);
 
@@ -122,14 +122,10 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
       scaleYVal = Math.max(0.05, scaleYVal);
     }
 
-    // Apply to model eyes
+    // Apply blink to model eye meshes only
     eyeMeshesRef.current.forEach((mesh) => {
       mesh.scale.y = scaleYVal;
     });
-
-    // Apply to fallback eyelids (inverse: grow to cover when blinking)
-    if (leftEyelidRef.current) leftEyelidRef.current.scale.y = 1 - scaleYVal + 0.05;
-    if (rightEyelidRef.current) rightEyelidRef.current.scale.y = 1 - scaleYVal + 0.05;
   });
 
   const hasHeadwear = !!equippedItems["headwear"];
@@ -142,20 +138,6 @@ function OwlModel({ equippedItems, onLoaded }: { equippedItems: Record<string, s
         scale={scale}
         position={[-center.x * scale, -center.y * scale, -center.z * scale]}
       />
-
-      {/* Fallback eyelids if no eye meshes found in model */}
-      {!hasModelEyes && (
-        <>
-          <mesh ref={leftEyelidRef} position={[-0.18, eyeY, 0.55]}>
-            <sphereGeometry args={[0.08, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color="#2a1a0a" />
-          </mesh>
-          <mesh ref={rightEyelidRef} position={[0.18, eyeY, 0.55]}>
-            <sphereGeometry args={[0.08, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color="#2a1a0a" />
-          </mesh>
-        </>
-      )}
 
       {/* HEADWEAR */}
       {hasHeadwear && (
@@ -213,6 +195,19 @@ function OwlLoadingFallback() {
 export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
+  const globalMouseRef = useRef({ x: 0, y: 0 });
+
+  // Track mouse across the entire page
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      globalMouseRef.current = {
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: (e.clientY / window.innerHeight) * 2 - 1,
+      };
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   return (
     <div className="relative w-full" style={{ height: "320px" }}>
@@ -231,7 +226,7 @@ export default function OwlScene({ equippedItems, message }: OwlSceneProps) {
         <Suspense fallback={<OwlLoadingFallback />}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[5, 5, 5]} intensity={0.6} />
-          <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} />
+          <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
           <Environment preset="sunset" />
           <OrbitControls
             enableZoom={false}
