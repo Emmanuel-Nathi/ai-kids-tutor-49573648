@@ -147,7 +147,7 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-10 md:py-24">
+      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-0 sm:px-0">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
