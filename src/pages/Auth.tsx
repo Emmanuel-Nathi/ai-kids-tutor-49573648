@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Button } from "@/components/ui/button";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +22,13 @@ export default function Auth() {
   const [resetSent, setResetSent] = useState(false);
   const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) localStorage.setItem("referral_code", ref);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && user) navigate("/parent");
@@ -51,6 +59,24 @@ export default function Auth() {
         await signUp(email, password, displayName);
         toast.success("Account created! Check your email to confirm.");
         window.posthog?.capture('user_signed_up', { email });
+        window.gtag?.('event', 'sign_up', { method: 'email' });
+
+        // Store referral after signup
+        const storedRef = localStorage.getItem("referral_code");
+        if (storedRef) {
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          if (newUser) {
+            const { data: referrer } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("referral_code", storedRef)
+              .maybeSingle();
+            if (referrer) {
+              await supabase.from("profiles").update({ referred_by: referrer.user_id } as any).eq("user_id", newUser.id);
+            }
+          }
+          localStorage.removeItem("referral_code");
+        }
         window.gtag?.('event', 'sign_up', { method: 'email' });
       } else {
         await signIn(email, password);
@@ -126,9 +152,9 @@ export default function Auth() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full font-display" disabled={loading}>
+                <LoadingButton type="submit" className="w-full font-display" isLoading={loading}>
                   {loading ? "Sending..." : "Send Reset Link"}
-                </Button>
+                </LoadingButton>
                 <button
                   type="button"
                   onClick={() => setForgotPassword(false)}
@@ -185,9 +211,9 @@ export default function Auth() {
                 Forgot Password?
               </button>
             )}
-            <Button type="submit" className="w-full font-display" disabled={loading}>
+            <LoadingButton type="submit" className="w-full font-display" isLoading={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
-            </Button>
+            </LoadingButton>
           </form>
 
           <div className="relative my-4">

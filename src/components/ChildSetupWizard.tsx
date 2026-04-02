@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { OwlMascot } from "@/components/OwlMascot";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -108,9 +109,9 @@ export function ChildSetupWizard() {
                 Next <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button className="flex-1" disabled={!canNext || saving} onClick={handleComplete}>
+              <LoadingButton className="flex-1" disabled={!canNext} isLoading={saving} onClick={handleComplete}>
                 {saving ? "Saving..." : "Complete Setup"} <Check className="w-4 h-4 ml-1" />
-              </Button>
+              </LoadingButton>
             )}
           </div>
         </CardContent>

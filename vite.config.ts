@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: "AI Kids Tutor",
         short_name: "AI Tutor",
-        theme_color: "#3b82f6",
+        theme_color: "#4a8c5c",
         background_color: "#ffffff",
         display: "standalone",
         start_url: "/",

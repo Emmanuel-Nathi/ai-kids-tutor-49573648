@@ -15,6 +15,74 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useChildren, ChildWithStats } from "@/hooks/useChildren";
 import { useRewards } from "@/hooks/useRewards";
+import { useEffect as useEffect2, useState as useState2 } from "react";
+
+function ReferralCard({ userId }: { userId?: string }) {
+  const [referralCode, setReferralCode] = useState2("");
+  const [referralCount, setReferralCount] = useState2(0);
+
+  useEffect2(() => {
+    if (!userId) return;
+    supabase
+      .from("profiles")
+      .select("referral_code")
+      .eq("user_id", userId)
+      .single()
+      .then(({ data }) => {
+        if (data?.referral_code) setReferralCode(data.referral_code);
+      });
+    supabase
+      .from("profiles")
+      .select("id")
+      .eq("referred_by", userId)
+      .then(({ data }) => {
+        setReferralCount(data?.length ?? 0);
+      });
+  }, [userId]);
+
+  const referralLink = `${window.location.origin}/auth?ref=${referralCode}`;
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    toast.success("Referral link copied! 📋");
+  };
+
+  if (!referralCode) return null;
+
+  return (
+    <Card className="border-2 border-primary/20 bg-primary/5">
+      <CardHeader className="pb-2">
+        <CardTitle className="font-display text-lg flex items-center gap-2">
+          <Gift className="w-5 h-5 text-primary" /> Invite & Earn
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Share your referral link. When a friend subscribes, you both get <strong>50% off</strong> next month!
+        </p>
+        <div className="flex items-center gap-2">
+          <Input readOnly value={referralLink} className="text-xs bg-background" />
+          <Button size="sm" variant="outline" onClick={copyReferralLink}>
+            <Copy className="w-4 h-4 mr-1" /> Copy
+          </Button>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1">
+            <UserPlus className="w-4 h-4 text-primary" />
+            <span className="font-display font-semibold">{referralCount}</span>
+            <span className="text-muted-foreground">Friends Invited</span>
+          </div>
+          {referralCount > 0 && (
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-[hsl(var(--star-gold))]" />
+              <span className="text-muted-foreground">Discount earned!</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ParentDashboard() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -48,6 +116,7 @@ export default function ParentDashboard() {
       }
       if (window.posthog) {
         window.posthog.capture('Subscription Started', { amount: 199.99, currency: 'ZAR', plan: 'Monthly' });
+        window.posthog.capture('Conversion', { type: 'subscription', amount: 199.99, currency: 'ZAR' });
       }
       toast.success("Payment successful! 🎉 Your subscription is now active.");
       window.history.replaceState({}, document.title, "/parent");
@@ -405,6 +474,7 @@ export default function ParentDashboard() {
 
           <TabsContent value="account" className="space-y-4 mt-4">
             <h2 className="font-display text-2xl font-bold">Account</h2>
+            <ReferralCard userId={user?.id} />
             <SubscriptionManager />
           </TabsContent>
         </Tabs>

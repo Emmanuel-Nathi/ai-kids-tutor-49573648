@@ -1,22 +1,36 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { OwlMascot } from "@/components/OwlMascot";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Paywall() {
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [hasReferralDiscount, setHasReferralDiscount] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("id")
+      .eq("referred_by", user.id)
+      .then(({ data }) => {
+        if (data && data.length > 0) setHasReferralDiscount(true);
+      });
+  }, [user]);
+
+  const price = hasReferralDiscount ? 99.99 : 199.99;
 
   const handlePayfastCheckout = () => {
     setIsRedirecting(true);
 
-    // TODO: PRODUCTION — Replace sandbox credentials with live values before go-live.
-    // Move to an edge function to avoid exposing merchant keys client-side.
-    const merchantId = "10000100"; // Sandbox — swap for production merchant_id
-    const merchantKey = "46f0cd694581a"; // Sandbox — swap for production merchant_key
-    const payfastUrl = "https://sandbox.payfast.co.za/eng/process"; // Swap to https://www.payfast.co.za/eng/process
+    const merchantId = "10000100";
+    const merchantKey = "46f0cd694581a";
+    const payfastUrl = "https://sandbox.payfast.co.za/eng/process";
 
     const paymentData: Record<string, string> = {
       merchant_id: merchantId,
@@ -26,12 +40,12 @@ export default function Paywall() {
       notify_url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`,
       email_address: user?.email || "",
       m_payment_id: user?.id || "",
-      amount: "199.99",
+      amount: price.toFixed(2),
       item_name: "AI Kids Tutor Monthly Subscription",
       subscription_type: "1",
       frequency: "3",
       cycles: "0",
-      recurring_amount: "199.99",
+      recurring_amount: hasReferralDiscount ? "199.99" : "199.99",
     };
 
     const form = document.createElement("form");
@@ -68,8 +82,18 @@ export default function Paywall() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center">
-            <p className="text-4xl font-display font-bold text-primary">R 199.99</p>
-            <p className="text-sm text-muted-foreground">per month, cancel anytime.</p>
+            {hasReferralDiscount && (
+              <Badge className="mb-2 bg-primary text-primary-foreground">🎉 Referral discount applied!</Badge>
+            )}
+            <p className="text-4xl font-display font-bold text-primary">
+              R {price.toFixed(2)}
+              {hasReferralDiscount && (
+                <span className="text-lg text-muted-foreground line-through ml-2">R 199.99</span>
+              )}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {hasReferralDiscount ? "first month (50% off), then R 199.99/mo" : "per month, cancel anytime."}
+            </p>
           </div>
           <ul className="space-y-3">
             {features.map((f) => (
@@ -81,15 +105,15 @@ export default function Paywall() {
           </ul>
         </CardContent>
         <CardFooter>
-          <Button
+          <LoadingButton
             className="w-full font-display gap-2"
             size="lg"
             onClick={handlePayfastCheckout}
-            disabled={isRedirecting}
+            isLoading={isRedirecting}
           >
             <ShieldCheck className="h-5 w-5" />
             {isRedirecting ? "Connecting securely..." : "Subscribe with Payfast"}
-          </Button>
+          </LoadingButton>
         </CardFooter>
       </Card>
     </div>

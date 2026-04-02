@@ -3,6 +3,8 @@ import { Environment, OrbitControls, useGLTF, Html } from "@react-three/drei";
 import { useRef, useMemo, useEffect, Suspense, useState, useCallback } from "react";
 import * as THREE from "three";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useInView } from "react-intersection-observer";
+import { OwlMascot } from "@/components/OwlMascot";
 
 interface OwlSceneProps {
   equippedItems: Record<string, string>;
@@ -18,14 +20,11 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
     const node = scene.getObjectByName(name);
     if (node) return node;
   }
-
   const totalBox = new THREE.Box3().setFromObject(scene);
   const totalHeight = totalBox.getSize(new THREE.Vector3()).y;
   if (totalHeight === 0) return null;
-
   let bestNode: THREE.Object3D | null = null;
   let bestY = -Infinity;
-
   scene.traverse((child) => {
     if (child === scene) return;
     if ((child as THREE.Mesh).isMesh || child.children.length > 0) {
@@ -38,7 +37,6 @@ function findHeadNode(scene: THREE.Object3D): THREE.Object3D | null {
       }
     }
   });
-
   return bestNode;
 }
 
@@ -57,18 +55,12 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
 
   useEffect(() => {
     const head = findHeadNode(scene);
-    if (head) {
-      headRef.current = head;
-    }
-
+    if (head) headRef.current = head;
     const eyes: THREE.Mesh[] = [];
     scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh && /eye/i.test(child.name)) {
-        eyes.push(child as THREE.Mesh);
-      }
+      if ((child as THREE.Mesh).isMesh && /eye/i.test(child.name)) eyes.push(child as THREE.Mesh);
     });
     eyeMeshesRef.current = eyes;
-
     onLoaded();
   }, [scene, onLoaded]);
 
@@ -85,18 +77,13 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     const delta = state.clock.getDelta() || 1 / 60;
-
-    // Breathing animation - gentle scale pulse
     if (sceneGroupRef.current) {
       const breathe = 1 + Math.sin(t * 1.5) * 0.015;
       sceneGroupRef.current.scale.set(breathe, breathe, breathe);
     }
-
-    // Use global mouse position instead of canvas-only state.mouse
     const mouse = globalMouse.current ?? { x: 0, y: 0 };
     const targetY = mouse.x * (Math.PI / 6);
     const targetX = -mouse.y * (Math.PI / 20);
-
     if (headRef.current) {
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
@@ -104,36 +91,20 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
       sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, targetY * 0.3, 0.05);
       sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, targetX * 0.3, 0.05);
     }
-
-    // Blink logic
     const blink = blinkTimerRef.current;
     if (!blink.blinking) {
       blink.nextBlink -= delta;
-      if (blink.nextBlink <= 0) {
-        blink.blinking = true;
-        blink.blinkStart = t;
-      }
+      if (blink.nextBlink <= 0) { blink.blinking = true; blink.blinkStart = t; }
     }
-
     let scaleYVal = 1;
     if (blink.blinking) {
       const elapsed = t - blink.blinkStart;
-      if (elapsed < 0.08) {
-        scaleYVal = 1 - elapsed / 0.08;
-      } else if (elapsed < 0.15) {
-        scaleYVal = (elapsed - 0.08) / 0.07;
-      } else {
-        blink.blinking = false;
-        blink.nextBlink = 2 + Math.random() * 4;
-        scaleYVal = 1;
-      }
+      if (elapsed < 0.08) scaleYVal = 1 - elapsed / 0.08;
+      else if (elapsed < 0.15) scaleYVal = (elapsed - 0.08) / 0.07;
+      else { blink.blinking = false; blink.nextBlink = 2 + Math.random() * 4; scaleYVal = 1; }
       scaleYVal = Math.max(0.05, scaleYVal);
     }
-
-    // Apply blink to model eye meshes only
-    eyeMeshesRef.current.forEach((mesh) => {
-      mesh.scale.y = scaleYVal;
-    });
+    eyeMeshesRef.current.forEach((mesh) => { mesh.scale.y = scaleYVal; });
   });
 
   const hasHeadwear = !!equippedItems["headwear"];
@@ -141,45 +112,19 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
 
   return (
     <group ref={sceneGroupRef}>
-      <primitive
-        object={scene}
-        scale={scale}
-        position={[-center.x * scale, -center.y * scale, -center.z * scale]}
-      />
-
-      {/* HEADWEAR */}
+      <primitive object={scene} scale={scale} position={[-center.x * scale, -center.y * scale, -center.z * scale]} />
       {hasHeadwear && (
         <group position={[0, headY + 0.15, 0]}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.35, 0.05, 8, 24]} />
-            <meshStandardMaterial color="#4B0082" />
-          </mesh>
-          <mesh position={[0, 0.35, 0]}>
-            <coneGeometry args={[0.3, 0.7, 16]} />
-            <meshStandardMaterial color="#6A0DAD" />
-          </mesh>
-          <mesh position={[0.15, 0.25, 0.25]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} />
-          </mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.35, 0.05, 8, 24]} /><meshStandardMaterial color="#4B0082" /></mesh>
+          <mesh position={[0, 0.35, 0]}><coneGeometry args={[0.3, 0.7, 16]} /><meshStandardMaterial color="#6A0DAD" /></mesh>
+          <mesh position={[0.15, 0.25, 0.25]}><sphereGeometry args={[0.05, 8, 8]} /><meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} /></mesh>
         </group>
       )}
-
-      {/* EYEWEAR */}
       {hasEyewear && (
         <group position={[0, eyeY, 0.55]}>
-          <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.12, 0.02, 8, 24]} />
-            <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
-          </mesh>
-          <mesh position={[0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.12, 0.02, 8, 24]} />
-            <meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} />
-          </mesh>
-          <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.015, 0.015, 0.16, 8]} />
-            <meshStandardMaterial color="#C0C0C0" metalness={0.8} />
-          </mesh>
+          <mesh position={[-0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.12, 0.02, 8, 24]} /><meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} /></mesh>
+          <mesh position={[0.2, 0, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.12, 0.02, 8, 24]} /><meshPhysicalMaterial color="#C0C0C0" metalness={0.8} roughness={0.2} /></mesh>
+          <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.015, 0.015, 0.16, 8]} /><meshStandardMaterial color="#C0C0C0" metalness={0.8} /></mesh>
         </group>
       )}
     </group>
@@ -204,8 +149,8 @@ export default function OwlScene({ equippedItems, message, containerHeight = 320
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
   const globalMouseRef = useRef({ x: 0, y: 0 });
+  const { ref: inViewRef, inView } = useInView({ triggerOnce: false, threshold: 0.1 });
 
-  // Track mouse across the entire page
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       globalMouseRef.current = {
@@ -218,33 +163,31 @@ export default function OwlScene({ equippedItems, message, containerHeight = 320
   }, []);
 
   return (
-    <div className="relative w-full" style={{ height: `${containerHeight}px` }}>
-      {!loaded && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
-          <Skeleton className="h-32 w-32 rounded-full" />
-          <Skeleton className="h-4 w-24 rounded-md" />
-          <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
+    <div ref={inViewRef} className="relative w-full" style={{ height: `${containerHeight}px` }}>
+      {!inView ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <OwlMascot size="lg" animate={false} />
         </div>
+      ) : (
+        <>
+          {!loaded && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
+              <Skeleton className="h-32 w-32 rounded-full" />
+              <Skeleton className="h-4 w-24 rounded-md" />
+              <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
+            </div>
+          )}
+          <Canvas camera={{ position: [0, 0.5 + modelYOffset, 4], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+            <Suspense fallback={<OwlLoadingFallback />}>
+              <ambientLight intensity={0.4} />
+              <directionalLight position={[5, 5, 5]} intensity={0.6} />
+              <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
+              <Environment preset="sunset" />
+              <OrbitControls enableZoom={false} enablePan={false} minPolarAngle={Math.PI / 4} maxPolarAngle={Math.PI / 2} autoRotate={false} />
+            </Suspense>
+          </Canvas>
+        </>
       )}
-
-      <Canvas
-        camera={{ position: [0, 0.5 + modelYOffset, 4], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
-      >
-        <Suspense fallback={<OwlLoadingFallback />}>
-          <ambientLight intensity={0.4} />
-          <directionalLight position={[5, 5, 5]} intensity={0.6} />
-          <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
-          <Environment preset="sunset" />
-          <OrbitControls
-            enableZoom={false}
-            enablePan={false}
-            minPolarAngle={Math.PI / 4}
-            maxPolarAngle={Math.PI / 2}
-            autoRotate={false}
-          />
-        </Suspense>
-      </Canvas>
 
       {message && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[260px] rounded-2xl backdrop-blur-md bg-white/30 border border-white/20 px-5 py-3 text-center text-sm font-display shadow-lg z-10">

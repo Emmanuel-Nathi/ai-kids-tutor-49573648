@@ -107,7 +107,7 @@ export function MissionMap({ levels, onStartMission }: MissionMapProps) {
               </motion.button>
 
               {/* Topic Label */}
-              <div className="mt-2 mb-6 text-center max-w-[140px]">
+              <div className="mt-2 mb-6 text-center max-w-[140px] backdrop-blur-md bg-white/20 border border-white/20 rounded-xl px-3 py-2">
                 <p className={cn(
                   "font-display text-xs font-semibold leading-tight",
                   isLocked && "text-muted-foreground"
