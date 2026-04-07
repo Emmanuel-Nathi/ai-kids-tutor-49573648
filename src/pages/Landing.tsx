@@ -378,18 +378,22 @@ export default function Landing() {
         </Button>
       </motion.div>
 
-      {/* Floating Owl when scrolled past */}
+      {/* Floating Owl on right side, follows scroll */}
       <AnimatePresence>
         {owlOutOfView && (
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="fixed bottom-20 md:bottom-6 left-4 z-40 w-16 h-16 cursor-pointer"
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
+            exit={{ opacity: 0, x: 60 }}
+            transition={{
+              opacity: { duration: 0.4, ease: "easeOut" },
+              x: { duration: 0.4, ease: "easeOut" },
+              y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+            }}
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-40 w-24 h-24 md:w-28 md:h-28 cursor-pointer"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
-            <OwlMascot size="sm" />
+            <OwlMascot size="md" />
           </motion.div>
         )}
       </AnimatePresence>
