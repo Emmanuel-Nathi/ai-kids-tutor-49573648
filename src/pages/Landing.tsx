@@ -61,7 +61,9 @@ export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const heroRef = useRef<HTMLElement>(null);
+  const owlRef = useRef<HTMLDivElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [owlOutOfView, setOwlOutOfView] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate("/parent");
