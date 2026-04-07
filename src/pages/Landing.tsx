@@ -378,6 +378,22 @@ export default function Landing() {
         </Button>
       </motion.div>
 
+      {/* Floating Owl when scrolled past */}
+      <AnimatePresence>
+        {owlOutOfView && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed bottom-20 md:bottom-6 left-4 z-40 w-16 h-16 cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <OwlMascot size="sm" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <CookieConsent />
     </div>
   );
