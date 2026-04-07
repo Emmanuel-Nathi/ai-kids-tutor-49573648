@@ -60,6 +60,7 @@ const trustPoints = [
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const owlRef = useRef<HTMLDivElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
@@ -80,15 +81,40 @@ export default function Landing() {
     return () => observer.disconnect();
   }, []);
 
-  // Floating owl when scrolled past
+  // Floating owl when the hero owl moves behind the sticky header
   useEffect(() => {
-    if (!owlRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setOwlOutOfView(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(owlRef.current);
-    return () => observer.disconnect();
+    let frame = 0;
+
+    const updateFloatingOwl = () => {
+      const owlElement = owlRef.current;
+      if (!owlElement) return;
+
+      const headerBottom = (headerRef.current?.getBoundingClientRect().bottom ?? 0) + 16;
+      const owlRect = owlElement.getBoundingClientRect();
+      const hasScrolledPastOwl = owlRect.bottom <= headerBottom;
+      const isBelowViewport = owlRect.top >= window.innerHeight;
+
+      setOwlOutOfView(hasScrolledPastOwl || isBelowViewport);
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        updateFloatingOwl();
+      });
+    };
+
+    updateFloatingOwl();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
   }, []);
 
   const handleCTA = () => {
@@ -129,7 +155,7 @@ export default function Landing() {
       </div>
 
       {/* Glassmorphic Header */}
-      <header className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
+      <header ref={headerRef} className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
         <div className="glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto">
           <div
             className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
@@ -381,20 +407,23 @@ export default function Landing() {
       {/* Floating Owl on right side, follows scroll */}
       <AnimatePresence>
         {owlOutOfView && (
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0, y: [0, -8, 0] }}
-            exit={{ opacity: 0, x: 60 }}
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, x: 48, scale: 0.96 }}
+            animate={{ opacity: 1, x: 0, scale: 1, y: [0, -6, 0] }}
+            exit={{ opacity: 0, x: 48, scale: 0.96 }}
             transition={{
-              opacity: { duration: 0.4, ease: "easeOut" },
-              x: { duration: 0.4, ease: "easeOut" },
-              y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+              opacity: { duration: 0.28, ease: "easeOut" },
+              x: { duration: 0.28, ease: "easeOut" },
+              scale: { duration: 0.28, ease: "easeOut" },
+              y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
             }}
-            className="fixed right-4 bottom-24 md:bottom-8 z-40 w-24 h-24 md:w-28 md:h-28 cursor-pointer"
+            className="fixed right-4 bottom-24 md:bottom-10 z-40 cursor-pointer rounded-[2rem] glass p-2.5 md:p-3 shadow-xl ring-1 ring-border/50 hover-scale"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Back to top"
           >
             <OwlMascot size="md" />
-          </motion.div>
+          </motion.button>
         )}
       </AnimatePresence>
 
