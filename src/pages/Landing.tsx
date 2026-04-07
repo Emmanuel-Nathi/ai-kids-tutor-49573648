@@ -160,25 +160,21 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 py-10 md:py-0 sm:px-0">
+      <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 py-4 md:py-8 sm:px-0">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[260px] sm:max-w-[320px] mx-auto mb-4">
+          <div ref={owlRef} className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
             <Suspense fallback={<OwlMascot size="xl" trackMouse />}>
-              <OwlScene equippedItems={{}} containerHeight={280} modelYOffset={0.3} />
+              <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
             </Suspense>
           </div>
 
-          <p className="text-base sm:text-lg md:text-xl font-display font-semibold text-foreground/80">
-            Let's make homework fun! 🦉
-          </p>
-
           {/* Trust badges right after mascot */}
-          <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-1.5 sm:gap-2">
+          <div className="mt-2 sm:mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {trustBadges.map((badge) => (
               <span
                 key={badge}
@@ -191,7 +187,7 @@ export default function Landing() {
           </div>
 
           {/* Liquid Glass hero card */}
-          <div className="mt-6 sm:mt-8 glass rounded-2xl sm:rounded-3xl px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-14 text-center max-w-3xl w-full">
+          <div className="mt-4 sm:mt-5 glass rounded-2xl sm:rounded-3xl px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-14 text-center max-w-3xl w-full">
             <h1 className="font-display text-2xl sm:text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
               Stop fighting over{" "}
               <span className="text-primary">homework.</span>
