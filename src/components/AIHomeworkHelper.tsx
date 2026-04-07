@@ -117,7 +117,7 @@ export function AIHomeworkHelper({ childId }: AIHomeworkHelperProps) {
   useEffect(() => {
     if (childId) {
       supabase
-        .from("children")
+        .from("children_safe")
         .select("grade, curriculum_level, selected_curriculum, preferred_language")
         .eq("id", childId)
         .single()

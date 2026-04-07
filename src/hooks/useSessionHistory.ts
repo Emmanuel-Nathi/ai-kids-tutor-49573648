@@ -34,7 +34,7 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
     if (!childId) return;
     setLoading(true);
 
-    const { data: child } = await supabase.from("children").select("name").eq("id", childId).single();
+    const { data: child } = await supabase.from("children_safe").select("name").eq("id", childId).single();
     setChildName(child?.name || "");
 
     const { data: sessionsData } = await supabase.from("sessions").select("*").eq("child_id", childId).order("started_at", { ascending: false });

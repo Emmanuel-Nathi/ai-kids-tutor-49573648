@@ -47,7 +47,7 @@ export default function ChildChat() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children").select("grade, curriculum_level, selected_curriculum, preferred_language").eq("id", childId).single().then(({ data }) => {
+      supabase.from("children_safe").select("grade, curriculum_level, selected_curriculum, preferred_language").eq("id", childId).single().then(({ data }) => {
         if (data) {
           setChildGrade(data.grade);
           setChildCurrLevel(data.curriculum_level);

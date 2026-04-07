@@ -58,7 +58,7 @@ export default function ChildHomework() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children").select("grade, selected_curriculum").eq("id", childId).single().then(({ data }) => {
+      supabase.from("children_safe").select("grade, selected_curriculum").eq("id", childId).single().then(({ data }) => {
         if (data) setChildData(data as any);
       });
     }

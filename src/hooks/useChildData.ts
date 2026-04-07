@@ -57,7 +57,7 @@ export function useChildData(childId: string | undefined) {
 
     try {
       const [childRes, pointsRes, sessionsRes, claimsRes, loginsRes] = await Promise.all([
-        supabase.from("children").select("*").eq("id", childId).single(),
+        supabase.from("children_safe").select("*").eq("id", childId).single(),
         supabase.from("points").select("amount").eq("child_id", childId),
         supabase
           .from("sessions")
