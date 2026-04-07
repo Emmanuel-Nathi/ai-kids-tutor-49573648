@@ -168,7 +168,7 @@ export default function Landing() {
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
           <div ref={owlRef} className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
-            <Suspense fallback={<OwlMascot size="xl" trackMouse />}>
+            <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
               <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
             </Suspense>
           </div>
@@ -390,7 +390,7 @@ export default function Landing() {
               x: { duration: 0.4, ease: "easeOut" },
               y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
             }}
-            className="fixed right-4 top-1/2 -translate-y-1/2 z-40 w-24 h-24 md:w-28 md:h-28 cursor-pointer"
+            className="fixed right-4 bottom-24 md:bottom-8 z-40 w-24 h-24 md:w-28 md:h-28 cursor-pointer"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <OwlMascot size="md" />
