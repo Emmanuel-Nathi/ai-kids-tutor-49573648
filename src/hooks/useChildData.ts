@@ -37,7 +37,7 @@ function calculateStreak(logins: { login_date: string }[]): number {
 }
 
 export function useChildData(childId: string | undefined) {
-  const [child, setChild] = useState<Tables<"children"> | null>(null);
+  const [child, setChild] = useState<Tables<"children_safe"> | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
@@ -57,7 +57,7 @@ export function useChildData(childId: string | undefined) {
 
     try {
       const [childRes, pointsRes, sessionsRes, claimsRes, loginsRes] = await Promise.all([
-        supabase.from("children").select("*").eq("id", childId).single(),
+        supabase.from("children_safe").select("*").eq("id", childId).single(),
         supabase.from("points").select("amount").eq("child_id", childId),
         supabase
           .from("sessions")

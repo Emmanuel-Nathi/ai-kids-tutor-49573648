@@ -78,7 +78,7 @@ export default function ChildActivities() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children").select("selected_curriculum, grade").eq("id", childId).single().then(({ data }) => {
+      supabase.from("children_safe").select("selected_curriculum, grade").eq("id", childId).single().then(({ data }) => {
         if (data) {
           setCurriculum((data as any).selected_curriculum || "cambridge");
           setGrade(data.grade);
