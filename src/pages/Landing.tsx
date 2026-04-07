@@ -80,6 +80,17 @@ export default function Landing() {
     return () => observer.disconnect();
   }, []);
 
+  // Floating owl when scrolled past
+  useEffect(() => {
+    if (!owlRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setOwlOutOfView(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(owlRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const handleCTA = () => {
     window.gtag?.("event", "begin_checkout", {
       items: [{ item_name: "AI Kids Tutor Subscription", price: 199.99, currency: "ZAR" }],
