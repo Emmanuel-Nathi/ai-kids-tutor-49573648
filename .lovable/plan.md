@@ -1,47 +1,40 @@
 
 
-# Remaining Enhancements: Confetti, Coming Soon, Inner Header Polish
+# Landing Page: Compact Hero + Sticky Floating Owl
 
-## What's Already Done (No Action Needed)
+## Overview
 
-The previous implementation rounds already covered:
-- Trust badges (CAPS, IEB, Cambridge) — already in the hero section
-- Sticky glassmorphic header on landing — already `sticky top-0 z-50` with glass styling
-- Photo-to-Help multimodal AI — implemented in AIHomeworkHelper + ai-tutor edge function
-- Referral Loop — profiles table has referral_code/referred_by, Invite card on ParentDashboard
-- Weekly Digest — send-weekly-summary edge function exists
-- LoadingButton — created and applied to Auth, Wizard, Paywall
-- 3D lazy loading — OwlScene uses react-intersection-observer
-- Message trimming — ai-tutor trims to first 2 + last 8 messages
-- Glassmorphism on MissionMap — topic labels have `backdrop-blur-md bg-white/20 border-white/20`
-- RLS — verified on profiles, rewards, children, sessions, etc.
+Three changes to the landing page: tighten the hero spacing, make the owl float to the side when scrolled past, and ensure the header stays sticky.
 
-## What's Actually New (3 items)
+## 1. Reduce Hero Whitespace
 
-### 1. XP Confetti Micro-Interactions
-- Install `canvas-confetti` (~2KB)
-- In `ParentDashboard.tsx`, the realtime XP listener (line ~146) currently fires a `toast.info`. Add a confetti burst alongside the toast when XP is earned (positive amount)
-- In the child-facing pages where XP is awarded (e.g., mission completion in `ChildMissions`, homework completion), trigger confetti on the success callback
-- Create a small `useConfetti` hook that wraps `canvas-confetti` for reuse
+**File:** `src/pages/Landing.tsx`
 
-### 2. "Coming Soon" Placeholder in Mission Map
-- In `MissionMap.tsx`, after the last mission node, append a "Coming Soon" placeholder node
-- Style it with a dashed border, muted colors, and a sparkle/lock icon
-- Label it "More adventures coming soon!" to set expectations
+- Shrink the owl container from `max-w-[260px]/max-w-[320px]` with `containerHeight={280}` down to `max-w-[180px]/max-w-[220px]` with `containerHeight={180}`
+- Remove `mb-4` from the owl wrapper
+- Remove the separate "Let's make homework fun!" `<p>` tag — fold it into the hero card as a subtitle or remove entirely (it adds vertical space without value)
+- Change hero section padding from `py-10 md:py-0` to `py-4 md:py-8` to reduce top/bottom gaps
+- Reduce trust badges `mt-4 sm:mt-6` to `mt-2 sm:mt-3`
+- Reduce hero card `mt-6 sm:mt-8` to `mt-4 sm:mt-5`
 
-### 3. Inner App Header Polish
-- In `AppLayout.tsx`, the inner header (line 15) uses `bg-card` with no blur
-- Add `backdrop-blur-md bg-card/80` for the frosted glass effect matching the landing page
-- Ensure `sticky top-0 z-40` so it doesn't jump when sidebar opens on mobile
+## 2. Floating Owl on Scroll
+
+**File:** `src/pages/Landing.tsx`
+
+- Use an `IntersectionObserver` on the owl's original container (similar to the existing `heroRef` pattern)
+- Track `owlOutOfView` state — when the owl's container scrolls out of the viewport, set it to `true`
+- Render a **fixed miniature owl** in the bottom-left corner (e.g., `fixed bottom-20 left-4 z-40 w-16 h-16`) that appears only when `owlOutOfView` is true
+- Use `framer-motion` `AnimatePresence` for a smooth slide-in/out transition (slide up from below + fade)
+- The floating owl uses the lightweight `<OwlMascot size="sm" />` (2D) to avoid a second WebGL context
+- On mobile, position it `bottom-24` to stay above the sticky CTA bar
+
+## 3. Header Already Sticky (Verify)
+
+The header is already `sticky top-0 z-50` (line 119). No changes needed — it persists on scroll. The `glass` class provides the backdrop-blur effect.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `package.json` | Add `canvas-confetti` dependency |
-| `src/hooks/useConfetti.ts` | Create — thin wrapper around canvas-confetti |
-| `src/pages/ParentDashboard.tsx` | Fire confetti on XP earn notification |
-| `src/pages/ChildMissions.tsx` | Fire confetti on mission complete |
-| `src/components/MissionMap.tsx` | Add "Coming Soon" placeholder node at end |
-| `src/components/AppLayout.tsx` | Add backdrop-blur to inner header |
+| `src/pages/Landing.tsx` | Tighten hero spacing, add floating owl with IntersectionObserver |
 
