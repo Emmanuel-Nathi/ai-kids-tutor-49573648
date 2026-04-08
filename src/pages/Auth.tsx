@@ -66,13 +66,10 @@ export default function Auth() {
         if (storedRef) {
           const { data: { user: newUser } } = await supabase.auth.getUser();
           if (newUser) {
-            const { data: referrer } = await supabase
-              .from("profiles")
-              .select("user_id")
-              .eq("referral_code", storedRef)
-              .maybeSingle();
-            if (referrer) {
-              await supabase.from("profiles").update({ referred_by: referrer.user_id } as any).eq("user_id", newUser.id);
+            const { data: referrerId } = await supabase
+              .rpc("lookup_referral_code" as any, { p_code: storedRef });
+            if (referrerId) {
+              await supabase.from("profiles").update({ referred_by: referrerId } as any).eq("user_id", newUser.id);
             }
           }
           localStorage.removeItem("referral_code");
