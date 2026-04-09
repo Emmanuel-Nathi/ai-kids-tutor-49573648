@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import type { Tables } from "@/integrations/supabase/types";
 
 export interface Reward {
@@ -56,48 +56,16 @@ export function useChildData(childId: string | undefined) {
     setError(null);
 
     try {
-      const [childRes, pointsRes, sessionsRes, claimsRes, loginsRes] = await Promise.all([
-        supabase.from("children_safe").select("*").eq("id", childId).single(),
-        supabase.from("points").select("amount").eq("child_id", childId),
-        supabase
-          .from("sessions")
-          .select("id, started_at")
-          .eq("child_id", childId)
-          .order("started_at", { ascending: false }),
-        supabase
-          .from("reward_claims")
-          .select("id, reward_id, status, created_at")
-          .eq("child_id", childId)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("daily_logins")
-          .select("login_date")
-          .eq("child_id", childId)
-          .order("login_date", { ascending: false })
-          .limit(60),
-      ]);
+      const data = await childApi.getDashboard(childId);
 
-      if (childRes.error) throw childRes.error;
-
-      const childData = childRes.data;
-      setChild(childData);
+      setChild(data.child);
       setTotalPoints(
-        (pointsRes.data || []).reduce((sum, p) => sum + p.amount, 0)
+        (data.points || []).reduce((sum: number, p: { amount: number }) => sum + p.amount, 0)
       );
-      setSessionCount(sessionsRes.data?.length || 0);
-      setStreak(calculateStreak((loginsRes.data as any) || []));
-      setClaims(claimsRes.data || []);
-
-      // Fetch rewards using parent_id from child
-      if (childData?.parent_id) {
-        const { data: rw } = await supabase
-          .from("rewards")
-          .select("id, name, description, point_cost")
-          .eq("parent_id", childData.parent_id)
-          .eq("is_active", true)
-          .order("point_cost", { ascending: true });
-        setRewards(rw || []);
-      }
+      setSessionCount(data.sessions?.length || 0);
+      setStreak(calculateStreak(data.logins || []));
+      setClaims(data.claims || []);
+      setRewards(data.rewards || []);
     } catch (err: any) {
       console.error("useChildData error:", err.message);
       setError(err.message);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 
@@ -39,54 +39,45 @@ export function useMissionProgress(childId: string | undefined, curriculum: stri
     if (!childId || !grade) return;
     setLoading(true);
 
-    const { data: activities, error: actErr } = await supabase
-      .from("activities")
-      .select("*")
-      .eq("curriculum", curriculum)
-      .eq("grade", grade)
-      .eq("is_active", true)
-      .order("sort_order");
+    try {
+      const data = await childApi.getMissionProgress(childId, curriculum, grade);
+      const activities = data.activities || [];
+      const progress = data.progress || [];
 
-    if (actErr) { console.error(actErr); setLoading(false); return; }
-    if (!activities?.length) { setLevels([]); setLoading(false); return; }
+      if (!activities.length) { setLevels([]); setLoading(false); return; }
 
-    const { data: progress } = await supabase
-      .from("child_activity_progress")
-      .select("*")
-      .eq("child_id", childId)
-      .in("activity_id", activities.map(a => a.id));
+      const progressMap = new Map<string, any>();
+      progress.forEach((p: any) => progressMap.set(p.activity_id, p));
 
-    const progressMap = new Map<string, any>();
-    (progress || []).forEach((p: any) => progressMap.set(p.activity_id, p));
+      let foundCurrent = false;
+      const built: MissionLevel[] = activities.map((act: any) => {
+        const prog = progressMap.get(act.id);
+        let status: "locked" | "current" | "completed" = "locked";
 
-    // Build levels: first without progress is "current", rest are "locked"
-    let foundCurrent = false;
-    const built: MissionLevel[] = activities.map((act: any) => {
-      const prog = progressMap.get(act.id);
-      let status: "locked" | "current" | "completed" = "locked";
+        if (prog) {
+          status = prog.status as any;
+        } else if (!foundCurrent) {
+          status = "current";
+          foundCurrent = true;
+        }
 
-      if (prog) {
-        status = prog.status as any;
-      } else if (!foundCurrent) {
-        // First activity without progress = current (auto-initialize)
-        status = "current";
-        foundCurrent = true;
+        return {
+          activity: { ...act, objectives: act.objectives || [] },
+          status,
+          progressId: prog?.id,
+        };
+      });
+
+      if (!built.some(l => l.status === "current")) {
+        const firstLocked = built.find(l => l.status === "locked");
+        if (firstLocked) firstLocked.status = "current";
       }
 
-      return {
-        activity: { ...act, objectives: act.objectives || [] },
-        status,
-        progressId: prog?.id,
-      };
-    });
-
-    // If no "current" found and there are locked items, make the first locked one current
-    if (!built.some(l => l.status === "current")) {
-      const firstLocked = built.find(l => l.status === "locked");
-      if (firstLocked) firstLocked.status = "current";
+      setLevels(built);
+    } catch (err: any) {
+      console.error("Mission progress error:", err.message);
     }
 
-    setLevels(built);
     setLoading(false);
   }, [childId, curriculum, grade]);
 
@@ -98,39 +89,24 @@ export function useMissionProgress(childId: string | undefined, curriculum: stri
     const level = levels.find(l => l.activity.id === activityId);
     if (!level) return;
 
-    // Upsert progress as completed
-    const { error } = await supabase.from("child_activity_progress").upsert({
-      child_id: childId,
-      activity_id: activityId,
-      status: "completed",
-      completed_at: new Date().toISOString(),
-      session_id: sessionId || null,
-    }, { onConflict: "child_id,activity_id" });
-
-    if (error) { console.error(error); return; }
-
-    // Award XP
-    const xp = level.activity.xp_reward;
-    await supabase.from("points").insert({
-      child_id: childId,
-      amount: xp,
-      reason: `🏆 Completed mission: ${level.activity.topic}`,
-    });
-    toast.success(`+${xp} XP! Mission complete! 🎉`);
-    confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ["#4a8c5c", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6"] });
-
-    // Unlock next activity
     const currentIdx = levels.findIndex(l => l.activity.id === activityId);
-    if (currentIdx < levels.length - 1) {
-      const next = levels[currentIdx + 1];
-      await supabase.from("child_activity_progress").upsert({
-        child_id: childId,
-        activity_id: next.activity.id,
-        status: "current",
-      }, { onConflict: "child_id,activity_id" });
-    }
+    const nextActivity = currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null;
 
-    fetchData();
+    try {
+      await childApi.completeActivity(childId, {
+        activity_id: activityId,
+        session_id: sessionId,
+        xp_reward: level.activity.xp_reward,
+        topic: level.activity.topic,
+        next_activity_id: nextActivity?.activity.id,
+      });
+
+      toast.success(`+${level.activity.xp_reward} XP! Mission complete! 🎉`);
+      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ["#4a8c5c", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6"] });
+      fetchData();
+    } catch (err: any) {
+      console.error("Complete activity error:", err.message);
+    }
   }, [childId, levels, fetchData]);
 
   return { levels, loading, completeActivity, refetch: fetchData };

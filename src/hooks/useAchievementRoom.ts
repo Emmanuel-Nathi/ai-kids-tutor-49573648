@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { useChildData } from "@/hooks/useChildData";
 import { toast } from "sonner";
 
@@ -60,17 +61,15 @@ export function useAchievementRoom(childId: string | undefined) {
     if (!childId) return;
     setLoading(true);
 
-    const [itemsRes, ownedRes, badgesRes, earnedRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").eq("is_active", true),
-      supabase.from("child_inventory").select("*, inventory_items(*)").eq("child_id", childId),
-      supabase.from("badges").select("*").eq("is_active", true),
-      supabase.from("child_badges").select("*, badges(*)").eq("child_id", childId),
-    ]);
-
-    if (itemsRes.data) setAllItems(itemsRes.data as unknown as InventoryItem[]);
-    if (ownedRes.data) setOwnedItems(ownedRes.data as unknown as OwnedItem[]);
-    if (badgesRes.data) setAllBadges(badgesRes.data as unknown as Badge[]);
-    if (earnedRes.data) setEarnedBadges(earnedRes.data as unknown as EarnedBadge[]);
+    try {
+      const data = await childApi.getAchievementRoom(childId);
+      setAllItems(data.items as unknown as InventoryItem[]);
+      setOwnedItems(data.owned as unknown as OwnedItem[]);
+      setAllBadges(data.badges as unknown as Badge[]);
+      setEarnedBadges(data.earned as unknown as EarnedBadge[]);
+    } catch (err: any) {
+      console.error("Achievement room error:", err.message);
+    }
 
     setLoading(false);
   }, [childId]);
@@ -84,28 +83,12 @@ export function useAchievementRoom(childId: string | undefined) {
 
   const toggleEquip = async (itemId: string, itemType: string) => {
     if (!childId) return;
-    const isCurrentlyEquipped = equippedItems[itemType] === itemId;
-
-    // Un-equip all items of same type first
-    const sameTypeOwned = ownedItems.filter(
-      (o) => o.inventory_items.item_type === itemType
-    );
-    for (const item of sameTypeOwned) {
-      await supabase
-        .from("child_inventory")
-        .update({ is_equipped: false })
-        .eq("id", item.id);
+    try {
+      await childApi.toggleEquip(childId, itemId, itemType);
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
     }
-
-    if (!isCurrentlyEquipped) {
-      await supabase
-        .from("child_inventory")
-        .update({ is_equipped: true })
-        .eq("child_id", childId)
-        .eq("item_id", itemId);
-    }
-
-    await fetchData();
   };
 
   const purchaseItem = async (itemId: string, cost: number) => {
@@ -115,32 +98,13 @@ export function useAchievementRoom(childId: string | undefined) {
       return;
     }
 
-    // Deduct points
-    const { error: pointsError } = await supabase.from("points").insert({
-      child_id: childId,
-      amount: -cost,
-      reason: "Item purchase",
-    });
-
-    if (pointsError) {
-      toast.error("Failed to deduct XP");
-      return;
+    try {
+      await childApi.purchaseItem(childId, itemId);
+      toast.success("Item purchased! 🎉");
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to purchase item");
     }
-
-    // Add to inventory
-    const { error: invError } = await supabase.from("child_inventory").insert({
-      child_id: childId,
-      item_id: itemId,
-      is_equipped: false,
-    });
-
-    if (invError) {
-      toast.error("Failed to purchase item");
-      return;
-    }
-
-    toast.success("Item purchased! 🎉");
-    await fetchData();
   };
 
   return {
