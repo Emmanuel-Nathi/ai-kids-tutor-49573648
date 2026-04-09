@@ -4,7 +4,7 @@ import { useChildData } from "@/hooks/useChildData";
 import { useMissionProgress } from "@/hooks/useMissionProgress";
 import { MissionMap } from "@/components/MissionMap";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfetti } from "@/hooks/useConfetti";
@@ -26,18 +26,13 @@ export default function ChildMissions() {
     const level = levels.find(l => l.activity.id === activityId);
     if (!level) return;
 
-    // Create a session with the activity's subject
-    const { data, error } = await supabase.from("sessions").insert({
-      child_id: childId,
-      subject: level.activity.subject,
-      status: "active",
-    }).select("id").single();
-
-    if (error) { toast.error(error.message); return; }
-
-    // Navigate to chat with activity context
-    const objectives = encodeURIComponent(JSON.stringify(level.activity.objectives));
-    navigate(`/child/${childId}/chat?session=${data.id}&subject=${level.activity.subject}&mission=${activityId}&objectives=${objectives}`);
+    try {
+      const { data } = await childApi.createSession(childId, level.activity.subject);
+      const objectives = encodeURIComponent(JSON.stringify(level.activity.objectives));
+      navigate(`/child/${childId}/chat?session=${data.id}&subject=${level.activity.subject}&mission=${activityId}&objectives=${objectives}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   return (
