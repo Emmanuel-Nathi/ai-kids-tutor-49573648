@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useRequireChildSession } from "@/hooks/useChildSession";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +58,8 @@ export default function ChildHomework() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children_safe").select("grade, selected_curriculum").eq("id", childId).single().then(({ data }) => {
-        if (data) setChildData(data as any);
+      childApi.getChild(childId).then(({ data }) => {
+        if (data) setChildData({ grade: data.grade, selected_curriculum: data.selected_curriculum });
       });
     }
   }, [childId]);
@@ -91,7 +91,6 @@ export default function ChildHomework() {
       reader.onload = async () => {
         const base64 = (reader.result as string).split(",")[1];
         try {
-          // Upload + parse in one server-side call
           const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/homework-parse`, {
             method: "POST",
             headers: {
@@ -119,12 +118,10 @@ export default function ChildHomework() {
           const result = await resp.json();
           setHomeworkId(result.homework_id);
 
-          // Award 10 XP for uploading
           await awardPoints(10, "📸 Homework uploaded");
           setEarnedPoints(10);
           toast.success("Homework uploaded! +10 XP 📸");
 
-          // Analytics tracking
           window.posthog?.capture('homework_uploaded', { child_id: childId, subject: childData?.selected_curriculum });
           window.gtag?.('event', 'homework_upload', { child_id: childId });
 
@@ -148,7 +145,7 @@ export default function ChildHomework() {
   const handleMarkComplete = async () => {
     if (!homeworkId || !childId) return;
 
-    await supabase.from("homework").update({ status: "completed" }).eq("id", homeworkId);
+    await childApi.updateHomework(childId, homeworkId, "completed");
     await awardPoints(20, "✅ Homework completed");
     setEarnedPoints((prev) => prev + 20);
     setCompleted(true);
@@ -156,7 +153,6 @@ export default function ChildHomework() {
     setTimeout(() => setShowCelebration(false), 3000);
     toast.success("Homework complete! +20 XP 🎉");
 
-    // Analytics tracking
     window.posthog?.capture('homework_completed', { child_id: childId });
     window.gtag?.('event', 'homework_complete', { child_id: childId });
   };
@@ -272,7 +268,6 @@ export default function ChildHomework() {
           )}
         </AnimatePresence>
 
-        {/* Celebration + Pivot to Activities */}
         <AnimatePresence>
           {completed && (
             <motion.div

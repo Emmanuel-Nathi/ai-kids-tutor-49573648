@@ -9,6 +9,8 @@ project_id = "uejizyyawomenkzqixfm"
     verify_jwt = false
   [functions.calculate-points]
     verify_jwt = false
+  [functions.child-data]
+    verify_jwt = false
   [functions.child-login]
     verify_jwt = false
   [functions.homework-parse]

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { isToday, format } from "date-fns";
 
 export interface SessionWithMessages {
@@ -34,65 +35,117 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
     if (!childId) return;
     setLoading(true);
 
-    const { data: child } = await supabase.from("children_safe").select("name").eq("id", childId).single();
-    setChildName(child?.name || "");
+    try {
+      // Parent-authenticated users can use direct supabase queries (they have RLS policies)
+      // But we also support the edge function path for consistency
+      // Check if there's an active auth session (parent viewing)
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      
+      if (authSession) {
+        // Parent is authenticated - use direct supabase queries (parent RLS policies apply)
+        const { data: child } = await supabase.from("children_safe").select("name").eq("id", childId).single();
+        setChildName(child?.name || "");
 
-    const { data: sessionsData } = await supabase.from("sessions").select("*").eq("child_id", childId).order("started_at", { ascending: false });
+        const { data: sessionsData } = await supabase.from("sessions").select("*").eq("child_id", childId).order("started_at", { ascending: false });
 
-    const sessionIds = (sessionsData || []).map((s) => s.id);
-    let allMsgs: { role: string; content: string; created_at: string; session_id: string }[] = [];
-    if (sessionIds.length > 0) {
-      const { data: msgs } = await supabase
-        .from("messages")
-        .select("role, content, created_at, session_id")
-        .in("session_id", sessionIds)
-        .order("created_at");
-      allMsgs = msgs || [];
+        const sessionIds = (sessionsData || []).map((s) => s.id);
+        let allMsgs: { role: string; content: string; created_at: string; session_id: string }[] = [];
+        if (sessionIds.length > 0) {
+          const { data: msgs } = await supabase
+            .from("messages")
+            .select("role, content, created_at, session_id")
+            .in("session_id", sessionIds)
+            .order("created_at");
+          allMsgs = msgs || [];
+        }
+
+        const msgsBySession = allMsgs.reduce((acc, m) => {
+          if (!acc[m.session_id]) acc[m.session_id] = [];
+          acc[m.session_id].push({ role: m.role, content: m.content, created_at: m.created_at });
+          return acc;
+        }, {} as Record<string, { role: string; content: string; created_at: string }[]>);
+
+        const enriched: SessionWithMessages[] = (sessionsData || []).map((s) => ({
+          ...s,
+          messages: msgsBySession[s.id] || [],
+        }));
+        setSessions(enriched);
+
+        const { data: pts } = await supabase.from("points").select("amount, reason, created_at").eq("child_id", childId).order("created_at", { ascending: false });
+        setTotalPoints((pts || []).reduce((sum, p) => sum + p.amount, 0));
+
+        const log: ActivityLogItem[] = [];
+        for (const p of pts || []) {
+          log.push({ type: "points", timestamp: p.created_at, title: `+${p.amount} XP`, detail: p.reason, emoji: "⭐" });
+        }
+        for (const s of sessionsData || []) {
+          log.push({
+            type: "session",
+            timestamp: s.started_at,
+            title: `${(s.subject || "General").replace(/_/g, " ")} session`,
+            detail: s.status === "completed" ? "Completed" : "Active",
+            emoji: s.subject === "math" ? "🔢" : s.subject === "english" ? "📖" : s.subject === "science" ? "🔬" : "🌍",
+          });
+        }
+
+        const { data: hw } = await supabase.from("homework").select("created_at, status, subject").eq("child_id", childId).order("created_at", { ascending: false });
+        for (const h of hw || []) {
+          log.push({ type: "homework", timestamp: h.created_at, title: `Homework ${h.status}`, detail: h.subject || "Worksheet", emoji: "📸" });
+        }
+
+        const { data: rc } = await supabase.from("reward_claims").select("created_at, status, reward_id").eq("child_id", childId).order("created_at", { ascending: false });
+        for (const r of rc || []) {
+          log.push({ type: "reward_claim", timestamp: r.created_at, title: `Reward ${r.status}`, detail: "", emoji: "🎁" });
+        }
+
+        log.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setActivityLog(log);
+      } else {
+        // No auth session - use edge function
+        const data = await childApi.getSessionHistory(childId);
+        setChildName(data.child_name || "");
+
+        const sessionsData = data.sessions || [];
+        const msgsBySession = (data.messages || []).reduce((acc: any, m: any) => {
+          if (!acc[m.session_id]) acc[m.session_id] = [];
+          acc[m.session_id].push(m);
+          return acc;
+        }, {} as Record<string, any[]>);
+
+        const enriched: SessionWithMessages[] = sessionsData.map((s: any) => ({
+          ...s,
+          messages: msgsBySession[s.id] || [],
+        }));
+        setSessions(enriched);
+
+        const pts = data.points || [];
+        setTotalPoints(pts.reduce((sum: number, p: any) => sum + p.amount, 0));
+
+        const log: ActivityLogItem[] = [];
+        for (const p of pts) {
+          log.push({ type: "points", timestamp: p.created_at, title: `+${p.amount} XP`, detail: p.reason, emoji: "⭐" });
+        }
+        for (const s of sessionsData) {
+          log.push({
+            type: "session",
+            timestamp: s.started_at,
+            title: `${(s.subject || "General").replace(/_/g, " ")} session`,
+            detail: s.status === "completed" ? "Completed" : "Active",
+            emoji: s.subject === "math" ? "🔢" : s.subject === "english" ? "📖" : s.subject === "science" ? "🔬" : "🌍",
+          });
+        }
+        for (const h of data.homework || []) {
+          log.push({ type: "homework", timestamp: h.created_at, title: `Homework ${h.status}`, detail: h.subject || "Worksheet", emoji: "📸" });
+        }
+        for (const r of data.reward_claims || []) {
+          log.push({ type: "reward_claim", timestamp: r.created_at, title: `Reward ${r.status}`, detail: "", emoji: "🎁" });
+        }
+        log.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setActivityLog(log);
+      }
+    } catch (err: any) {
+      console.error("Session history error:", err.message);
     }
-
-    const msgsBySession = allMsgs.reduce((acc, m) => {
-      if (!acc[m.session_id]) acc[m.session_id] = [];
-      acc[m.session_id].push({ role: m.role, content: m.content, created_at: m.created_at });
-      return acc;
-    }, {} as Record<string, { role: string; content: string; created_at: string }[]>);
-
-    const enriched: SessionWithMessages[] = (sessionsData || []).map((s) => ({
-      ...s,
-      messages: msgsBySession[s.id] || [],
-    }));
-    setSessions(enriched);
-
-    const { data: pts } = await supabase.from("points").select("amount, reason, created_at").eq("child_id", childId).order("created_at", { ascending: false });
-    setTotalPoints((pts || []).reduce((sum, p) => sum + p.amount, 0));
-
-    const log: ActivityLogItem[] = [];
-
-    for (const p of pts || []) {
-      log.push({ type: "points", timestamp: p.created_at, title: `+${p.amount} XP`, detail: p.reason, emoji: "⭐" });
-    }
-
-    for (const s of sessionsData || []) {
-      log.push({
-        type: "session",
-        timestamp: s.started_at,
-        title: `${(s.subject || "General").replace(/_/g, " ")} session`,
-        detail: s.status === "completed" ? "Completed" : "Active",
-        emoji: s.subject === "math" ? "🔢" : s.subject === "english" ? "📖" : s.subject === "science" ? "🔬" : "🌍",
-      });
-    }
-
-    const { data: hw } = await supabase.from("homework").select("created_at, status, subject").eq("child_id", childId).order("created_at", { ascending: false });
-    for (const h of hw || []) {
-      log.push({ type: "homework", timestamp: h.created_at, title: `Homework ${h.status}`, detail: h.subject || "Worksheet", emoji: "📸" });
-    }
-
-    const { data: rc } = await supabase.from("reward_claims").select("created_at, status, reward_id").eq("child_id", childId).order("created_at", { ascending: false });
-    for (const r of rc || []) {
-      log.push({ type: "reward_claim", timestamp: r.created_at, title: `Reward ${r.status}`, detail: "", emoji: "🎁" });
-    }
-
-    log.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setActivityLog(log);
     setLoading(false);
   }, [childId]);
 
@@ -100,7 +153,6 @@ export function useSessionHistory(childId: string | undefined, enabled: boolean)
     if (enabled && childId) fetchData();
   }, [enabled, childId, fetchData]);
 
-  // Realtime subscriptions for points, sessions, and homework
   useEffect(() => {
     if (!enabled || !childId) return;
     const channel = supabase

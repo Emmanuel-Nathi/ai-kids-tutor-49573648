@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OwlMascot } from "@/components/OwlMascot";
@@ -78,9 +78,9 @@ export default function ChildActivities() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children_safe").select("selected_curriculum, grade").eq("id", childId).single().then(({ data }) => {
+      childApi.getChild(childId).then(({ data }) => {
         if (data) {
-          setCurriculum((data as any).selected_curriculum || "cambridge");
+          setCurriculum(data.selected_curriculum || "cambridge");
           setGrade(data.grade);
         }
       });
@@ -91,18 +91,12 @@ export default function ChildActivities() {
 
   const startActivity = async (activity: Activity) => {
     if (!childId) return;
-    const { data, error } = await supabase.from("sessions").insert({
-      child_id: childId,
-      subject: "general",
-      status: "active",
-    }).select("id").single();
-
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data } = await childApi.createSession(childId, "general");
+      navigate(`/child/${childId}/chat?session=${data.id}&subject=general&context=${encodeURIComponent(activity.chatContext)}`);
+    } catch (err: any) {
+      toast.error(err.message);
     }
-
-    navigate(`/child/${childId}/chat?session=${data.id}&subject=general&context=${encodeURIComponent(activity.chatContext)}`);
   };
 
   return (

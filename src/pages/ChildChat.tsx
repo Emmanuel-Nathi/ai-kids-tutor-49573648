@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useRequireChildSession } from "@/hooks/useChildSession";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OwlMascot } from "@/components/OwlMascot";
@@ -47,12 +47,12 @@ export default function ChildChat() {
 
   useEffect(() => {
     if (childId) {
-      supabase.from("children_safe").select("grade, curriculum_level, selected_curriculum, preferred_language").eq("id", childId).single().then(({ data }) => {
+      childApi.getChild(childId).then(({ data }) => {
         if (data) {
           setChildGrade(data.grade);
           setChildCurrLevel(data.curriculum_level);
-          setChildCurriculum((data as any).selected_curriculum || "cambridge");
-          setChildLanguage((data as any).preferred_language || "english");
+          setChildCurriculum(data.selected_curriculum || "cambridge");
+          setChildLanguage(data.preferred_language || "english");
         }
       });
     }
@@ -69,8 +69,8 @@ export default function ChildChat() {
   }, [contextQuestion, childGrade]);
 
   const saveMessage = async (role: string, content: string) => {
-    if (!sessionId) return;
-    await supabase.from("messages").insert({ session_id: sessionId, role, content });
+    if (!sessionId || !childId) return;
+    await childApi.saveMessage(childId, sessionId, role, content);
   };
 
   const awardXP = async (amount: number, reason: string) => {
@@ -98,7 +98,6 @@ export default function ChildChat() {
     const newCount = userMsgCount + 1;
     setUserMsgCount(newCount);
 
-    // Track first message as session start
     if (newCount === 1) {
       window.posthog?.capture('chat_session_started', { child_id: childId, subject });
       window.gtag?.('event', 'chat_session_start', { subject });
@@ -106,10 +105,9 @@ export default function ChildChat() {
 
     await saveMessage("user", text.trim());
 
-    // Award 5 XP every 3rd message — but enforce 3-minute anti-rush minimum
     if (newCount % 3 === 0) {
       const elapsedMs = Date.now() - sessionStart;
-      const MIN_TIME_MS = 3 * 60 * 1000; // 3 minutes
+      const MIN_TIME_MS = 3 * 60 * 1000;
       if (elapsedMs < MIN_TIME_MS) {
         const remaining = Math.ceil((MIN_TIME_MS - elapsedMs) / 1000);
         toast("Whoa there, Speedster! 🏎️", {

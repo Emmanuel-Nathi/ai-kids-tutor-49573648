@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { useChildData } from "@/hooks/useChildData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,7 @@ export default function ChildRewards() {
       toast.error(`You need ${reward.point_cost - totalPoints} more points!`);
       return;
     }
+    if (!childId) return;
     setClaimingId(reward.id);
 
     try {
@@ -43,20 +44,16 @@ export default function ChildRewards() {
       return;
     }
 
-    const { error } = await supabase.from("reward_claims").insert({
-      child_id: childId!,
-      reward_id: reward.id,
-      status: "pending",
-    });
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await childApi.claimReward(childId, reward.id);
       toast.success("Reward claimed! Waiting for parent approval 🎉");
       window.posthog?.capture('reward_claimed', { child_id: childId, reward_name: reward.name, point_cost: reward.point_cost });
       window.gtag?.('event', 'reward_claim', { reward_name: reward.name, point_cost: reward.point_cost });
       setShowSparkle(true);
       setTimeout(() => setShowSparkle(false), 1500);
       refetch();
+    } catch (err: any) {
+      toast.error(err.message);
     }
     setClaimingId(null);
   };

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useChildData } from "@/hooks/useChildData";
 import { useRequireChildSession } from "@/hooks/useChildSession";
-import { supabase } from "@/integrations/supabase/client";
+import { childApi } from "@/lib/childApi";
 import { OwlMascot } from "@/components/OwlMascot";
 import { Sparkle } from "@/components/Sparkle";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,6 @@ export default function ChildHome() {
   const [streakBannerShown, setStreakBannerShown] = useState(false);
   const [isWaving, setIsWaving] = useState(true);
 
-  // Transition from wave to idle after welcome animation
   useEffect(() => {
     const timer = setTimeout(() => setIsWaving(false), 3000);
     return () => clearTimeout(timer);
@@ -56,7 +55,6 @@ export default function ChildHome() {
   const childName = child?.name || "";
   const curriculum = child?.selected_curriculum || "cambridge";
 
-  // Show streak milestone toast once
   useEffect(() => {
     if (streakBannerShown || streak === 0) return;
     const milestones = [30, 14, 7, 3];
@@ -75,17 +73,12 @@ export default function ChildHome() {
 
   const startSession = async (subject: string) => {
     if (!childId) return;
-    const { data, error } = await supabase.from("sessions").insert({
-      child_id: childId,
-      subject,
-      status: "active",
-    }).select("id").single();
-
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data } = await childApi.createSession(childId, subject);
+      navigate(`/child/${childId}/chat?session=${data.id}&subject=${subject}`);
+    } catch (err: any) {
+      toast.error(err.message);
     }
-    navigate(`/child/${childId}/chat?session=${data.id}&subject=${subject}`);
   };
 
   return (
