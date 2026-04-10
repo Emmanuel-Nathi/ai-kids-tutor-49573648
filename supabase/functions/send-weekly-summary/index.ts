@@ -11,6 +11,15 @@ const SENDER_DOMAIN = 'notify.www.aikidstutor.co.za'
 const FROM_DOMAIN = 'www.aikidstutor.co.za'
 const LOGO_URL = `https://${ROOT_DOMAIN}/email-logo.png`
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function formatMinutes(seconds: number): string {
   const mins = Math.round(seconds / 60)
   if (mins < 60) return `${mins} min`
@@ -29,10 +38,13 @@ interface ChildStats {
 }
 
 function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string {
-  const childCards = childrenStats.map(c => `
+  const safeParentName = escapeHtml(parentName || 'there')
+  const childCards = childrenStats.map(c => {
+    const safeName = escapeHtml(c.name)
+    return `
     <div style="background:#FFF7ED;border-radius:12px;padding:20px;margin-bottom:16px;">
       <h3 style="font-family:'Fredoka',sans-serif;color:#1A1F2C;margin:0 0 12px 0;font-size:18px;">
-        🧒 ${c.name}
+        🧒 ${safeName}
       </h3>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
@@ -58,13 +70,13 @@ function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${Object.entries(c.subjects).map(([subj, count]) => `
             <span style="display:inline-block;background:#FED7AA;color:#9A3412;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;">
-              ${subj} × ${count}
+              ${escapeHtml(subj)} × ${count}
             </span>
           `).join('')}
         </div>
       </div>` : ''}
     </div>
-  `).join('')
+  `}).join('')
 
   return `<!DOCTYPE html>
 <html>
@@ -76,7 +88,6 @@ function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string
 <body style="margin:0;padding:0;background:#F3F4F6;font-family:'Inter',Arial,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:24px;">
     <div style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-      <!-- Header -->
       <div style="background:linear-gradient(135deg,#F97316,#FB923C);padding:32px;text-align:center;">
         <img src="${LOGO_URL}" alt="${SITE_NAME}" width="60" height="60" style="border-radius:12px;margin-bottom:12px;">
         <h1 style="font-family:'Fredoka',sans-serif;color:#ffffff;margin:0;font-size:24px;">
@@ -86,11 +97,9 @@ function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string
           Here's how your kids did this week
         </p>
       </div>
-
-      <!-- Body -->
       <div style="padding:24px;">
         <p style="color:#374151;font-size:15px;margin:0 0 20px;">
-          Hi ${parentName || 'there'} 👋, here's your weekly summary:
+          Hi ${safeParentName} 👋, here's your weekly summary:
         </p>
         ${childCards}
         <div style="text-align:center;margin-top:24px;">
@@ -100,8 +109,6 @@ function buildEmailHtml(parentName: string, childrenStats: ChildStats[]): string
           </a>
         </div>
       </div>
-
-      <!-- Footer -->
       <div style="padding:20px 24px;background:#F9FAFB;text-align:center;border-top:1px solid #E5E7EB;">
         <p style="color:#9CA3AF;font-size:12px;margin:0;">
           You're receiving this because you have an account on AI Kids Tutor.
@@ -158,11 +165,9 @@ Deno.serve(async (req) => {
   let emailsSent = 0
 
   for (const parent of parents) {
-    // Get parent's email from auth
     const { data: authUser } = await supabase.auth.admin.getUserById(parent.user_id)
     if (!authUser?.user?.email) continue
 
-    // Get children
     const { data: children } = await supabase
       .from('children')
       .select('id, name')
@@ -170,11 +175,9 @@ Deno.serve(async (req) => {
 
     if (!children?.length) continue
 
-    const childIds = children.map(c => c.id)
     const childrenStats: ChildStats[] = []
 
     for (const child of children) {
-      // Sessions
       const { data: sessions } = await supabase
         .from('sessions')
         .select('active_time_seconds, subject')
@@ -191,7 +194,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // XP
       const { data: points } = await supabase
         .from('points')
         .select('amount')
@@ -200,7 +202,6 @@ Deno.serve(async (req) => {
 
       const xp = points?.reduce((sum, p) => sum + (p.amount || 0), 0) ?? 0
 
-      // Homework
       const { data: hw } = await supabase
         .from('homework')
         .select('id')
@@ -217,7 +218,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Skip if zero activity
     const totalActivity = childrenStats.reduce((s, c) => s + c.sessions + c.xp + c.homework, 0)
     if (totalActivity === 0) continue
 

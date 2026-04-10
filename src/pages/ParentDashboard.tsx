@@ -222,15 +222,16 @@ export default function ParentDashboard() {
     if (!user || !coParentEmail.trim()) return;
     setInviting(true);
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-coparent`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${currentSession?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ email: coParentEmail.trim(), parent_id: user.id }),
+          body: JSON.stringify({ email: coParentEmail.trim() }),
         }
       );
       const data = await resp.json();

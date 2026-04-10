@@ -7,30 +7,59 @@ const corsHeaders = {
 
 const LOGO_URL = "https://ai-kids-tutor.lovable.app/email-logo.png";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { user_id, email, display_name } = await req.json();
-
-    if (!user_id || !email) {
-      return new Response(JSON.stringify({ error: "Missing user_id or email" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Require auth - only authenticated users or service role should trigger welcome emails
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Check if already sent
+    // Verify the calling user
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Only allow sending welcome email for the calling user themselves
+    const user_id = user.id;
+    const email = user.email;
+    if (!email) {
+      return new Response(JSON.stringify({ error: "No email found" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get display name from profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("welcome_email_sent")
+      .select("welcome_email_sent, display_name")
       .eq("user_id", user_id)
       .single();
 
@@ -39,6 +68,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const safeName = escapeHtml(profile?.display_name || "there");
 
     const emailHtml = `
       <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
@@ -49,7 +80,7 @@ Deno.serve(async (req) => {
           <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">Welcome to AI Kids Tutor! 🦉</h1>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Hi ${display_name || "there"},
+          Hi ${safeName},
         </p>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
           We're thrilled to have you on board! Your 30-day free trial has started — here's how to get the most out of it:
@@ -118,7 +149,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

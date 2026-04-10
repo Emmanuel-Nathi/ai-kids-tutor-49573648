@@ -7,6 +7,15 @@ const corsHeaders = {
 
 const LOGO_URL = "https://ai-kids-tutor.lovable.app/email-logo.png";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,6 +44,7 @@ Deno.serve(async (req) => {
       if (!user?.email) continue;
 
       const daysLeft = 5;
+      const safeName = escapeHtml(profile.display_name || "there");
       const emailHtml = `
         <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
           <div style="text-align: center; margin-bottom: 24px;">
@@ -44,7 +54,7 @@ Deno.serve(async (req) => {
             <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">Your Trial Ends in ${daysLeft} Days! ⏰</h1>
           </div>
           <p style="color: #333; font-size: 16px; line-height: 1.6;">
-            Hi ${profile.display_name || "there"},
+            Hi ${safeName},
           </p>
           <p style="color: #333; font-size: 16px; line-height: 1.6;">
             Your free trial of AI Kids Tutor is ending soon. Don't let your child lose their learning momentum!
@@ -98,7 +108,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

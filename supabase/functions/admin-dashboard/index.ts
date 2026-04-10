@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Whitelist of allowed fields for activity updates
+const ALLOWED_ACTIVITY_FIELDS = new Set([
+  "topic", "grade", "curriculum", "subject", "objectives",
+  "difficulty", "xp_reward", "sort_order", "is_active",
+]);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +54,12 @@ Deno.serve(async (req) => {
     }
 
     const { action, ...params } = await req.json();
+
+    if (!action || typeof action !== "string") {
+      return new Response(JSON.stringify({ error: "action is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (action === "get-stats") {
       const [profilesRes, pointsRes, activeRes, trialRes, cancelledRes, childrenRes, sessionsRes] = await Promise.all([
@@ -120,10 +132,17 @@ Deno.serve(async (req) => {
 
     if (action === "update-subscription") {
       const { profileId, status } = params;
-      if (!profileId || !["active", "cancelled", "trial"].includes(status)) {
+      if (!profileId || typeof profileId !== "string" || !["active", "cancelled", "trial"].includes(status)) {
         return new Response(JSON.stringify({ error: "Invalid params" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!UUID_RE.test(profileId)) {
+        return new Response(JSON.stringify({ error: "Invalid profileId format" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -158,15 +177,26 @@ Deno.serve(async (req) => {
 
       if (operation === "create") {
         const { topic, grade, curriculum, subject, objectives, difficulty, xp_reward, sort_order } = params;
-        if (!topic || !grade) {
-          return new Response(JSON.stringify({ error: "Topic and grade are required" }), {
+        if (!topic || typeof topic !== "string" || topic.length > 500) {
+          return new Response(JSON.stringify({ error: "Valid topic is required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!grade || typeof grade !== "string" || grade.length > 20) {
+          return new Response(JSON.stringify({ error: "Valid grade is required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
         const { data, error } = await adminClient.from("activities").insert({
-          topic, grade, curriculum: curriculum || "cambridge", subject: subject || "general",
-          objectives: objectives || [], difficulty: difficulty || 1,
-          xp_reward: xp_reward || 30, sort_order: sort_order || 0, created_by: user.id,
+          topic: topic.slice(0, 500),
+          grade,
+          curriculum: (curriculum || "cambridge").slice(0, 50),
+          subject: (subject || "general").slice(0, 50),
+          objectives: Array.isArray(objectives) ? objectives.slice(0, 20) : [],
+          difficulty: Math.min(Math.max(Number(difficulty) || 1, 1), 10),
+          xp_reward: Math.min(Math.max(Number(xp_reward) || 30, 0), 1000),
+          sort_order: Number(sort_order) || 0,
+          created_by: user.id,
         }).select().single();
         if (error) throw error;
         return new Response(JSON.stringify({ activity: data }), {
@@ -176,13 +206,36 @@ Deno.serve(async (req) => {
 
       if (operation === "update") {
         const { activityId, updates } = params;
-        if (!activityId) {
+        if (!activityId || typeof activityId !== "string") {
           return new Response(JSON.stringify({ error: "activityId required" }), {
             status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_RE.test(activityId)) {
+          return new Response(JSON.stringify({ error: "Invalid activityId format" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Sanitize updates: only allow whitelisted fields
+        if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+          return new Response(JSON.stringify({ error: "updates object required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(updates)) {
+          if (ALLOWED_ACTIVITY_FIELDS.has(key)) {
+            sanitized[key] = value;
+          }
+        }
+        if (Object.keys(sanitized).length === 0) {
+          return new Response(JSON.stringify({ error: "No valid fields to update" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const { data, error } = await adminClient.from("activities")
-          .update(updates).eq("id", activityId).select().single();
+          .update(sanitized).eq("id", activityId).select().single();
         if (error) throw error;
         return new Response(JSON.stringify({ activity: data }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -191,6 +244,17 @@ Deno.serve(async (req) => {
 
       if (operation === "delete") {
         const { activityId } = params;
+        if (!activityId || typeof activityId !== "string") {
+          return new Response(JSON.stringify({ error: "activityId required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_RE.test(activityId)) {
+          return new Response(JSON.stringify({ error: "Invalid activityId format" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const { error } = await adminClient.from("activities").delete().eq("id", activityId);
         if (error) throw error;
         return new Response(JSON.stringify({ success: true }), {
@@ -205,6 +269,12 @@ Deno.serve(async (req) => {
 
     if (action === "preview-activity") {
       const { topic, grade, curriculum, objectives } = params;
+      if (!topic || typeof topic !== "string" || topic.length > 500) {
+        return new Response(JSON.stringify({ error: "Valid topic required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -214,11 +284,12 @@ Deno.serve(async (req) => {
         cambridge: "Use a spiral learning approach. Reference prior foundational concepts.",
       };
 
-      const objectivesList = (objectives || []).map((o: string, i: number) => `${i + 1}. ${o}`).join("\n");
+      const safeObjectives = Array.isArray(objectives) ? objectives.slice(0, 20) : [];
+      const objectivesList = safeObjectives.map((o: string, i: number) => `${i + 1}. ${String(o).slice(0, 500)}`).join("\n");
 
-      const previewPrompt = `Generate a sample 3-turn Socratic tutoring conversation between "Owl" (AI tutor) and a Grade ${grade} student about "${topic}".
+      const previewPrompt = `Generate a sample 3-turn Socratic tutoring conversation between "Owl" (AI tutor) and a Grade ${String(grade || "unknown").slice(0, 20)} student about "${topic.slice(0, 500)}".
 
-Curriculum: ${(curriculum || "cambridge").toUpperCase()}
+Curriculum: ${(String(curriculum || "cambridge").slice(0, 50)).toUpperCase()}
 Style: ${curriculumStyle[curriculum?.toLowerCase()] || "Standard Socratic guidance."}
 ${objectivesList ? `Learning Objectives:\n${objectivesList}` : ""}
 
@@ -229,7 +300,7 @@ Format as:
 👦 Student: [student attempting the answer]
 🦉 Owl: [encouraging conclusion with celebration]
 
-Keep it age-appropriate for Grade ${grade}. Be encouraging and use emojis.`;
+Keep it age-appropriate for Grade ${String(grade || "unknown").slice(0, 20)}. Be encouraging and use emojis.`;
 
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",

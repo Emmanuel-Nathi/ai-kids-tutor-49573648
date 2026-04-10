@@ -102,11 +102,13 @@ serve(async (req) => {
       // ---- SAVE MESSAGE ----
       case "save_message": {
         const { session_id, role, content } = body;
-        if (!session_id || !role || !content) return err("session_id, role, content required");
+        if (!session_id || typeof session_id !== "string" || !uuidRegex.test(session_id)) return err("Valid session_id required");
+        if (!role || typeof role !== "string" || !["user", "assistant", "system"].includes(role)) return err("Valid role required");
+        if (!content || typeof content !== "string" || content.length > 10000) return err("Valid content required (max 10000 chars)");
         // Verify session belongs to child
         const { data: sess } = await supabase.from("sessions").select("child_id").eq("id", session_id).single();
         if (!sess || sess.child_id !== child_id) return err("Session not found for this child", 403);
-        const { error: msgErr } = await supabase.from("messages").insert({ session_id, role, content });
+        const { error: msgErr } = await supabase.from("messages").insert({ session_id, role, content: content.slice(0, 10000) });
         if (msgErr) return err(msgErr.message, 500);
         return json({ ok: true });
       }
