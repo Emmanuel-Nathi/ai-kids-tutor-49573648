@@ -13,12 +13,28 @@ const STREAK_MILESTONES = [
   { days: 3, bonus: 10, reason: "streak_bonus_3" },
 ];
 
+const MAX_PIN_LENGTH = 20;
+const MAX_NAME_LENGTH = 100;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { name, pin } = await req.json();
-    if (!pin || !pin.trim()) throw new Error("PIN is required");
+
+    // Input validation
+    if (!pin || typeof pin !== "string" || !pin.trim() || pin.length > MAX_PIN_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: "PIN is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (name !== undefined && name !== null && (typeof name !== "string" || name.length > MAX_NAME_LENGTH)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid name" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

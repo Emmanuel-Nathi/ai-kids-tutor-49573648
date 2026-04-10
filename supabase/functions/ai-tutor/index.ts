@@ -6,6 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 5000;
+const MAX_IMAGE_LENGTH = 10_000_000;
+
 const getCurriculumInstruction = (curriculum: string) => {
   switch (curriculum?.toLowerCase()) {
     case 'caps':
@@ -61,8 +65,6 @@ When the student successfully explains the concept or arrives at the answer them
 
 /**
  * Trim messages to stay within token limits.
- * If more than 10 messages, keep first 2 (context) and last 8,
- * and prepend a summary instruction.
  */
 function trimMessages(messages: Array<{ role: string; content: any }>) {
   if (messages.length <= 10) return messages;
@@ -79,7 +81,44 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, subject, grade, curriculum_level, curriculum, preferred_language, activity_objectives, image_base64 } = await req.json();
+    const body = await req.json();
+    const { messages, subject, grade, curriculum_level, curriculum, preferred_language, activity_objectives, image_base64 } = body;
+
+    // Input validation
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: "messages array is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(JSON.stringify({ error: "Too many messages" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Validate each message
+    for (const m of messages) {
+      if (!m.role || typeof m.role !== "string" || !["user", "assistant", "system"].includes(m.role)) {
+        return new Response(JSON.stringify({ error: "Invalid message role" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof m.content === "string" && m.content.length > MAX_MESSAGE_LENGTH) {
+        return new Response(JSON.stringify({ error: "Message too long" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    if (image_base64 && (typeof image_base64 !== "string" || image_base64.length > MAX_IMAGE_LENGTH)) {
+      return new Response(JSON.stringify({ error: "Image too large" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (subject && (typeof subject !== "string" || subject.length > 100)) {
+      return new Response(JSON.stringify({ error: "Invalid subject" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -94,8 +133,8 @@ serve(async (req) => {
       : "";
 
     let objectivesContext = "";
-    if (activity_objectives && Array.isArray(activity_objectives) && activity_objectives.length > 0) {
-      objectivesContext = `\n\n### MISSION OBJECTIVES\nThe child is working on a structured mission. Guide them through these specific learning objectives:\n${activity_objectives.map((obj: string, i: number) => `${i + 1}. ${obj}`).join("\n")}\n\nEnsure the child demonstrates understanding of EACH objective before considering the mission complete. Check them off one by one in your guidance.`;
+    if (activity_objectives && Array.isArray(activity_objectives) && activity_objectives.length > 0 && activity_objectives.length <= 20) {
+      objectivesContext = `\n\n### MISSION OBJECTIVES\nThe child is working on a structured mission. Guide them through these specific learning objectives:\n${activity_objectives.slice(0, 20).map((obj: string, i: number) => `${i + 1}. ${String(obj).slice(0, 500)}`).join("\n")}\n\nEnsure the child demonstrates understanding of EACH objective before considering the mission complete. Check them off one by one in your guidance.`;
     }
 
     const systemContent = SYSTEM_PROMPT + subjectContext + curriculumInstruction + objectivesContext + (curriculumContext ? "\n\n" + curriculumContext : "");
@@ -103,7 +142,7 @@ serve(async (req) => {
     // Build message array
     let processedMessages = messages.map((m: { role: string; content: string }) => ({
       role: m.role,
-      content: m.content,
+      content: typeof m.content === "string" ? m.content.slice(0, MAX_MESSAGE_LENGTH) : m.content,
     }));
 
     // If an image is provided, construct multimodal last user message
@@ -113,7 +152,7 @@ serve(async (req) => {
       processedMessages[lastUserIdx] = {
         role: lastMsg.role,
         content: [
-          { type: "text", text: (lastMsg.content || "Please look at this worksheet and help me.") + "\n\n[INSTRUCTION: Read the provided worksheet image. Do not solve the problems. Ask the first guiding Socratic question based on the first unsolved problem in the image.]" },
+          { type: "text", text: (typeof lastMsg.content === "string" ? lastMsg.content : "Please look at this worksheet and help me.") + "\n\n[INSTRUCTION: Read the provided worksheet image. Do not solve the problems. Ask the first guiding Socratic question based on the first unsolved problem in the image.]" },
           { type: "image_url", image_url: { url: image_base64 } },
         ],
       };
@@ -161,7 +200,7 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("ai-tutor error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Something went wrong" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

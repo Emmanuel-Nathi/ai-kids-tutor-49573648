@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -18,6 +20,31 @@ serve(async (req) => {
     // Mode 1: Direct child_id + amount (for homework completion, activities, redemptions)
     if (body.child_id && body.amount !== undefined) {
       const { child_id, amount, reason = "Activity" } = body;
+
+      // Input validation
+      if (typeof child_id !== "string" || !UUID_RE.test(child_id)) {
+        return new Response(JSON.stringify({ error: "Invalid child_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof amount !== "number" || !Number.isFinite(amount) || Math.abs(amount) > 10000) {
+        return new Response(JSON.stringify({ error: "Invalid amount" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof reason !== "string" || reason.length > 500) {
+        return new Response(JSON.stringify({ error: "Invalid reason" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify child exists
+      const { data: childExists } = await supabase.from("children").select("id").eq("id", child_id).single();
+      if (!childExists) {
+        return new Response(JSON.stringify({ error: "Child not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // Server-side anti-rush: for positive awards, check if child has an active session < 3 min old
       if (amount > 0) {
@@ -45,7 +72,7 @@ serve(async (req) => {
       const { error: pErr } = await supabase.from("points").insert({
         child_id,
         amount,
-        reason,
+        reason: reason.slice(0, 500),
       });
       if (pErr) throw pErr;
 
@@ -60,7 +87,16 @@ serve(async (req) => {
 
     // Mode 2: Session-based calculation (existing logic)
     const { session_id, bonus_points = 0, bonus_reason = "" } = body;
-    if (!session_id) throw new Error("session_id or (child_id + amount) is required");
+    if (!session_id || typeof session_id !== "string" || !UUID_RE.test(session_id)) {
+      return new Response(JSON.stringify({ error: "Valid session_id or (child_id + amount) is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof bonus_points !== "number" || bonus_points < 0 || bonus_points > 10000) {
+      return new Response(JSON.stringify({ error: "Invalid bonus_points" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { data: session, error: sErr } = await supabase
       .from("sessions")
@@ -80,12 +116,12 @@ serve(async (req) => {
     if (totalPoints > 0) {
       const reasons: string[] = [];
       if (basePoints > 0) reasons.push(`${basePoints} pts for ${Math.round(activeMinutes)} min study (${Math.round(focusScore * 100)}% focus)`);
-      if (bonus_points > 0) reasons.push(`${bonus_points} pts bonus: ${bonus_reason || "activity"}`);
+      if (bonus_points > 0) reasons.push(`${bonus_points} pts bonus: ${(bonus_reason || "activity").slice(0, 200)}`);
 
       const { error: pErr } = await supabase.from("points").insert({
         child_id: session.child_id,
         amount: totalPoints,
-        reason: reasons.join(" + "),
+        reason: reasons.join(" + ").slice(0, 500),
       });
 
       if (pErr) throw pErr;

@@ -13,6 +13,15 @@ const CURRICULUM_LABELS: Record<string, string> = {
   cambridge: "Cambridge (International)",
 };
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,14 +57,25 @@ Deno.serve(async (req) => {
 
     const { child_name, grade, curriculum } = await req.json();
 
-    if (!child_name || !grade || !curriculum) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!child_name || typeof child_name !== "string" || child_name.length > 100) {
+      return new Response(JSON.stringify({ error: "Invalid child_name" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!grade || typeof grade !== "string" || grade.length > 20) {
+      return new Response(JSON.stringify({ error: "Invalid grade" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!curriculum || typeof curriculum !== "string" || curriculum.length > 50) {
+      return new Response(JSON.stringify({ error: "Invalid curriculum" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const curriculumLabel = CURRICULUM_LABELS[curriculum] || curriculum;
+    const safeChildName = escapeHtml(child_name);
+    const safeGrade = escapeHtml(grade);
+    const curriculumLabel = escapeHtml(CURRICULUM_LABELS[curriculum] || curriculum);
 
     const emailHtml = `
       <div style="font-family: 'Fredoka', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background: #fff;">
@@ -63,21 +83,21 @@ Deno.serve(async (req) => {
           <img src="${LOGO_URL}" alt="AI Kids Tutor" width="64" height="64" style="border-radius: 16px;" />
         </div>
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">${child_name}'s Profile is Ready! 🎉</h1>
+          <h1 style="color: hsl(24, 95%, 53%); font-size: 28px; margin: 0;">${safeChildName}'s Profile is Ready! 🎉</h1>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Great news! You've successfully added <strong>${child_name}</strong> to AI Kids Tutor.
+          Great news! You've successfully added <strong>${safeChildName}</strong> to AI Kids Tutor.
         </p>
         <div style="background: hsl(24, 95%, 53%, 0.1); border-radius: 16px; padding: 20px; margin: 24px 0;">
           <p style="margin: 0 0 12px; font-weight: bold; color: hsl(24, 95%, 53%);">📋 Profile Details:</p>
           <ul style="color: #333; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
-            <li><strong>Name:</strong> ${child_name}</li>
-            <li><strong>Grade:</strong> ${grade}</li>
+            <li><strong>Name:</strong> ${safeChildName}</li>
+            <li><strong>Grade:</strong> ${safeGrade}</li>
             <li><strong>Curriculum:</strong> ${curriculumLabel}</li>
           </ul>
         </div>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          ${child_name} can now start learning with Owl! Log in and let them try their first tutoring session.
+          ${safeChildName} can now start learning with Owl! Log in and let them try their first tutoring session.
         </p>
         <div style="text-align: center; margin: 32px 0;">
           <a href="https://ai-kids-tutor.lovable.app/parent" 
@@ -107,7 +127,7 @@ Deno.serve(async (req) => {
         to: user.email,
         from: "AI Kids Tutor <noreply@www.aikidstutor.co.za>",
         sender_domain: "notify.www.aikidstutor.co.za",
-        subject: `${child_name}'s profile is ready! 🎉`,
+        subject: `${safeChildName}'s profile is ready! 🎉`,
         html: emailHtml,
         purpose: "transactional",
         label: "child_added",
@@ -128,7 +148,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
