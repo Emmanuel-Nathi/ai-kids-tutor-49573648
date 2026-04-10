@@ -9,7 +9,6 @@ export interface Child {
   avatar_url: string | null;
   selected_curriculum: string;
   preferred_language: string;
-  access_pin: string | null;
 }
 
 export interface ChildWithStats extends Child {
