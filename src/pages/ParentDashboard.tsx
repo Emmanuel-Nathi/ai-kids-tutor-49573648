@@ -385,7 +385,7 @@ export default function ParentDashboard() {
                           className="text-xs"
                           onClick={(e) => { e.stopPropagation(); setPinDialogChild(child); setNewPin(""); }}
                         >
-                          <Key className="w-3 h-3 mr-1" /> {child.access_pin ? "Change PIN" : "Set PIN"}
+                          <Key className="w-3 h-3 mr-1" /> Set/Change PIN
                         </Button>
                       </div>
                     </CardContent>
@@ -489,7 +489,7 @@ export default function ParentDashboard() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-display">
-              {pinDialogChild?.access_pin ? "Change" : "Set"} PIN for {pinDialogChild?.name}
+              Set/Change PIN for {pinDialogChild?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
