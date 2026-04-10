@@ -88,18 +88,17 @@ export default function Auth() {
 
           // Send welcome email on first login
           if (profile && !profile.welcome_email_sent) {
-            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({
-                user_id: signedInUser.id,
-                email: signedInUser.email,
-                display_name: profile?.display_name || signedInUser.user_metadata?.display_name,
-              }),
-            }).catch(() => {});
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (currentSession?.access_token) {
+              fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${currentSession.access_token}`,
+                },
+                body: JSON.stringify({}),
+              }).catch(() => {});
+            }
           }
         }
         navigate("/parent");
