@@ -9,7 +9,6 @@ export interface Child {
   avatar_url: string | null;
   selected_curriculum: string;
   preferred_language: string;
-  access_pin: string | null;
 }
 
 export interface ChildWithStats extends Child {
@@ -28,7 +27,7 @@ export function useChildren(userId: string | undefined) {
 
     const { data: childrenData } = await supabase
       .from("children")
-      .select("*")
+      .select("id, name, grade, curriculum_level, avatar_url, selected_curriculum, preferred_language, created_at")
       .order("created_at");
 
     const childIds = (childrenData || []).map((c) => c.id);
