@@ -64,9 +64,7 @@ export default function Landing() {
   const { user, loading } = useAuth();
   const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
-  const owlRef = useRef<HTMLDivElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
-  const [owlOutOfView, setOwlOutOfView] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate("/parent");
@@ -81,42 +79,6 @@ export default function Landing() {
     );
     observer.observe(heroRef.current);
     return () => observer.disconnect();
-  }, []);
-
-  // Floating owl when the hero owl moves behind the sticky header
-  useEffect(() => {
-    let frame = 0;
-
-    const updateFloatingOwl = () => {
-      const owlElement = owlRef.current;
-      if (!owlElement) return;
-
-      const headerBottom = (headerRef.current?.getBoundingClientRect().bottom ?? 0) + 16;
-      const owlRect = owlElement.getBoundingClientRect();
-      const hasScrolledPastOwl = owlRect.bottom <= headerBottom;
-      const isBelowViewport = owlRect.top >= window.innerHeight;
-
-      setOwlOutOfView(hasScrolledPastOwl || isBelowViewport);
-    };
-
-    const scheduleUpdate = () => {
-      if (frame) return;
-
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        updateFloatingOwl();
-      });
-    };
-
-    updateFloatingOwl();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
   }, []);
 
   const handleCTA = () => {
