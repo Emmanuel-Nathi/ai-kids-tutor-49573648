@@ -246,13 +246,16 @@ export default function OwlScene({ equippedItems, message, containerHeight = 420
               <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
             </div>
           )}
-          <Canvas camera={{ position: [0, 0.5 + modelYOffset, 3.2], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+          <Canvas
+            camera={{ position: [0, 0.5 + modelYOffset, 3.2], fov: 45 }}
+            gl={{ antialias: true, alpha: true }}
+            style={{ touchAction: "pan-y", pointerEvents: "none" }}
+          >
             <Suspense fallback={<OwlLoadingFallback />}>
               <ambientLight intensity={0.4} />
               <directionalLight position={[5, 5, 5]} intensity={0.6} />
               <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
               <Environment preset="sunset" />
-              <OrbitControls enableZoom={false} enablePan={false} minPolarAngle={Math.PI / 4} maxPolarAngle={Math.PI / 2} autoRotate={false} />
             </Suspense>
           </Canvas>
         </>
