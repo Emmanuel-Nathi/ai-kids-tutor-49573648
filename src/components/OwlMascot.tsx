@@ -17,10 +17,10 @@ interface OwlMascotProps {
 }
 
 const sizeMap = {
-  sm: "w-12 h-12",
-  md: "w-20 h-20",
-  lg: "w-32 h-32",
-  xl: "w-48 h-48",
+  sm: "w-16 h-16",
+  md: "w-24 h-24",
+  lg: "w-40 h-40",
+  xl: "w-64 h-64",
 };
 
 const poseImages = {
@@ -57,8 +57,8 @@ export function OwlMascot({ size = "md", animate = true, variant = "idle", pose 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(mouseY, [-300, 300], [8, -8]), { stiffness: 100, damping: 30 });
-  const rotateY = useSpring(useTransform(mouseX, [-300, 300], [-12, 12]), { stiffness: 100, damping: 30 });
+  const rotateX = useSpring(useTransform(mouseY, [-300, 300], [10, -10]), { stiffness: 150, damping: 18 });
+  const rotateY = useSpring(useTransform(mouseX, [-300, 300], [-15, 15]), { stiffness: 150, damping: 18 });
 
   const [pulse, setPulse] = useState(false);
 
