@@ -100,9 +100,9 @@ export default function Landing() {
   };
 
   const { scrollY } = useScroll();
-  const blob1Y = useTransform(scrollY, [0, 1000], [0, -150]);
-  const blob2Y = useTransform(scrollY, [0, 1000], [0, -80]);
-  const blob3Y = useTransform(scrollY, [0, 1000], [0, -200]);
+  const blob1Y = useTransform(scrollY, [0, 1000], [0, -45]);
+  const blob2Y = useTransform(scrollY, [0, 1000], [0, -25]);
+  const blob3Y = useTransform(scrollY, [0, 1000], [0, -60]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
