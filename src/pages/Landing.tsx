@@ -10,7 +10,7 @@ const OwlScene = lazy(() => import("@/components/OwlScene"));
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -64,9 +64,7 @@ export default function Landing() {
   const { user, loading } = useAuth();
   const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
-  const owlRef = useRef<HTMLDivElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
-  const [owlOutOfView, setOwlOutOfView] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate("/parent");
@@ -81,42 +79,6 @@ export default function Landing() {
     );
     observer.observe(heroRef.current);
     return () => observer.disconnect();
-  }, []);
-
-  // Floating owl when the hero owl moves behind the sticky header
-  useEffect(() => {
-    let frame = 0;
-
-    const updateFloatingOwl = () => {
-      const owlElement = owlRef.current;
-      if (!owlElement) return;
-
-      const headerBottom = (headerRef.current?.getBoundingClientRect().bottom ?? 0) + 16;
-      const owlRect = owlElement.getBoundingClientRect();
-      const hasScrolledPastOwl = owlRect.bottom <= headerBottom;
-      const isBelowViewport = owlRect.top >= window.innerHeight;
-
-      setOwlOutOfView(hasScrolledPastOwl || isBelowViewport);
-    };
-
-    const scheduleUpdate = () => {
-      if (frame) return;
-
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        updateFloatingOwl();
-      });
-    };
-
-    updateFloatingOwl();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
   }, []);
 
   const handleCTA = () => {
@@ -195,7 +157,7 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div ref={owlRef} className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
+          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
             <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
               <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
             </Suspense>
@@ -419,28 +381,6 @@ export default function Landing() {
         </Button>
       </motion.div>
 
-      {/* Floating Owl on right side, follows scroll */}
-      <AnimatePresence>
-        {owlOutOfView && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, x: 48, scale: 0.96 }}
-            animate={{ opacity: 1, x: 0, scale: 1, y: [0, -6, 0] }}
-            exit={{ opacity: 0, x: 48, scale: 0.96 }}
-            transition={{
-              opacity: { duration: 0.28, ease: "easeOut" },
-              x: { duration: 0.28, ease: "easeOut" },
-              scale: { duration: 0.28, ease: "easeOut" },
-              y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
-            }}
-            className="fixed right-4 bottom-24 md:bottom-10 z-40 cursor-pointer rounded-[2rem] glass p-2.5 md:p-3 shadow-xl ring-1 ring-border/50 hover-scale"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            aria-label="Back to top"
-          >
-            <OwlMascot size="md" />
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       <CookieConsent />
     </div>
