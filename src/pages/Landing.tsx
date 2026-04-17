@@ -419,28 +419,6 @@ export default function Landing() {
         </Button>
       </motion.div>
 
-      {/* Floating Owl on right side, follows scroll */}
-      <AnimatePresence>
-        {owlOutOfView && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, x: 48, scale: 0.96 }}
-            animate={{ opacity: 1, x: 0, scale: 1, y: [0, -6, 0] }}
-            exit={{ opacity: 0, x: 48, scale: 0.96 }}
-            transition={{
-              opacity: { duration: 0.28, ease: "easeOut" },
-              x: { duration: 0.28, ease: "easeOut" },
-              scale: { duration: 0.28, ease: "easeOut" },
-              y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
-            }}
-            className="fixed right-4 bottom-24 md:bottom-10 z-40 cursor-pointer rounded-[2rem] glass p-2.5 md:p-3 shadow-xl ring-1 ring-border/50 hover-scale"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            aria-label="Back to top"
-          >
-            <OwlMascot size="md" />
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       <CookieConsent />
     </div>
