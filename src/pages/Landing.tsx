@@ -255,10 +255,10 @@ export default function Landing() {
             {bentoFeatures.map((item, i) => (
               <motion.div
                 key={item.title}
-                initial={{ opacity: 0, y: item.large ? 0 : 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
                 className={`glass-card p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 hover:shadow-xl transition-shadow duration-300 ${item.span}`}
               >
                 <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-14 h-14 sm:w-16 sm:h-16" : "w-10 h-10 sm:w-12 sm:h-12"}`}>
