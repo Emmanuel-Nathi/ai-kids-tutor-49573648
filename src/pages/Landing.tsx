@@ -100,9 +100,9 @@ export default function Landing() {
   };
 
   const { scrollY } = useScroll();
-  const blob1Y = useTransform(scrollY, [0, 1000], [0, -150]);
-  const blob2Y = useTransform(scrollY, [0, 1000], [0, -80]);
-  const blob3Y = useTransform(scrollY, [0, 1000], [0, -200]);
+  const blob1Y = useTransform(scrollY, [0, 1000], [0, -45]);
+  const blob2Y = useTransform(scrollY, [0, 1000], [0, -25]);
+  const blob3Y = useTransform(scrollY, [0, 1000], [0, -60]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
@@ -167,8 +167,8 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
-            <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
+          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto" style={{ height: 180 }}>
+            <Suspense fallback={<div style={{ height: 180 }} className="w-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
               <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
             </Suspense>
           </div>
@@ -271,8 +271,8 @@ export default function Landing() {
                   {item.desc}
                 </p>
                 {item.large && (
-                  <div className="mt-auto pt-2 w-full max-w-[200px] sm:max-w-[240px] mx-auto pointer-events-none">
-                    <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
+                  <div className="mt-auto pt-2 w-full max-w-[200px] sm:max-w-[240px] mx-auto pointer-events-none" style={{ height: 200 }}>
+                    <Suspense fallback={<div style={{ height: 200 }} className="w-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
                       <OwlScene equippedItems={{}} containerHeight={200} modelYOffset={0.3} />
                     </Suspense>
                   </div>
