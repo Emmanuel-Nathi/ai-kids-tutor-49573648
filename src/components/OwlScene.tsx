@@ -51,16 +51,32 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
   const headRef = useRef<THREE.Object3D | null>(null);
   const sceneGroupRef = useRef<THREE.Group>(null!);
   const eyeMeshesRef = useRef<THREE.Mesh[]>([]);
+  const pupilMeshesRef = useRef<{ mesh: THREE.Object3D; basePos: THREE.Vector3 }[]>([]);
   const blinkTimerRef = useRef({ nextBlink: 2 + Math.random() * 4, blinking: false, blinkStart: 0 });
+  const tiltTimerRef = useRef({ next: 6 + Math.random() * 4, active: false, start: 0 });
+  const perkTimerRef = useRef({ next: 12 + Math.random() * 8, active: false, start: 0 });
 
   useEffect(() => {
     const head = findHeadNode(scene);
     if (head) headRef.current = head;
     const eyes: THREE.Mesh[] = [];
+    const pupils: { mesh: THREE.Object3D; basePos: THREE.Vector3 }[] = [];
     scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh && /eye/i.test(child.name)) eyes.push(child as THREE.Mesh);
+      const m = child as THREE.Mesh;
+      if (m.isMesh) {
+        if (/pupil|iris/i.test(child.name)) {
+          pupils.push({ mesh: child, basePos: child.position.clone() });
+        } else if (/eye/i.test(child.name)) {
+          eyes.push(m);
+        }
+      }
     });
+    // Fallback: if no pupils, use eye meshes for offset (cache base pos)
+    if (pupils.length === 0 && eyes.length > 0) {
+      eyes.forEach((e) => pupils.push({ mesh: e, basePos: e.position.clone() }));
+    }
     eyeMeshesRef.current = eyes;
+    pupilMeshesRef.current = pupils;
     onLoaded();
   }, [scene, onLoaded]);
 
@@ -74,23 +90,76 @@ function OwlModel({ equippedItems, onLoaded, globalMouse }: OwlModelProps) {
     return { center: c, scale: s, headY: topY, eyeY: topY * 0.75 };
   }, [scene]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    const delta = state.clock.getDelta() || 1 / 60;
-    if (sceneGroupRef.current) {
-      const breathe = 1 + Math.sin(t * 1.5) * 0.015;
-      sceneGroupRef.current.scale.set(breathe, breathe, breathe);
-    }
     const mouse = globalMouse.current ?? { x: 0, y: 0 };
-    const targetY = mouse.x * (Math.PI / 6);
-    const targetX = -mouse.y * (Math.PI / 20);
-    if (headRef.current) {
-      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.1);
-      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.1);
-    } else if (sceneGroupRef.current) {
-      sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, targetY * 0.3, 0.05);
-      sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, targetX * 0.3, 0.05);
+
+    // --- Periodic perk-up scale pulse ---
+    const perk = perkTimerRef.current;
+    let perkScale = 1;
+    if (!perk.active) {
+      perk.next -= delta;
+      if (perk.next <= 0) { perk.active = true; perk.start = t; }
+    } else {
+      const e = t - perk.start;
+      if (e < 0.4) {
+        const p = e / 0.4;
+        perkScale = 1 + Math.sin(p * Math.PI) * 0.04;
+      } else {
+        perk.active = false;
+        perk.next = 12 + Math.random() * 8;
+      }
     }
+
+    if (sceneGroupRef.current) {
+      const breathe = 1 + Math.sin(t * 1.5) * 0.022;
+      const s = breathe * perkScale;
+      sceneGroupRef.current.scale.set(s, s, s);
+      // tiny vertical bob
+      sceneGroupRef.current.position.y = Math.sin(t * 1.2) * 0.02;
+      // body counter-lean toward cursor
+      const bodyTargetY = mouse.x * (Math.PI / 12) * 0.3;
+      const bodyTargetX = -mouse.y * (Math.PI / 30) * 0.3;
+      sceneGroupRef.current.rotation.y = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.y, bodyTargetY, 0.08);
+      sceneGroupRef.current.rotation.x = THREE.MathUtils.lerp(sceneGroupRef.current.rotation.x, bodyTargetX, 0.08);
+    }
+
+    // --- Head tracking + sway + micro-tilt ---
+    const sway = Math.sin(t * 0.6) * 0.05 * (1 - Math.min(1, Math.abs(mouse.x) * 2));
+    const targetY = mouse.x * (Math.PI / (180 / 35)) + sway; // ±35°
+    const targetX = -mouse.y * (Math.PI / (180 / 12)); // ±12°
+
+    // micro head-tilt (Z rotation)
+    const tilt = tiltTimerRef.current;
+    let tiltZ = 0;
+    if (!tilt.active) {
+      tilt.next -= delta;
+      if (tilt.next <= 0) { tilt.active = true; tilt.start = t; }
+    } else {
+      const e = t - tilt.start;
+      if (e < 0.6) {
+        tiltZ = Math.sin((e / 0.6) * Math.PI) * 0.12 * (Math.random() > 0.5 ? 1 : -1);
+      } else {
+        tilt.active = false;
+        tilt.next = 6 + Math.random() * 4;
+      }
+    }
+
+    if (headRef.current) {
+      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetY, 0.25);
+      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetX, 0.25);
+      headRef.current.rotation.z = THREE.MathUtils.lerp(headRef.current.rotation.z, tiltZ, 0.1);
+    }
+
+    // --- Pupil tracking ---
+    pupilMeshesRef.current.forEach(({ mesh, basePos }) => {
+      const tx = basePos.x + mouse.x * 0.03;
+      const ty = basePos.y + -mouse.y * 0.02;
+      mesh.position.x = THREE.MathUtils.lerp(mesh.position.x, tx, 0.15);
+      mesh.position.y = THREE.MathUtils.lerp(mesh.position.y, ty, 0.15);
+    });
+
+    // --- Blink ---
     const blink = blinkTimerRef.current;
     if (!blink.blinking) {
       blink.nextBlink -= delta;
@@ -145,7 +214,7 @@ function OwlLoadingFallback() {
   );
 }
 
-export default function OwlScene({ equippedItems, message, containerHeight = 320, modelYOffset = 0 }: OwlSceneProps) {
+export default function OwlScene({ equippedItems, message, containerHeight = 420, modelYOffset = 0 }: OwlSceneProps) {
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
   const globalMouseRef = useRef({ x: 0, y: 0 });
@@ -166,18 +235,18 @@ export default function OwlScene({ equippedItems, message, containerHeight = 320
     <div ref={inViewRef} className="relative w-full" style={{ height: `${containerHeight}px` }}>
       {!inView ? (
         <div className="absolute inset-0 flex items-center justify-center">
-          <OwlMascot size="lg" animate={false} />
+          <OwlMascot size="xl" animate={false} />
         </div>
       ) : (
         <>
           {!loaded && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
-              <Skeleton className="h-32 w-32 rounded-full" />
+              <Skeleton className="h-40 w-40 rounded-full" />
               <Skeleton className="h-4 w-24 rounded-md" />
               <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
             </div>
           )}
-          <Canvas camera={{ position: [0, 0.5 + modelYOffset, 4], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+          <Canvas camera={{ position: [0, 0.5 + modelYOffset, 3.2], fov: 45 }} gl={{ antialias: true, alpha: true }}>
             <Suspense fallback={<OwlLoadingFallback />}>
               <ambientLight intensity={0.4} />
               <directionalLight position={[5, 5, 5]} intensity={0.6} />
