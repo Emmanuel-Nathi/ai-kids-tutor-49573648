@@ -218,7 +218,7 @@ export default function OwlScene({ equippedItems, message, containerHeight = 420
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
   const globalMouseRef = useRef({ x: 0, y: 0 });
-  const { ref: inViewRef, inView } = useInView({ triggerOnce: false, threshold: 0.1 });
+  const { ref: inViewRef, inView } = useInView({ triggerOnce: true, threshold: 0.01, rootMargin: "200px" });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
