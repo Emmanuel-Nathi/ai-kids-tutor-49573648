@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { lazy, Suspense } from "react";
 import { OwlMascot } from "@/components/OwlMascot";
 import { MiniChatPreview } from "@/components/MiniChatPreview";
+import { MasteryBadges } from "@/components/landing/MasteryBadges";
+import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
 
 const OwlScene = lazy(() => import("@/components/OwlScene"));
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
@@ -257,6 +259,9 @@ export default function Landing() {
         </motion.div>
       </section>
 
+      {/* Mastery Badges */}
+      <MasteryBadges />
+
       {/* Bento Grid Features */}
       <section className="px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-5xl mx-auto">
@@ -330,6 +335,9 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Parent Testimonials */}
+      <ParentTestimonials />
 
       {/* Pricing */}
       <section className="px-4 sm:px-6 py-10 sm:py-16">

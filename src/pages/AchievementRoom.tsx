@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, Flame, BookOpen, Lock, Trophy, ShoppingBag, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 
 export default function AchievementRoom() {
@@ -40,6 +41,7 @@ export default function AchievementRoom() {
 
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
         <Trophy className="w-5 h-5 text-primary" />
@@ -104,26 +106,47 @@ export default function AchievementRoom() {
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                 {allBadges.map((badge) => {
                   const earned = earnedBadgeIds.has(badge.id);
+                  const tooltipText = earned
+                    ? badge.description || "Earned!"
+                    : badge.description ||
+                      (badge.criteria_type
+                        ? `Earn by: ${badge.criteria_type.replace(/_/g, " ")} ${badge.criteria_value ?? ""}`
+                        : "Keep learning to unlock!");
                   return (
-                    <motion.div
-                      key={badge.id}
-                      whileHover={{ scale: 1.05 }}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
-                        earned
-                          ? "bg-secondary/10 border-secondary/30 shadow-md"
-                          : "bg-muted/30 border-border opacity-50 grayscale"
-                      }`}
-                    >
-                      <span className="text-2xl">{earned ? badge.icon_emoji : "🔒"}</span>
-                      <span className="text-[10px] font-display font-semibold text-center leading-tight">
-                        {badge.title}
-                      </span>
-                      {earned && (
-                        <Badge variant="secondary" className="text-[8px] px-1.5 py-0">
-                          Earned
-                        </Badge>
-                      )}
-                    </motion.div>
+                    <Tooltip key={badge.id}>
+                      <TooltipTrigger asChild>
+                        <motion.div
+                          whileHover={{ scale: 1.08, y: -2 }}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all cursor-help relative overflow-hidden ${
+                            earned
+                              ? "bg-gradient-to-br from-secondary/30 to-primary/15 border-secondary/40 shadow-lg ring-1 ring-white/40"
+                              : "bg-muted/30 border-border opacity-50 grayscale"
+                          }`}
+                          style={
+                            earned
+                              ? { boxShadow: "inset 0 1px 4px hsl(0 0% 100% / 0.5), 0 4px 14px hsl(var(--secondary) / 0.25)" }
+                              : undefined
+                          }
+                        >
+                          {earned && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/30 pointer-events-none" />
+                          )}
+                          <span className="text-3xl drop-shadow-sm relative z-10">{earned ? badge.icon_emoji : "🔒"}</span>
+                          <span className="text-[10px] font-display font-semibold text-center leading-tight relative z-10">
+                            {badge.title}
+                          </span>
+                          {earned && (
+                            <Badge variant="secondary" className="text-[8px] px-1.5 py-0 relative z-10">
+                              Earned
+                            </Badge>
+                          )}
+                        </motion.div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[200px] text-xs">
+                        <p className="font-display font-bold mb-0.5">{badge.title}</p>
+                        <p>{tooltipText}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   );
                 })}
               </div>
@@ -199,5 +222,6 @@ export default function AchievementRoom() {
         </Card>
       </main>
     </div>
+    </TooltipProvider>
   );
 }
