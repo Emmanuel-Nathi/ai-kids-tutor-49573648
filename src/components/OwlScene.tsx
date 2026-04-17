@@ -3,8 +3,6 @@ import { Environment, useGLTF, Html } from "@react-three/drei";
 import { useRef, useMemo, useEffect, Suspense, useState, useCallback } from "react";
 import * as THREE from "three";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInView } from "react-intersection-observer";
-import { OwlMascot } from "@/components/OwlMascot";
 
 interface OwlSceneProps {
   equippedItems: Record<string, string>;
@@ -218,7 +216,6 @@ export default function OwlScene({ equippedItems, message, containerHeight = 420
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
   const globalMouseRef = useRef({ x: 0, y: 0 });
-  const { ref: inViewRef, inView } = useInView({ triggerOnce: true, threshold: 0.01, rootMargin: "200px" });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -232,34 +229,29 @@ export default function OwlScene({ equippedItems, message, containerHeight = 420
   }, []);
 
   return (
-    <div ref={inViewRef} className="relative w-full" style={{ height: `${containerHeight}px` }}>
-      {!inView ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <OwlMascot size="xl" animate={false} />
+    <div
+      className="relative w-full overflow-hidden"
+      style={{ height: `${containerHeight}px`, contain: "layout size" }}
+    >
+      {!loaded && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl">
+          <Skeleton className="h-32 w-32 rounded-full" />
+          <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
         </div>
-      ) : (
-        <>
-          {!loaded && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-xl transition-opacity duration-500">
-              <Skeleton className="h-40 w-40 rounded-full" />
-              <Skeleton className="h-4 w-24 rounded-md" />
-              <p className="text-xs text-muted-foreground animate-pulse">Loading 3D owl…</p>
-            </div>
-          )}
-          <Canvas
-            camera={{ position: [0, 0.5 + modelYOffset, 3.2], fov: 45 }}
-            gl={{ antialias: true, alpha: true }}
-            style={{ touchAction: "pan-y", pointerEvents: "none" }}
-          >
-            <Suspense fallback={<OwlLoadingFallback />}>
-              <ambientLight intensity={0.4} />
-              <directionalLight position={[5, 5, 5]} intensity={0.6} />
-              <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
-              <Environment preset="sunset" />
-            </Suspense>
-          </Canvas>
-        </>
       )}
+      <Canvas
+        camera={{ position: [0, 0.5 + modelYOffset, 3.2], fov: 45 }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        resize={{ scroll: false, debounce: { scroll: 0, resize: 50 } }}
+        style={{ touchAction: "pan-y", pointerEvents: "none", position: "absolute", inset: 0 }}
+      >
+        <Suspense fallback={<OwlLoadingFallback />}>
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[5, 5, 5]} intensity={0.6} />
+          <OwlModel equippedItems={equippedItems} onLoaded={handleLoaded} globalMouse={globalMouseRef} />
+          <Environment preset="sunset" />
+        </Suspense>
+      </Canvas>
 
       {message && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 max-w-[260px] rounded-2xl backdrop-blur-md bg-white/30 border border-white/20 px-5 py-3 text-center text-sm font-display shadow-lg z-10">
