@@ -19,8 +19,10 @@ export function AdminGuard({ children }: AdminGuardProps) {
     }
     supabase
       .rpc("has_role", { _user_id: user.id, _role: "admin" as any })
-      .then(({ data }) => setIsAdmin(!!data))
-      .catch(() => setIsAdmin(false));
+      .then(
+        ({ data }) => setIsAdmin(!!data),
+        () => setIsAdmin(false),
+      );
   }, [user]);
 
   if (loading || (user && isAdmin === null)) {
