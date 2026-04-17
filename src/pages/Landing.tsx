@@ -298,6 +298,13 @@ export default function Landing() {
                 <p className={`text-muted-foreground leading-relaxed ${item.large ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}>
                   {item.desc}
                 </p>
+                {item.large && (
+                  <div className="mt-auto pt-2 w-full max-w-[200px] sm:max-w-[240px] mx-auto pointer-events-none">
+                    <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
+                      <OwlScene equippedItems={{}} containerHeight={200} modelYOffset={0.3} />
+                    </Suspense>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
