@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Flame, Gift, Home, Map, Sparkles, Star, Trophy } from "lucide-react";
 import { AIHomeworkHelper } from "@/components/AIHomeworkHelper";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -175,6 +176,7 @@ export default function ChildHome() {
 
         <AIHomeworkHelper childId={childId!} />
       </main>
+      <FeedbackButton childId={childId} />
     </div>
   );
 }

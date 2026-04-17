@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ChildSessionProvider } from "@/hooks/useChildSession";
 import { AppLayout } from "@/components/AppLayout";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
+import { AdminGuard } from "@/components/AdminGuard";
 import { OwlMascot } from "@/components/OwlMascot";
 import { motion } from "framer-motion";
 
@@ -97,7 +98,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
                 <Route path="/child-login" element={<ChildLogin />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/paywall" element={<Paywall />} />

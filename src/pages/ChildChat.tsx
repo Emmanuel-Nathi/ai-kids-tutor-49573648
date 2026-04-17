@@ -10,6 +10,8 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { useConfetti } from "@/hooks/useConfetti";
+import { FeedbackButton } from "@/components/FeedbackButton";
 
 interface Message {
   role: "user" | "assistant";
@@ -40,6 +42,7 @@ export default function ChildChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const contextSent = useRef(false);
+  const { fireConfetti } = useConfetti();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -84,6 +87,7 @@ export default function ChildChat() {
         body: JSON.stringify({ child_id: childId, amount, reason }),
       });
       toast.success(`+${amount} XP! ⭐`, { duration: 2000 });
+      fireConfetti();
     } catch {}
   };
 
@@ -267,6 +271,7 @@ export default function ChildChat() {
           </Button>
         </form>
       </div>
+      <FeedbackButton childId={childId} />
     </div>
   );
 }
