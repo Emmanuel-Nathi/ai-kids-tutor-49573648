@@ -10,7 +10,7 @@ const OwlScene = lazy(() => import("@/components/OwlScene"));
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -157,7 +157,7 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div ref={owlRef} className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
+          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto">
             <Suspense fallback={<div className="w-full aspect-square flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
               <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
             </Suspense>
