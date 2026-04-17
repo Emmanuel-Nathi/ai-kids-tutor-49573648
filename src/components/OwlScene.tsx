@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, useGLTF, Html } from "@react-three/drei";
+import { Environment, useGLTF, Html } from "@react-three/drei";
 import { useRef, useMemo, useEffect, Suspense, useState, useCallback } from "react";
 import * as THREE from "three";
 import { Skeleton } from "@/components/ui/skeleton";
