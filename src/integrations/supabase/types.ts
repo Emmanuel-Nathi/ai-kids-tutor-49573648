@@ -386,6 +386,57 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          category: string
+          child_id: string | null
+          created_at: string
+          id: string
+          message: string
+          page_url: string | null
+          parent_id: string | null
+          rating: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          category?: string
+          child_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          page_url?: string | null
+          parent_id?: string | null
+          rating?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          category?: string
+          child_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          page_url?: string | null
+          parent_id?: string | null
+          rating?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homework: {
         Row: {
           child_id: string
