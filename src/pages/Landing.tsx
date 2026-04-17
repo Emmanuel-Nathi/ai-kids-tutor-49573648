@@ -199,12 +199,12 @@ export default function Landing() {
             </Suspense>
           </div>
 
-          {/* Trust badges right after mascot */}
+          {/* High-contrast authority badges */}
           <div className="mt-2 sm:mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {trustBadges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-display font-semibold bg-secondary/15 text-secondary border border-secondary/20"
+                className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-display font-bold bg-primary text-primary-foreground border-2 border-primary shadow-md uppercase tracking-wide"
               >
                 <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {badge}
