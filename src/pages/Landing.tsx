@@ -7,7 +7,7 @@ import { MasteryBadges } from "@/components/landing/MasteryBadges";
 import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
 
 const OwlScene = lazy(() => import("@/components/OwlScene"));
-import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle } from "lucide-react";
+import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle, ArrowUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -65,6 +65,16 @@ export default function Landing() {
   const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setHeaderScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   useEffect(() => {
     if (!loading && user) navigate("/parent");
@@ -120,7 +130,7 @@ export default function Landing() {
 
       {/* Glassmorphic Header */}
       <header ref={headerRef} className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
-        <div className="glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto">
+        <div className={`glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto transition-shadow duration-300 ${headerScrolled ? "shadow-lg" : ""}`}>
           <div
             className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/")}
@@ -363,6 +373,23 @@ export default function Landing() {
         <span>© 2026 AI Kids Tutor. Safe learning for every child.</span>
         <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate("/admin")}>Admin</span>
       </footer>
+
+      {/* Back to Top Button */}
+      <motion.button
+        type="button"
+        onClick={scrollToTop}
+        aria-label="Back to top"
+        initial={false}
+        animate={{
+          y: showStickyCTA ? 0 : 20,
+          opacity: showStickyCTA ? 1 : 0,
+          pointerEvents: showStickyCTA ? "auto" : "none",
+        }}
+        transition={{ duration: 0.3 }}
+        className="fixed right-4 bottom-20 md:right-6 md:bottom-6 z-50 glass rounded-full w-11 h-11 md:w-12 md:h-12 flex items-center justify-center shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+      >
+        <ArrowUp className="w-5 h-5 text-foreground" />
+      </motion.button>
 
       {/* Sticky Mobile CTA */}
       <motion.div
