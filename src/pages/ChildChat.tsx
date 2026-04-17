@@ -271,6 +271,7 @@ export default function ChildChat() {
           </Button>
         </form>
       </div>
+      <FeedbackButton childId={childId} />
     </div>
   );
 }
