@@ -289,19 +289,9 @@ export default function Landing() {
                 transition={{ delay: i * 0.1 }}
                 className={`glass-card p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ${item.span}`}
               >
-                {item.large ? (
-                  <div className="relative w-full flex items-center justify-center -mt-2 mb-1">
-                    <div className="w-full max-w-[200px] aspect-square">
-                      <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
-                        <OwlScene equippedItems={{}} containerHeight={200} modelYOffset={0.3} />
-                      </Suspense>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner w-10 h-10 sm:w-12 sm:h-12`}>
-                    <item.icon className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                )}
+                <div className={`rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-inner ${item.large ? "w-14 h-14 sm:w-16 sm:h-16" : "w-10 h-10 sm:w-12 sm:h-12"}`}>
+                  <item.icon className={`text-primary ${item.large ? "w-7 h-7 sm:w-8 sm:h-8" : "w-5 h-5 sm:w-6 sm:h-6"}`} />
+                </div>
                 <h3 className={`font-display font-bold text-foreground ${item.large ? "text-lg sm:text-xl" : "text-base sm:text-lg"}`}>
                   {item.title}
                 </h3>
