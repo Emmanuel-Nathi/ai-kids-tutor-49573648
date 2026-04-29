@@ -103,6 +103,10 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
+      {/* Floating Socratic Owls — anchored to the page, not to scroll-fragile canvases */}
+      <InteractiveOwl variant="hero" />
+      <InteractiveOwl variant="content" />
+
       {/* Organic background blobs with parallax */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <motion.div
