@@ -164,11 +164,8 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto" style={{ height: 180 }}>
-            <Suspense fallback={<div style={{ height: 180 }} className="w-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
-              <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
-            </Suspense>
-          </div>
+          {/* Hero spacer — owls now float over the page via <InteractiveOwl /> */}
+          <div className="h-4 sm:h-6" aria-hidden="true" />
 
           {/* High-contrast authority badges */}
           <div className="mt-2 sm:mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2">
