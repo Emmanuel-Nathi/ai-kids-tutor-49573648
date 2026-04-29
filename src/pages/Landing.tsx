@@ -4,6 +4,7 @@ import { MiniChatPreview } from "@/components/MiniChatPreview";
 import { MasteryBadges } from "@/components/landing/MasteryBadges";
 import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
 import InteractiveOwl from "@/components/InteractiveOwl";
+import StickyNavbar from "@/components/StickyNavbar";
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle, ArrowUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
@@ -59,17 +60,8 @@ const trustPoints = [
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
-  const [headerScrolled, setHeaderScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setHeaderScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -102,7 +94,10 @@ export default function Landing() {
   const blob3Y = useTransform(scrollY, [0, 1000], [0, -60]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden pt-16 sm:pt-20">
+      {/* Sticky glass navbar */}
+      <StickyNavbar />
+
       {/* Floating Socratic Owls — anchored to the page, not to scroll-fragile canvases */}
       <InteractiveOwl variant="hero" />
       <InteractiveOwl variant="content" />
@@ -128,37 +123,6 @@ export default function Landing() {
           className="absolute bottom-0 right-1/4 w-[350px] h-[350px] rounded-full bg-primary/5 blur-3xl"
         />
       </div>
-
-      {/* Glassmorphic Header */}
-      <header ref={headerRef} className="sticky top-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pb-0">
-        <div className={`glass rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between max-w-6xl mx-auto transition-shadow duration-300 ${headerScrolled ? "shadow-lg" : ""}`}>
-          <div
-            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate("/")}
-          >
-            <TransparentLogo src={logo} alt="AI Kids Tutor" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" loading="lazy" />
-            <span className="font-display font-bold text-sm sm:text-lg text-foreground">AI Kids Tutor</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full font-display text-xs sm:text-sm px-2 sm:px-3"
-              onClick={() => navigate("/child-login")}
-            >
-              <span className="hidden sm:inline">I'm a Kid 🎒</span>
-              <span className="sm:hidden">Kid 🎒</span>
-            </Button>
-            <Button
-              onClick={handleCTA}
-              size="sm"
-              className="rounded-full font-display text-xs sm:text-sm px-3 sm:px-4 bg-gradient-to-r from-primary to-primary/80 shadow-md hover:shadow-lg transition-shadow"
-            >
-              Get Started
-            </Button>
-          </div>
-        </div>
-      </header>
 
       {/* Hero */}
       <section ref={heroRef} className="flex-1 flex flex-col items-center justify-center px-4 py-4 md:py-8 sm:px-0">
