@@ -1,12 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { lazy, Suspense } from "react";
-import { OwlMascot } from "@/components/OwlMascot";
 import { MiniChatPreview } from "@/components/MiniChatPreview";
 import { MasteryBadges } from "@/components/landing/MasteryBadges";
 import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
-
-const OwlScene = lazy(() => import("@/components/OwlScene"));
+import InteractiveOwl from "@/components/InteractiveOwl";
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle, ArrowUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
