@@ -4,6 +4,7 @@ import { MiniChatPreview } from "@/components/MiniChatPreview";
 import { MasteryBadges } from "@/components/landing/MasteryBadges";
 import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
 import InteractiveOwl from "@/components/InteractiveOwl";
+import StickyNavbar from "@/components/StickyNavbar";
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle, ArrowUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
@@ -59,17 +60,8 @@ const trustPoints = [
 export default function Landing() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const headerRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
-  const [headerScrolled, setHeaderScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setHeaderScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
