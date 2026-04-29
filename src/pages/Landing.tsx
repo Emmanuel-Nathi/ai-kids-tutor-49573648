@@ -1,12 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { lazy, Suspense } from "react";
-import { OwlMascot } from "@/components/OwlMascot";
 import { MiniChatPreview } from "@/components/MiniChatPreview";
 import { MasteryBadges } from "@/components/landing/MasteryBadges";
 import { ParentTestimonials } from "@/components/landing/ParentTestimonials";
-
-const OwlScene = lazy(() => import("@/components/OwlScene"));
+import InteractiveOwl from "@/components/InteractiveOwl";
 import { Sparkles, Gift, LineChart, Camera, Shield, ArrowRight, CheckCircle, ArrowUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 import TransparentLogo from "@/components/TransparentLogo";
@@ -106,6 +103,10 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden">
+      {/* Floating Socratic Owls — anchored to the page, not to scroll-fragile canvases */}
+      <InteractiveOwl variant="hero" />
+      <InteractiveOwl variant="content" />
+
       {/* Organic background blobs with parallax */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <motion.div
@@ -167,11 +168,8 @@ export default function Landing() {
           transition={{ duration: 0.7 }}
           className="max-w-5xl mx-auto flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[180px] sm:max-w-[220px] mx-auto" style={{ height: 180 }}>
-            <Suspense fallback={<div style={{ height: 180 }} className="w-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
-              <OwlScene equippedItems={{}} containerHeight={180} modelYOffset={0.3} />
-            </Suspense>
-          </div>
+          {/* Hero spacer — owls now float over the page via <InteractiveOwl /> */}
+          <div className="h-4 sm:h-6" aria-hidden="true" />
 
           {/* High-contrast authority badges */}
           <div className="mt-2 sm:mt-3 flex flex-wrap justify-center gap-1.5 sm:gap-2">
@@ -271,11 +269,7 @@ export default function Landing() {
                   {item.desc}
                 </p>
                 {item.large && (
-                  <div className="mt-auto pt-2 w-full max-w-[200px] sm:max-w-[240px] mx-auto pointer-events-none" style={{ height: 200 }}>
-                    <Suspense fallback={<div style={{ height: 200 }} className="w-full flex items-center justify-center"><OwlMascot size="lg" trackMouse /></div>}>
-                      <OwlScene equippedItems={{}} containerHeight={200} modelYOffset={0.3} />
-                    </Suspense>
-                  </div>
+                  <div className="mt-auto pt-2" aria-hidden="true" />
                 )}
               </motion.div>
             ))}
