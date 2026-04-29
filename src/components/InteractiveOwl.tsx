@@ -18,8 +18,8 @@ const InteractiveOwl = ({ variant }: InteractiveOwlProps) => {
 
   const placementClasses =
     variant === "hero"
-      ? "top-20 right-4 w-16 md:top-24 md:right-10 md:w-28 lg:top-32 lg:right-24 lg:w-36"
-      : "bottom-10 left-4 w-16 md:bottom-20 md:left-10 md:w-24 lg:bottom-32 lg:left-24 lg:w-32";
+      ? "top-2 right-2 w-12 md:top-24 md:right-10 md:w-28 lg:top-32 lg:right-24 lg:w-36"
+      : "bottom-24 left-2 w-12 md:bottom-20 md:left-10 md:w-24 lg:bottom-32 lg:left-24 lg:w-32";
 
   return (
     <motion.div
